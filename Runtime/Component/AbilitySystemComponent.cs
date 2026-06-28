@@ -252,6 +252,23 @@ namespace Likeon.GAS
         private readonly List<ActiveGameplayEffect> _activeEffects = new List<ActiveGameplayEffect>();
         private int _nextEffectId = 1;
 
+        /// <summary>一个持续/永久效果被登记为激活时触发（瞬时效果不产生激活实例，故不触发）。供 buff/debuff 图标条订阅。</summary>
+        public event Action<ActiveGameplayEffect> OnActiveEffectAdded;
+
+        /// <summary>一个激活效果被移除时触发（到期、显式移除、或被 RemoveEffectsWithTags 顶掉皆触发）。</summary>
+        public event Action<ActiveGameplayEffect> OnActiveEffectRemoved;
+
+        /// <summary>当前所有存活的持续/永久效果（只读视图，含剩余时长/抑制态）。供 UI 列举 buff/debuff。</summary>
+        public IReadOnlyList<ActiveGameplayEffect> GetActiveGameplayEffects() => _activeEffects;
+
+        /// <summary>按句柄取激活效果实例（用于刷新单个 buff 图标的剩余时间），未找到返回 null。</summary>
+        public ActiveGameplayEffect GetActiveGameplayEffect(ActiveGameplayEffectHandle handle)
+        {
+            for (int i = 0; i < _activeEffects.Count; i++)
+                if (_activeEffects[i].Handle.Equals(handle)) return _activeEffects[i];
+            return null;
+        }
+
         /// <summary>制作一个外发效果 spec（带本 ASC 作为来源）。</summary>
         public GameplayEffectSpec MakeOutgoingSpec(GameplayEffect effect, int level = 1)
         {
@@ -299,6 +316,8 @@ namespace Likeon.GAS
 
             UpdateInhibition(active);
             RecalculateAffectedAttributes(def);
+
+            OnActiveEffectAdded?.Invoke(active);
             return handle;
         }
 
@@ -314,6 +333,7 @@ namespace Likeon.GAS
                     foreach (var t in active.Def.GrantedTags) RemoveLooseGameplayTag(t);
                     foreach (var cue in active.Def.GameplayCues) RemoveGameplayCue(cue, MakeCueParams(active.Spec));
                     RecalculateAffectedAttributes(active.Def);
+                    OnActiveEffectRemoved?.Invoke(active);
                     return true;
                 }
             }
