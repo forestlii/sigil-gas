@@ -1,0 +1,32 @@
+{
+  "name": "com.likeon.gas",
+  "version": "0.1.0",
+  "displayName": "Sigil - Action Combat & Ability Framework",
+  "description": "Sigil — a GAS-style action-combat & ability framework for Unity. A GameplayTag-driven state bus connects abilities, attributes, effects, input dispatch, melee & ranged combat, movement, and presentation (GameplayCue, camera blend stack, surface effects). Independent Unity implementation; single-player authoritative logic.",
+  "unity": "6000.4",
+  "keywords": [
+    "ability system",
+    "gameplay ability",
+    "gas",
+    "combat",
+    "action rpg",
+    "framework",
+    "gameplay tags",
+    "abilities",
+    "attributes",
+    "melee"
+  ],
+  "author": {
+    "name": "Likeon"
+  },
+  "dependencies": {
+    "com.unity.inputsystem": "1.4.4"
+  },
+  "samples": [
+    {
+      "displayName": "Playable Demo",
+      "description": "可玩 demo：运行时构建一个完整闭环场景（输入→技能→近战命中→扣血→GameplayCue），WASD 移动 / Shift 冲刺 / 鼠标看 / 空格或左键攻击。导入后打开 GASDemo 场景按 Play 即玩。A playable demo that builds a full input→ability→hit→damage→cue loop at runtime.",
+      "path": "Samples~/PlayableDemo"
+    }
+  ]
+}

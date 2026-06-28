@@ -1,0 +1,15 @@
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vs/
+*.user
+*.csproj
+*.sln
+
+# Unity build artifacts (should never appear in a package, guard against accidents)
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Ll]ogs/

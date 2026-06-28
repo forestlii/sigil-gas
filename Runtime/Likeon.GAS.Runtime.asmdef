@@ -1,0 +1,14 @@
+{
+  "name": "Likeon.GAS.Runtime",
+  "rootNamespace": "Likeon.GAS",
+  "references": [],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
