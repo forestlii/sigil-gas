@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed / 变更
+
+- **Playable Demo upgraded to a feature showcase / 可玩 Demo 升级为功能展示场**. The bundled sample now puts several combat lines in one runtime-built scene — melee, **ranged projectiles**, **lock-on switching between 3 enemies**, **poise/stagger**, and **stacking buffs** — with a self-explanatory on-screen HUD rendered purely from the framework's observability events. No framework code changed; the demo simply exercises features that were already implemented and tested. New demo scripts: `DemoRanged` / `DemoRangedAbility` / `DemoHUD`. / 示例从"只演示近战"升级为多条战斗线同场展示（近战 / 远程子弹 / 3 敌人锁定切换 / 削韧破防 / buff 叠层）+ 自解释 HUD（全靠订阅可观测性事件渲染）。框架零改动，仅把已实现并测试过的功能调用出来。新增 demo 脚本 `DemoRanged` / `DemoRangedAbility` / `DemoHUD`。
+- Demo smoke tests expanded from 1 to 4 (melee / lock-on / ranged / buff-stacking), all green. Test totals: **EditMode 21 + PlayMode 89 = 110**. / demo 冒烟测试从 1 个扩到 4 个（近战 / 锁定 / 远程 / 叠层）全过；测试总数升至 EditMode 21 + PlayMode 89 = 110。
+
 ## [0.3.0] - 2026-06-29
 
 Verified on Unity 6000.4.10f1 — **EditMode 21 + PlayMode 86 = 107 automated tests, all green**.

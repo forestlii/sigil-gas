@@ -93,13 +93,18 @@ Sigil 负责把数据暴露出来。主要事件：
 ### Editor tools / 编辑器工具
 - GameplayTag picker (hierarchical dropdown + search + add), tag registry & a `Likeon ▸ GAS ▸ Gameplay Tags` window, `[SerializeReference]` subclass pickers, asset inspectors, a project tag scanner — all under one top-level **Likeon** menu. / 标签选择器、标签注册表与管理窗口、子类选择器、资产 Inspector、标签扫描器，统一收在顶部 Likeon 菜单下。
 
-### Playable demo / 可玩 Demo
-Import via **Package Manager → Sigil → Samples → *Playable Demo***, open `GASDemo.unity`, press Play:
-WASD move · Shift sprint · mouse look · Space / left-click attack. Builds the full
-input → ability → hit → damage → cue loop at runtime (placeholder programmer art).
+### Playable demo / 可玩功能展示 Demo
+Import via **Package Manager → Sigil → Samples → *Playable Demo***, open `GASDemo.unity`, press Play.
+A runtime-built **feature showcase** putting several combat lines in one scene (placeholder programmer art):
+**melee → damage → cue, ranged projectiles, lock-on switching between 3 enemies, poise/stagger, and
+stacking buffs**, with a self-explanatory on-screen HUD that renders purely from the framework's
+observability events. Controls: WASD move · Shift sprint · mouse look · Space/LMB melee · RMB/F ranged ·
+Tab lock-on · Q/E switch target · R stack a buff.
 
-在 **Package Manager → Sigil → Samples → *Playable Demo*** 导入，打开 `GASDemo.unity` 按 Play：
-WASD 移动 / Shift 冲刺 / 鼠标看 / 空格或左键攻击，演示输入→技能→命中→扣血→cue 全闭环（程序员美术胶囊体）。
+在 **Package Manager → Sigil → Samples → *Playable Demo*** 导入，打开 `GASDemo.unity` 按 Play。
+一个运行时构建的**功能展示场**，把多条战斗线放进同一场景（程序员美术胶囊体）：
+**近战→扣血→cue、远程子弹、3 敌人间锁定切换、削韧破防、buff 叠层**，并带一个全靠订阅框架可观测性事件
+渲染的自解释 HUD。操作：WASD 移动 / Shift 冲刺 / 鼠标看 / 空格·左键近战 / 右键·F 远程 / Tab 锁定 / Q·E 切目标 / R 叠 buff。
 
 ## Quick start / 快速上手
 
