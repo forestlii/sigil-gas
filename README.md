@@ -30,6 +30,19 @@ The only dependency is `com.unity.inputsystem`.
 把 `com.likeon.gas` 文件夹放进工程的 `Packages/` 目录，或用
 **Package Manager → Add package from disk…** 选中 `package.json`。唯一依赖是 `com.unity.inputsystem`。
 
+### Running tests / 运行测试
+
+The package ships with EditMode + PlayMode tests under `Tests/`. To run them, add the
+package to `"testables"` in your project's `Packages/manifest.json`, then open
+**Window → General → Test Runner**:
+
+```json
+"testables": [ "com.likeon.gas" ]
+```
+
+包内 `Tests/` 自带 EditMode + PlayMode 测试。在工程 `Packages/manifest.json` 的
+`"testables"` 里加上本包，再打开 **Window → General → Test Runner** 即可运行。
+
 ## Features / 功能
 
 ### Core ability system / 核心能力系统
