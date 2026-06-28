@@ -4,12 +4,12 @@
 
 A GAS-style **action-combat and ability framework** for Unity. A **GameplayTag-driven
 state bus** ties together abilities, attributes, effects, input dispatch, melee & ranged
-combat, movement and presentation — so input → ability → effect → attribute → feedback
-stays decoupled and data-driven.
+combat, and presentation — so input → ability → effect → attribute → feedback stays
+decoupled and data-driven. (Movement lives in an optional companion package; see below.)
 
 一套 GAS 风格的 **Unity 动作战斗与能力框架**。以 **GameplayTag 驱动的状态总线**串起
-能力 / 属性 / 效果 / 输入分发 / 近战与远程战斗 / 移动 / 表现，让
-"输入 → 技能 → 效果 → 属性 → 反馈"保持解耦、数据驱动。
+能力 / 属性 / 效果 / 输入分发 / 近战与远程战斗 / 表现，让
+"输入 → 技能 → 效果 → 属性 → 反馈"保持解耦、数据驱动。（移动在可选配套包里，见下文。）
 
 - **Engine / 引擎:** Unity 6 — developed & verified on 6000.4.10f1 / 在 6000.4.10f1 开发并验证
 - **Tests / 测试:** EditMode 21 + PlayMode 86 = **107 automated tests, all green / 107 个自动化测试全过**
@@ -172,16 +172,16 @@ inputSystemComponent.ReceiveInput(
 
 ## Status & roadmap / 状态与路线
 
-Single-player core is **complete and tested** (107 automated tests) — including game phases,
-global abilities, generic collision tracing, and a locomotion animation **data layer** (with a
-sample layered Controller generator).
+Single-player core is **complete and tested** (107 automated tests, run together with the
+movement companion package) — covering the ability system, input dispatch, melee & ranged
+combat, game phases, global abilities, generic collision tracing, and presentation.
 
-- **Networking** (replication / prediction) — planned for a later stage. / 联网（复制/预测）—后续阶段。
+- **Movement / locomotion** — in the companion package [`com.likeon.gas.movement`](https://github.com/forestlii/sigil-movement). / 移动/运动在配套包。
 - **UI** — **intentionally out of scope.** Sigil is logic-only; subscribe to its change events
   (see *Observability* above) from any UI solution. / **刻意不在范围内**：Sigil 只做逻辑，UI 自行订阅事件接入。
-- **Locomotion** drives Animator parameters; final animation clips & feel are the host project's. / 运动层驱动 Animator 参数，成品动画与手感由宿主提供。
+- **Networking** (replication / prediction) — planned for a later stage. / 联网（复制/预测）—后续阶段。
 
-单机核心**已完成并测试**（107 个自动化测试）——含游戏阶段、全局技能、通用碰撞检测、运动动画**数据层**（附示例分层 Controller 生成器）。
+单机核心**已完成并测试**（107 个自动化测试，与 movement 配套包一起跑）——覆盖能力系统、输入分发、近战与远程战斗、游戏阶段、全局技能、通用碰撞检测、表现层。
 
 ## License / 许可
 
