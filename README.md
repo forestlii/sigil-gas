@@ -12,7 +12,7 @@ stays decoupled and data-driven.
 "输入 → 技能 → 效果 → 属性 → 反馈"保持解耦、数据驱动。
 
 - **Engine / 引擎:** Unity 6 — developed & verified on 6000.4.10f1 / 在 6000.4.10f1 开发并验证
-- **Tests / 测试:** EditMode 21 + PlayMode 76 = **97 automated tests, all green / 97 个自动化测试全过**
+- **Tests / 测试:** EditMode 21 + PlayMode 86 = **107 automated tests, all green / 107 个自动化测试全过**
 - **Scope / 范围:** single-player authoritative logic (no networking yet) / 单机权威逻辑（暂无联网）
 - **Publisher / 发布者:** Likeon · namespace `Likeon.GAS`
 
@@ -167,7 +167,7 @@ inputSystemComponent.ReceiveInput(
 
 ## Status & roadmap / 状态与路线
 
-Single-player core is **complete and tested** (97 automated tests) — including game phases,
+Single-player core is **complete and tested** (107 automated tests) — including game phases,
 global abilities, generic collision tracing, and a locomotion animation **data layer** (with a
 sample layered Controller generator).
 
@@ -176,7 +176,7 @@ sample layered Controller generator).
   (see *Observability* above) from any UI solution. / **刻意不在范围内**：Sigil 只做逻辑，UI 自行订阅事件接入。
 - **Locomotion** drives Animator parameters; final animation clips & feel are the host project's. / 运动层驱动 Animator 参数，成品动画与手感由宿主提供。
 
-单机核心**已完成并测试**（97 个自动化测试）——含游戏阶段、全局技能、通用碰撞检测、运动动画**数据层**（附示例分层 Controller 生成器）。
+单机核心**已完成并测试**（107 个自动化测试）——含游戏阶段、全局技能、通用碰撞检测、运动动画**数据层**（附示例分层 Controller 生成器）。
 
 ## License / 许可
 

@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-06-29
+
+Verified on Unity 6000.4.10f1 — **EditMode 21 + PlayMode 86 = 107 automated tests, all green**.
+
+在 Unity 6000.4.10f1 实测 **EditMode 21 + PlayMode 86 = 107 个自动化测试全过**。
+
 ### Added / 新增
 
 - **GameplayEffect stacking / 效果叠层** — `StackingType` (None / AggregateByTarget / AggregateBySource), `StackLimitCount`, duration-refresh & period-reset policies, and an expiration policy (clear entire stack / remove a single stack & refresh / refresh only). Modifiers and periodic execution scale by stack count; `OnActiveEffectStackChanged` (effect, old, new) + `ActiveGameplayEffect.StackCount` drive ×N UI badges. / 效果叠层：合并方式/上限/时长刷新/周期重置/到期策略，修改量与周期结算按层放大，层变事件 + 层数字段供 ×N 角标。
@@ -54,4 +60,5 @@ First public release. Verified on Unity 6000.4.10f1 — **EditMode 21 + PlayMode
 - The demo uses placeholder programmer art (capsules). / Demo 为程序员美术（胶囊体）。
 
 [Unreleased]: #unreleased
+[0.2.0]: #020---2026-06-29
 [0.1.0]: #010---2026-06-29
