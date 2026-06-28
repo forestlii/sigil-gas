@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // Unity Input System 适配器：把 Unity 的 InputAction 回调翻译成 InputTag + InputTriggerEvent，
 // 注入 InputSystemComponent。
 // 仅在工程安装了 com.unity.inputsystem（定义 ENABLE_INPUT_SYSTEM）时编译。

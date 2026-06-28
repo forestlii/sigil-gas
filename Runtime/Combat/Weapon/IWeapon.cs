@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 武器对象的统一接口。
 // 单机取舍：保留武器的核心契约。
 

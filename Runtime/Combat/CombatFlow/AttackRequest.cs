@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 一次攻击请求的数据封装。
 // 把"这一击做什么"打包：近战引用 AttackDefinition + 要控制的判定标签；
 // 远程引用 BulletDefinition + 发射起点来源。用 [SerializeReference] 多态，技能/招式数据里内联配置。

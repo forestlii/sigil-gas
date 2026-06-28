@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 一次攻击命中后的结算结果（可被受击方消费）。
 // Unity 版去掉网络，保留数据语义。
 

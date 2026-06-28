@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 战斗结算用的中间属性集。
 // Damage / DamageNegation / GuardDamageNegation / StaminaDamage / StaminaDamageNegation。
 // 真实伤害管线：攻击的 GameplayEffect 用 Execution 把 Damage 减去 (Guard)DamageNegation，

@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 一套"检查器 + 处理器 + 执行模式"，可压栈切换。
 
 using System.Collections.Generic;

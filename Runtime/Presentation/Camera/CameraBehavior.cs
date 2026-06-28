@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 相机行为：每帧算出一个相机视图（位置/朝向/FOV），并按 AnimationCurve 推进自己的混入权重。
 // 多个相机行为压在混合栈里，由栈把它们的视图按权重融合成最终相机姿态。
 

@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 数据驱动 + GameplayTag 状态化的移动系统基类。
 // 覆盖范围：移动状态机（MovementSet/State、LocomotionMode、RotationMode、输入方向、移动定义栈）
 //          + 与 GAS 的"状态总线"对接。

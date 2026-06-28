@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 编辑器：查找或创建 GameplayTagsSettings 资产。
 
 using System.IO;

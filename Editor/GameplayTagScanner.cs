@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 编辑器：扫描工程脚本里的 RequestTag("...") 字面量，一键补进标签注册表。
 
 using System.Collections.Generic;

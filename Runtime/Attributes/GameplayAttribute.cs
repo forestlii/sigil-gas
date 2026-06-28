@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 指向"某个 AttributeSet 上的某个属性"的引用。
 // Unity 没有等价反射属性指针，这里用 (集合类型 + 属性名) 定位。
 

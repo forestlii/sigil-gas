@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 可选便利组件：挂在带 AbilitySystemComponent 的角色上，启用时自动注册到 GlobalAbilitySystem、禁用时注销。
 // 不想自动注册的工程可不挂此组件，改为手动调 GlobalAbilitySystem.Instance.RegisterASC/UnregisterASC。
 

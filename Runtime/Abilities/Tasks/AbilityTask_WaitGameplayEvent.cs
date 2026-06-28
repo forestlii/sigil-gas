@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 等待匹配某些 tag 的 GameplayEvent。
 // 监听 ASC（或外部目标 ASC）的 OnGameplayEvent。连段确认 / 命中确认 / 动画事件派发常用。
 

@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 编辑器：GameplayTag 的属性绘制器 —— 层级下拉选择 + 搜索 + 一键新增标签。
 // 让 Inspector 里不再手打字符串标签。
 

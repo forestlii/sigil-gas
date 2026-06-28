@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 输入处理器（多态分发落点）。
 // 一个 InputTag 下可挂多个处理器，各有 CheckCanHandleInput 状态条件，FirstOnly 模式选第一个通过的。
 

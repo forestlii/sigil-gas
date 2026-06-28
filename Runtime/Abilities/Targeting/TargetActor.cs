@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 目标采集器。
 // 单机实现：不含网络预测/准心/玩家视角/扩散(Spread)。
 // 这里实现"可复用、可配置、做 trace 出 TargetData"的核心，不含 Actor 生命周期与网络部分，

@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 受击反应处理器。
 // 受击方收到 AttackResult 时，CombatFlow 依次跑一串处理器做反应：判死亡、按标签查询触发
 // GameplayEvent（→可激活受击/硬直技能）、触发命中 cue。

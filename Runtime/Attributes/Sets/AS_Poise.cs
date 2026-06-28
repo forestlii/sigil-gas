@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 忠实说明：源码 AS_Poise 只持有三个属性 + clamp + Max 变化按比例调整，
 // **不含**"破防/硬直/恢复 tick"逻辑。
 // 本文件实现这三个属性；削韧的"机制"（破防→硬直→按 PoiseRecover 恢复）见 PoiseComponent（标注为补充）。

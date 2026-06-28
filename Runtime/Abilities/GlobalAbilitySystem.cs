@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 全局技能/效果系统：把一个技能或效果一次性施加到所有已注册的 ASC（全场 buff/debuff、环境效果、阶段技能）。
 // 用纯 C# 单例（同 GameplayCueManager 风格）。
 // 注册：调 RegisterASC/UnregisterASC，或给角色挂可选的 GlobalAbilitySystemRegistrant 组件自动注册。

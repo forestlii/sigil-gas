@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // Unity 不能直接序列化 Dictionary，这里用可序列化列表 + 运行时字典缓存复刻。
 
 using System;

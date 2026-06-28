@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 削韧机制组件（破防 → 硬直 → 恢复）。
 // 本组件把这套常见机制收进框架，作为 AS_Poise 的标准消费者（标注为源码外补充）：
 //   - 监听 Poise 归零 → 破防：挂硬直标签(+可选硬直效果)，触发 OnPoiseBroken；

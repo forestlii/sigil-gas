@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 编辑器：关键资产的增强 Inspector（摘要 + 配置校验提示 + 默认绘制）。
 
 using UnityEditor;

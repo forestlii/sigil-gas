@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 受击反应流程：对每个收到的 AttackResult 依次跑处理器链。
 // 这里挂在受击方上，订阅 CombatSystemComponent.OnAttackResultReceived，本地直接跑处理器。
 

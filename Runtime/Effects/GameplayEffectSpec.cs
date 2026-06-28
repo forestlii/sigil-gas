@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // GameplayEffect 的一次"实例化施加请求"，带等级、上下文、SetByCaller。
 
 using System.Collections.Generic;

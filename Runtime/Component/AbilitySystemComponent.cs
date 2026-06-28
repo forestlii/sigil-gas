@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // GAS 中枢。
 // 挂在角色 GameObject 上，统管：拥有标签 / 属性集 / 效果 / 技能授予与激活 / 激活组互斥 / 标签关系。
 // 诚实声明：本阶段为单机权威实现。

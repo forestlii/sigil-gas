@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 表面效果库：把 (效果标签 + 情景标签) 映射到 音效/粒子。
 // 例：脚步 + 草地表面 → 播草地脚步声 + 草屑粒子。
 

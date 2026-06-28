@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 战斗锁定（Lock-On）系统。
 // Unity 无该插件，这里自研等价物：OverlapSphere 收集候选 → 过滤链（阵营/死亡/标签/视角/视线）→
 // 选择最佳（最近 / 视角最小）；锁定/解锁、左右切换目标、视角计算、锁定事件。

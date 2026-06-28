@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // Unity 没有原生 GameplayTag，这里用层级点分字符串实现，
 
 using System;

@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 把 cue 标签路由到对应的 GameplayCueNotify 处理器。
 
 using System;

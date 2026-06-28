@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 运动动画驱动：每帧从移动数据算出 LocomotionState（速度/方向/倾身/视角/空中），并读出移动系统的
 // 核心状态标签（LocomotionMode/RotationMode/MovementState/MovementSet）。既可直接读，也按需写进
 // Animator 参数，供混合树（idle/walk/run、方向、lean、aim offset、jump/fall）与状态机分层消费。

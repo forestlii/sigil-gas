@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 对一个标签容器做条件查询。
 // 输入门控、技能交互规则、连段动作选择等场景
 // 都用它"按角色当前状态标签选分支"，是状态驱动多态的判断核心。

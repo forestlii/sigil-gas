@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 忠实说明：源码 AS_Health.cpp 的 PreAttributeChange 把 Health 夹到 [0,MaxHealth]，
 // PostAttributeChange 在 MaxHealth 变化时按比例调整 Health，PostGameplayEffectExecute 只 clamp Health。
 // 源码里 IncomingDamage/IncomingHealing 被声明为 Meta 属性（注释写"映射为 ±Health"），

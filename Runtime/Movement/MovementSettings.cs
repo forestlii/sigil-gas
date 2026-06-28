@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 注：Unity 用 m/s，默认值已换算，字段含义一致。
 
 using System;

@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 一次攻击命中后"对目标做什么"的数据。
 // Unity 用 ScriptableObject 资产。
 

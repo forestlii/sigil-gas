@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 复杂结算（如带护甲/暴击的伤害公式）。
 
 using System.Collections.Generic;

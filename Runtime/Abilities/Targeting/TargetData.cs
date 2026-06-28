@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // GAS 层的"目标数据"模型：把一次目标采集（trace/选取）的结果打包，供施加效果、传给技能/事件。
 // 单机实现：不含网络序列化/预测，保留数据结构与常用查询。
 

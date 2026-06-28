@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 被授予的技能在 ASC 内的登记项。
 
 namespace Likeon.GAS

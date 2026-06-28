@@ -12,7 +12,7 @@ stays decoupled and data-driven.
 "输入 → 技能 → 效果 → 属性 → 反馈"保持解耦、数据驱动。
 
 - **Engine / 引擎:** Unity 6 — developed & verified on 6000.4.10f1 / 在 6000.4.10f1 开发并验证
-- **Tests / 测试:** EditMode 21 + PlayMode 71 = **92 automated tests, all green / 92 个自动化测试全过**
+- **Tests / 测试:** EditMode 21 + PlayMode 76 = **97 automated tests, all green / 97 个自动化测试全过**
 - **Scope / 范围:** single-player authoritative logic (no networking yet) / 单机权威逻辑（暂无联网）
 - **Publisher / 发布者:** Likeon · namespace `Likeon.GAS`
 
@@ -72,6 +72,18 @@ The only dependency is `com.unity.inputsystem`.
 - **GameplayCue** — tag-driven VFX/SFX, routed by tag hierarchy via `GameplayCueManager`. / 标签驱动表现，层级路由。
 - **Surface effects** — `SurfaceEffectComponent` resolves a surface from a hit and plays audio & particles from a `SurfaceEffectLibrary`. / 表面效果：按命中表面播音画。
 - **Camera blend stack** — third-person behaviors blended by an AnimationCurve-driven weight, with SphereCast collision pull-in. / 相机混合栈：第三人称 + 曲线混合 + 碰撞拉近。
+
+### Observability — binding your own UI / 可观测性 — 接你自己的 UI
+Sigil is **logic-only and UI-agnostic**: it broadcasts change events and lets *any* UI
+solution (UGUI / UI Toolkit / third-party) subscribe and render. Drawing the HUD is the
+host project's job — Sigil's job is to expose the data. Key events:
+
+Sigil **只做逻辑、不绑 UI**：它对外广播变更事件，任何 UI 方案自行订阅渲染。画 HUD 是宿主的事，
+Sigil 负责把数据暴露出来。主要事件：
+
+- `AbilitySystemComponent`: `OnAttributeChanged` (health/mana/stamina bars), `OnTagChanged` (status icons), `OnAbilityActivated` / `OnAbilityEnded`, `OnGameplayEvent`, **`OnActiveEffectAdded` / `OnActiveEffectRemoved`** + read-only `GetActiveGameplayEffects()` / `GetActiveGameplayEffect(handle)` for buff/debuff bars with remaining time, and `GetCooldownRemainingForTags(...)` for cooldown fills. / 属性条、状态图标、技能激活、激活效果增减（含只读枚举读剩余时长）、冷却查询。
+- `CombatSystemComponent`: `OnDealtDamage` / `OnAttackResultReceived` (damage numbers). / 伤害飘字。
+- `PoiseComponent`: `OnPoiseBroken` / `OnPoiseRecovered`. `TargetingSystemComponent`: `OnTargetLockOn` / `OnTargetLockOff`. `WeaponComponent`: `OnEquipped` / `OnUnequipped` / `OnWeaponActiveStateChanged`. / 削韧、锁定、武器事件。
 
 ### Editor tools / 编辑器工具
 - GameplayTag picker (hierarchical dropdown + search + add), tag registry & a `Likeon ▸ GAS ▸ Gameplay Tags` window, `[SerializeReference]` subclass pickers, asset inspectors, a project tag scanner — all under one top-level **Likeon** menu. / 标签选择器、标签注册表与管理窗口、子类选择器、资产 Inspector、标签扫描器，统一收在顶部 Likeon 菜单下。
@@ -155,16 +167,18 @@ inputSystemComponent.ReceiveInput(
 
 ## Status & roadmap / 状态与路线
 
-Single-player core is **complete and tested** — including game phases, global abilities,
-generic collision tracing, and a locomotion animation **data layer** (with a sample layered
-Controller generator). **Not yet included:** networking (replication / prediction) and an
-in-package UI framework — intended to be layered on by the host project or added in a later release.
-The locomotion layer drives Animator parameters; final animation clips & feel are the host project's.
+Single-player core is **complete and tested** (97 automated tests) — including game phases,
+global abilities, generic collision tracing, and a locomotion animation **data layer** (with a
+sample layered Controller generator).
 
-单机核心**已完成并测试**——含游戏阶段、全局技能、通用碰撞检测、运动动画**数据层**（附示例分层 Controller 生成器）。
-**暂未包含**：联网（复制/预测）、包内 UI 框架——计划由宿主项目叠加或后续版本补上。
-运动层驱动 Animator 参数，最终动画 clip 与手感由宿主工程提供。
+- **Networking** (replication / prediction) — planned for a later stage. / 联网（复制/预测）—后续阶段。
+- **UI** — **intentionally out of scope.** Sigil is logic-only; subscribe to its change events
+  (see *Observability* above) from any UI solution. / **刻意不在范围内**：Sigil 只做逻辑，UI 自行订阅事件接入。
+- **Locomotion** drives Animator parameters; final animation clips & feel are the host project's. / 运动层驱动 Animator 参数，成品动画与手感由宿主提供。
+
+单机核心**已完成并测试**（97 个自动化测试）——含游戏阶段、全局技能、通用碰撞检测、运动动画**数据层**（附示例分层 Controller 生成器）。
 
 ## License / 许可
 
-See [`LICENSE.md`](LICENSE.md). / 见 [`LICENSE.md`](LICENSE.md)。
+[MIT](LICENSE.md) — free for any use including commercial, just keep the copyright notice.
+/ [MIT 许可证](LICENSE.md) — 免费用于任何用途（含商用），保留版权声明即可。

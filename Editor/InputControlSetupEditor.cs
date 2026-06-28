@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 编辑器：InputControlSetup —— [SerializeReference] 的检查器/处理器列表，按具体子类型下拉添加 + 删除 + 展开编辑。
 
 using System;

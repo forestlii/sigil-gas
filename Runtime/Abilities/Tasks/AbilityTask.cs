@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 技能内的异步任务基类。
 // Unity 无蓝图，改用：C# 协程驱动 + Action 回调订阅。用法：
 //   var t = AbilityTask_WaitDelay.WaitDelay(this, 0.3f);

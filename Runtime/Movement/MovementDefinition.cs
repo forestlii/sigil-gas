@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 数据驱动的移动定义资产（可被压栈切换）。
 
 using System.Collections.Generic;

@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 运动动画的纯数学：方向角、四向/八向方向选择（带死区滞回）、倾身量。
 // 全是无副作用的静态函数，便于单测。坐标约定：Unity Y 轴朝上，角色前方=+Z、右方=+X。
 

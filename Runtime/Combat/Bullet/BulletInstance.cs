@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 单个子弹实例（自走 + 命中检测 + 穿透 + 施伤 + 子弹链）。
 // 这里用普通 MonoBehaviour 自己积分运动，球扫命中；去掉网络。
 // 关键：提供 Tick(dt) 解耦 Unity 时间——便于测试用固定步长驱动、也便于宿主自定义时间/暂停。

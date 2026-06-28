@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 驱动一个 TargetActor 等待目标数据。
 // 单机实现：不含网络复制/预测，保留"启动采集→拿到有效数据/取消"的核心流程。
 

@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 属性集合基类，提供 GameplayEffect 结算前后的钩子。
 
 using System.Collections.Generic;

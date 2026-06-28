@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 能力相关的基础类型：激活策略枚举、标签计数、效果容器。
 
 using System;

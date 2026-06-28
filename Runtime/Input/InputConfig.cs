@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 输入配置。
 // 注：Unity 端把"绑定"交给输入后端适配器，
 // 本资产只保留与后端无关的"输入缓冲窗口定义"，让核心分发不依赖具体输入方案。

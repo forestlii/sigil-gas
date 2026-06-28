@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 编辑器：Likeon ▸ GAS ▸ Documentation —— 打开随包附带的使用文档。
 
 using System.IO;

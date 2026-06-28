@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 移动取消窗口：攻击等动画带 root motion 位移时，若窗口期内玩家有移动意图，则取消动画 root motion、让移动系统接管
 // （动作游戏常见的"位移可被移动打断"手感）。
 //

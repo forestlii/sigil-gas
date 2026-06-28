@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 游戏阶段技能：带一个层级 GamePhaseTag，激活=进入该阶段、结束=离开。激活/结束自动 hook GamePhaseSubsystem。
 // 阶段持续激活，直到被兄弟阶段取代或被手动 EndAbility。
 // 买家可子类化加阶段专属逻辑（如进入战斗阶段时全局施加效果——配合 GlobalAbilitySystem）。

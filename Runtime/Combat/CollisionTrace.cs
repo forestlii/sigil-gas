@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 通用碰撞检测：一组 socket 点持续 OverlapSphere 检测命中（每次激活内对每个 actor 去重），开关状态 + 命中/状态回调。
 // 精简实现：单组件 + 去重，无对象池/外部 targeting 依赖。
 //

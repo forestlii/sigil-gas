@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 把攻击伤害减去目标减伤后映射成 -Health。
 // 这条是你源码里"真实伤害走 AS_Combat 执行计算"的路径（区别于直接 SetByCaller 到 IncomingDamage）。
 

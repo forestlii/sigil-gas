@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 传给 AttributeSet.PostGameplayEffectExecute 的结算信息。
 
 namespace Likeon.GAS

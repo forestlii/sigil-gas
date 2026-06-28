@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 按定义批量生成子弹（含散射）。
 // 单机取舍：这里用静态工具直接生成 GameObject+BulletInstance；
 // 子弹失效时自销毁（对象池可作为后续优化，不影响 API）。

@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 输入门控（决定输入是否放行）。
 // Unity 端用 [Serializable] 多态类 + [SerializeReference] 内联到控制集，
 

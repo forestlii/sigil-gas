@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 相机混合栈：把若干相机行为叠在一起，按各自混入权重融合成一个最终视图。
 // index 0 = 最新压入（最上层）。最上层完全生效后，下方被遮住的层会被丢弃。
 

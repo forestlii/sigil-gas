@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 技能装载：把一组技能 + 常驻效果 + 属性集打包，一次性授予给 ASC，并返回句柄便于整批回收。
 
 using System;

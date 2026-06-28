@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 目标来源：非 Actor 的目标产生器。给定施法 ASC 与事件数据，产出命中结果 + actor 列表。
 // 用于效果容器（按"取自己 / 取事件里的目标"决定施加对象），不必起一个 TargetActor。
 

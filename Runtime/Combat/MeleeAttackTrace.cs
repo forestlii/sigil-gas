@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 在攻击动画时间轴用 Animation Event 标记判定帧，在判定区间
 //      切判定开关，CollisionTraceInstance 按武器 socket 扫描碰撞，命中施加 AttackDefinition 的效果。
 // Unity：判定帧改用 Animation Event 调 BeginAttackTrace(index)/EndAttackTrace；

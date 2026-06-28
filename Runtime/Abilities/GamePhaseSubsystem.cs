@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 游戏阶段子系统：用层级 GameplayTag 管理嵌套游戏阶段——父子阶段共存、兄弟阶段互斥。
 // 例：Game.Playing 与 Game.Playing.WarmUp 可共存；启动 Game.Playing.PostGame 会结束 Game.Playing.WarmUp 但保留 Game.Playing。
 // 用纯 C# 单例（同 GlobalAbilitySystem 风格）。

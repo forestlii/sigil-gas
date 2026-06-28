@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 移动系统的状态标签常量（字符串与源码一致）。
 
 namespace Likeon.GAS

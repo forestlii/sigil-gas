@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 把一个 AttackDefinition 施加到目标 ASC 的共享逻辑（近战/子弹/其他攻击源复用）。
 // 抽出"主效果 + SetByCaller + 效果容器 + 命中 cue"这段核心施加，避免各攻击源重复。
 

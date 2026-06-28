@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 相机系统组件：持有相机混合栈，每帧把融合后的视图应用到 Unity Camera。
 
 using UnityEngine;

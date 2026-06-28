@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 运动动画的数据类型：移动方向枚举 + 每帧算出的运动状态（喂给 Animator 的驱动值）。
 
 using UnityEngine;

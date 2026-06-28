@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 带引用计数的标签集合，用于 ASC 的"拥有标签"。
 // 关键语义：加入子标签 "A.B.C" 时，父标签 "A.B"、"A" 计数同步 +1，
 // 使得 HasMatchingTag("A") 在只加了 "A.B.C" 时也成立。

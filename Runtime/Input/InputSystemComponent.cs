@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 输入分发中枢。
 // 与后端解耦：Unity 版由外部后端（见 UnityInput 适配器）
 // 调用 ReceiveInput(tag, triggerEvent, data) 注入输入。核心的门控/分发/缓冲逻辑后端无关。

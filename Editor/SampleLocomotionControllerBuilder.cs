@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 编辑器工具：一键生成一个与 LocomotionAnimationDriver 参数对齐的示例分层 Animator Controller。
 // 菜单：Likeon ▸ GAS ▸ Samples ▸ Create Locomotion Animator Controller
 //

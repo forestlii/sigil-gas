@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 表面效果组件：按情景（命中表面等）播放音效/粒子。
 // 从命中物体的 SurfaceType 组件解析表面标签，再从效果库里查匹配记录播放。
 

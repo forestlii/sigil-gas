@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 子弹/投射物的数据定义。Unity 用 ScriptableObject。
 // 单机取舍：保留 速度/重力/命中半径/数量/散射/穿透/生命/攻击定义/子弹链；
 

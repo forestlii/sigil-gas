@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 球扫采集器（带半径的扫掠，更易命中）。
 
 using System.Collections.Generic;

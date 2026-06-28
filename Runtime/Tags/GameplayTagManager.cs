@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 全局标签注册表与层级查询。
 // Unity 版做轻量实现：维护已知标签集合，提供父链展开（用于 CountContainer 的父标签累加）。
 

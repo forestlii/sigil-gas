@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 战斗中枢：攻击结果登记、受击反应、动画播放。
 // 诚实说明：这里是单机版。
 

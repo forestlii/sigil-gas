@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 描述"对属性/标签做什么"的数据资产。
 // Unity 里用 ScriptableObject 资产，更符合 Unity 数据驱动习惯。
 

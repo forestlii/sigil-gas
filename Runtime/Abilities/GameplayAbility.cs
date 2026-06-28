@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 技能本体。
 // Unity 无蓝图，技能逻辑用 C# 子类重写 OnActivateAbility 实现。
 

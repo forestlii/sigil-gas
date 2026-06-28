@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // GAS 的"表现钩子"，用 tag 把 VFX/SFX 与逻辑解耦。
 
 using UnityEngine;

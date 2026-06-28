@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 通过 GameplayEvent 触发技能/在技能间传递的数据负载。
 
 using UnityEngine;

@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 编辑器：GameplayTagContainer 多选绘制器 —— 列出已含标签(可删) + 下拉添加(去重)。
 
 using UnityEditor;

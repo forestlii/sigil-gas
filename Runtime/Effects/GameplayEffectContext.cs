@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 效果来源信息（谁施加的、用哪个技能、命中点等）。
 
 using UnityEngine;

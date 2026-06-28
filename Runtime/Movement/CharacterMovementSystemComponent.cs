@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 基于 CharacterMovementComponent 的实际移动实现。
 // Unity 用 CharacterController（CMC 的等价物）：按当前移动状态速度移动 + 重力 + 落地检测 + 转向。
 

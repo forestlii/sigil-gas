@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 技能交互规则：把"技能之间的 block / cancel / 激活准入"数据化。
 // 支持状态感知的条件规则——按角色当前标签查询，动态决定哪些规则此刻生效。
 

@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 武器的默认实现（持标签/激活态/挥砍判定/枪口）。
 // 单机取舍：这里用 MonoBehaviour。
 // 武器作枢纽：装备到角色（关联 owner ASC、可把武器标签挂到 owner 供技能门控）、

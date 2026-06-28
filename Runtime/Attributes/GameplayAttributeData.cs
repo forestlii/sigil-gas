@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 单个属性的数据，区分 BaseValue 与 CurrentValue。
 
 using System;

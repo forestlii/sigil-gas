@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 播放一段动画（Animator 状态）并等待其结束，同时监听匹配的 GameplayEvent。
 // 连段/技能常用：边播挥砍动画边等命中事件或再次输入。
 //

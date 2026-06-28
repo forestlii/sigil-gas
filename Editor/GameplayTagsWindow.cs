@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 编辑器：Likeon > GAS > Gameplay Tags —— 独立编辑器窗口，集中管理 Gameplay Tag 注册表。
 // 取代原先挂在 Project Settings 下的入口，把插件的编辑器功能统一收进顶部 Likeon 菜单。
 

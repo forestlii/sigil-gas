@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 等待某输入按下（带状态标签门控）。
 // Unity 无 per-ability 输入绑定，故这里显式传入 inputTag，监听同物体上的 InputSystemComponent。
 

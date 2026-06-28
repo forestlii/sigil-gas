@@ -1,4 +1,4 @@
-// Copyright 2026 Likeon All Rights Reserved.
+// Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 响应某个 Cue 标签的表现处理器（播特效/音效）。
 
 using UnityEngine;
