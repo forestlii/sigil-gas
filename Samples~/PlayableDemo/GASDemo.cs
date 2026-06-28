@@ -81,7 +81,6 @@ namespace GASDemo
             asc.AddAttributeSet(new AS_Health());
             asc.AddAttributeSet(new AS_Stamina());
 
-            var move = p.AddComponent<CharacterMovementSystemComponent>(); // Awake 接 ASC + CharacterController
             p.AddComponent<CombatTeamAgent>().SetTeamId(0);
             p.AddComponent<CombatSystemComponent>();
             var melee = p.AddComponent<MeleeAttackTrace>();
@@ -102,18 +101,6 @@ namespace GASDemo
                 Trace = new CollisionTraceDefinition { SocketTransforms = new List<Transform> { socket }, TraceRadius = 1.0f }
             });
 
-            // 移动定义（运行时）
-            var def = Track(ScriptableObject.CreateInstance<MovementDefinition>());
-            var set = new MovementSetSetting { MovementSet = GameplayTag.RequestTag("Movement.Set.Default") };
-            set.States.Add(MakeState(MovementTags.MovementState_Walk, 2f));
-            set.States.Add(MakeState(MovementTags.MovementState_Jog, 5f));
-            set.States.Add(MakeState(MovementTags.MovementState_Sprint, 8f));
-            def.MovementSets.Add(set);
-            move.PushAvailableMovementDefinition(def);
-            move.SetMovementSet(set.MovementSet);
-            move.SetDesiredMovement(MovementTags.MovementState_Jog);
-            move.SetDesiredRotationMode(MovementTags.RotationMode_VelocityDirection); // 朝移动方向
-
             // 近战技能（带体力消耗）
             var ability = Track(ScriptableObject.CreateInstance<DemoMeleeAbility>());
             ability.AbilityTags.Add(MeleeTag);
@@ -121,7 +108,7 @@ namespace GASDemo
             asc.GiveAbility(ability);
 
             var ctrl = p.AddComponent<DemoPlayerController>();
-            ctrl.ASC = asc; ctrl.Movement = move; ctrl.Melee = melee;
+            ctrl.ASC = asc; ctrl.Controller = cc; ctrl.Melee = melee;
 
             PlayerASC = asc; Melee = melee; Controller = ctrl;
             return p;
@@ -222,11 +209,6 @@ namespace GASDemo
             });
             return ge;
         }
-
-        private static MovementStateSetting MakeState(GameplayTag state, float speed) => new MovementStateSetting
-        {
-            State = state, Speed = speed, Acceleration = 25f, BrakingDeceleration = 30f, RotationInterpolationSpeed = 12f
-        };
 
         private T Track<T>(T asset) where T : Object { _runtimeAssets.Add(asset); return asset; }
 

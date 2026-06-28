@@ -1,4 +1,6 @@
-// Demo 玩家控制器：用新输入系统读键鼠，驱动 GAS 移动系统 + 近战技能 + 第三人称相机。
+// Demo 玩家控制器：用新输入系统读键鼠，驱动一个极简 CharacterController 移动 + 近战技能 + 第三人称相机。
+// 注：本 demo 刻意用最简单的 CharacterController 直推移动，不依赖 movement 配套包（com.likeon.gas.movement）；
+// 完整的运动状态机 / 运动动画层在该配套包里单独演示。
 using System.Collections;
 using Likeon.GAS;
 using UnityEngine;
@@ -9,17 +11,22 @@ namespace GASDemo
     public class DemoPlayerController : MonoBehaviour
     {
         [HideInInspector] public AbilitySystemComponent ASC;
-        [HideInInspector] public CharacterMovementSystemComponent Movement;
+        [HideInInspector] public CharacterController Controller;
         [HideInInspector] public MeleeAttackTrace Melee;
         [HideInInspector] public ThirdPersonCameraBehavior ThirdPersonCamera;
 
         public GameplayTag MeleeAbilityTag = GameplayTag.RequestTag("Ability.MeleeAttack");
         public float MouseSensitivity = 0.12f;
+        public float WalkSpeed = 5f;
+        public float SprintSpeed = 8f;
+        public float RotationSpeed = 12f;
+        public float Gravity = -20f;
         public float AttackWindow = 0.3f;
         public float AttackCooldown = 0.5f;
         public float StaminaRegenPerSecond = 15f;
 
         private float _nextAttackTime;
+        private float _verticalVelocity;
         private AS_Stamina _stamina;
 
         private void Start()
@@ -44,7 +51,7 @@ namespace GASDemo
 
         private void HandleMove()
         {
-            if (Movement == null) return;
+            if (Controller == null) return;
 
             Vector2 axis = Vector2.zero;
             var kb = Keyboard.current;
@@ -60,11 +67,24 @@ namespace GASDemo
             Vector3 fwd = Camera.main != null ? Camera.main.transform.forward : Vector3.forward; fwd.y = 0; fwd.Normalize();
             Vector3 right = Camera.main != null ? Camera.main.transform.right : Vector3.right; right.y = 0; right.Normalize();
             Vector3 dir = fwd * axis.y + right * axis.x;
-            Movement.SetInputDirection(dir);
+            if (dir.sqrMagnitude > 1f) dir.Normalize();
 
-            // 冲刺
             bool sprint = kb != null && kb.leftShiftKey.isPressed && axis.sqrMagnitude > 0.01f;
-            Movement.SetDesiredMovement(sprint ? MovementTags.MovementState_Sprint : MovementTags.MovementState_Jog);
+            float speed = sprint ? SprintSpeed : WalkSpeed;
+
+            // 重力（贴地时保持轻微下压，避免悬空）
+            if (Controller.isGrounded && _verticalVelocity < 0f) _verticalVelocity = -2f;
+            else _verticalVelocity += Gravity * Time.deltaTime;
+
+            Vector3 velocity = dir * speed + Vector3.up * _verticalVelocity;
+            Controller.Move(velocity * Time.deltaTime);
+
+            // 朝移动方向转身
+            if (dir.sqrMagnitude > 0.01f)
+            {
+                Quaternion target = Quaternion.LookRotation(dir, Vector3.up);
+                transform.rotation = Quaternion.Slerp(transform.rotation, target, RotationSpeed * Time.deltaTime);
+            }
         }
 
         private void HandleAttack()

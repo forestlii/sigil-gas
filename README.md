@@ -62,11 +62,16 @@ The only dependency is `com.unity.inputsystem`.
 - **CollisionTrace** — generic `OverlapSphere` hit detection with per-activation dedup, on/off state, and filtering — for traps, AOE zones, environmental hazards (distinct from `MeleeAttackTrace`). / 通用碰撞检测：去重 + 状态开关 + 过滤，用于陷阱/AOE 区域/环境伤害。
 - **MovementCancellation** — Animation-Event-driven window that toggles `Animator.applyRootMotion` when the player moves, so attack root-motion can be cancelled by movement. / root motion 取消窗口：移动时取消动画位移。
 
-### Movement / 移动
-- **MovementSystemComponent** — movement-set/state machine, definition stack, rotation modes, input direction. / 移动状态机、定义栈、旋转模式。
-- **CharacterMovementSystemComponent** — actual movement on a `CharacterController`. / 基于 CharacterController 的实际移动。
-- **State bus to the ability system** — movement state mirrors onto the ASC as loose tags. / 移动状态镜像到 ASC。
-- **Locomotion animation driver** — `LocomotionAnimationDriver` + `LocomotionMath`: computes speed, local-velocity yaw, 4-/8-way direction (dead-zone hysteresis), lean, in-air state (jump apex / falling time / just-landed / ground prediction), view-relative aim offset, and core-state tags — writing them all to Animator parameters. A menu generator (`Likeon ▸ GAS ▸ Samples`) builds a matching layered Animator Controller (8-way blend tree + jump/fall + upper-body aim-offset layer). / 运动动画驱动：速度/偏航/四八向/倾身/空中态(顶点·下落·着地预测)/视角 AimOffset/核心状态标签 → Animator 参数；附菜单生成器一键造对齐的分层 Controller。
+### Movement / 移动 — companion package / 配套包
+Movement & locomotion live in a **separate companion package**, [`com.likeon.gas.movement`](../com.likeon.gas.movement)
+(GameplayTag-driven movement state machine on a `CharacterController` + data-driven locomotion
+animation layer + sample Animator Controller generator). Kept out of the core on purpose:
+movement is a *consumer* of the state bus, not the ability system — so you can pair the GAS
+core with your own movement, or with this package.
+
+移动与运动动画在**独立配套包** [`com.likeon.gas.movement`](../com.likeon.gas.movement)（标签驱动的
+CharacterController 移动状态机 + 数据驱动运动动画层 + 示例 Controller 生成器）。刻意不放核心：移动是
+状态总线的*消费方*、非能力系统——核心可配你自己的移动，也可搭这个包。
 
 ### Presentation / 表现
 - **GameplayCue** — tag-driven VFX/SFX, routed by tag hierarchy via `GameplayCueManager`. / 标签驱动表现，层级路由。

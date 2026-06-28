@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed / 变更
+
+- **BREAKING — Movement extracted to a companion package / 移动拆为配套包** `com.likeon.gas.movement`. `MovementSystemComponent`, `CharacterMovementSystemComponent`, the locomotion animation layer (`LocomotionAnimationDriver` / `LocomotionMath` / `LocomotionTypes`), `MovementDefinition` / `MovementSettings` / `MovementTags`, and the sample Animator Controller generator now live there. Namespace is unchanged (`Likeon.GAS`); install the companion package to keep using movement. Rationale: movement is a *consumer* of the GameplayTag state bus, not part of the ability system — keeping the GAS core focused. / 移动是 GAS 状态总线的消费方、非能力系统本身，拆出让核心专注；命名空间不变，装配套包即可继续用。
+- The playable demo now uses a minimal built-in `CharacterController` mover, so the core sample stays self-contained (no dependency on the movement package). / 可玩 demo 改用极简 CharacterController 移动，核心示例自给自足、不依赖 movement 包。
+
 ## [0.2.0] - 2026-06-29
 
 Verified on Unity 6000.4.10f1 — **EditMode 21 + PlayMode 86 = 107 automated tests, all green**.
