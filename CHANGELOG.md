@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added / 新增
+
+- **Ability grant/removal observability / 技能授予移除可观测性** — `AbilitySystemComponent.OnAbilityGiven` / `OnAbilityRemoved` events (payload `GameplayAbilitySpec`, fired for loadout & global grants too; removal fires before the instance is destroyed) + read-only `GetGrantedAbilities()`, so a loadout-driven ability bar can auto-populate. / 技能授予/移除事件（含批量授予；移除在销毁前回调）+ 只读已授予枚举，供技能栏自动增删订阅。
+
 ## [0.1.0] - 2026-06-29
 
 First public release. Verified on Unity 6000.4.10f1 — **EditMode 21 + PlayMode 76 = 97 automated tests, all green** — with a playable demo. Single-player authoritative; stage-6 networking is the remaining roadmap item.

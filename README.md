@@ -81,7 +81,7 @@ host project's job — Sigil's job is to expose the data. Key events:
 Sigil **只做逻辑、不绑 UI**：它对外广播变更事件，任何 UI 方案自行订阅渲染。画 HUD 是宿主的事，
 Sigil 负责把数据暴露出来。主要事件：
 
-- `AbilitySystemComponent`: `OnAttributeChanged` (health/mana/stamina bars), `OnTagChanged` (status icons), `OnAbilityActivated` / `OnAbilityEnded`, `OnGameplayEvent`, **`OnActiveEffectAdded` / `OnActiveEffectRemoved`** + read-only `GetActiveGameplayEffects()` / `GetActiveGameplayEffect(handle)` for buff/debuff bars with remaining time, and `GetCooldownRemainingForTags(...)` for cooldown fills. / 属性条、状态图标、技能激活、激活效果增减（含只读枚举读剩余时长）、冷却查询。
+- `AbilitySystemComponent`: `OnAttributeChanged` (health/mana/stamina bars), `OnTagChanged` (status icons), `OnAbilityActivated` / `OnAbilityEnded`, **`OnAbilityGiven` / `OnAbilityRemoved`** + read-only `GetGrantedAbilities()` for a loadout-driven ability bar, `OnGameplayEvent`, **`OnActiveEffectAdded` / `OnActiveEffectRemoved`** + read-only `GetActiveGameplayEffects()` / `GetActiveGameplayEffect(handle)` for buff/debuff bars with remaining time, and `GetCooldownRemainingForTags(...)` for cooldown fills. / 属性条、状态图标、技能激活、技能授予移除（含只读枚举）、激活效果增减（含只读枚举读剩余时长）、冷却查询。
 - `CombatSystemComponent`: `OnDealtDamage` / `OnAttackResultReceived` (damage numbers). / 伤害飘字。
 - `PoiseComponent`: `OnPoiseBroken` / `OnPoiseRecovered`. `TargetingSystemComponent`: `OnTargetLockOn` / `OnTargetLockOff`. `WeaponComponent`: `OnEquipped` / `OnUnequipped` / `OnWeaponActiveStateChanged`. / 削韧、锁定、武器事件。
 

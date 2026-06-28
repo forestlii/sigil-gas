@@ -94,6 +94,15 @@ namespace Likeon.GAS
         public event Action<GameplayAbility> OnAbilityActivated;
         public event Action<GameplayAbility, bool> OnAbilityEnded;
 
+        /// <summary>一个技能被授予时触发（含 loadout / 全局系统的批量授予）。供 loadout 驱动的技能栏订阅。</summary>
+        public event Action<GameplayAbilitySpec> OnAbilityGiven;
+
+        /// <summary>一个技能被移除时触发（在销毁实例前回调，订阅方仍可读 spec.Ability）。</summary>
+        public event Action<GameplayAbilitySpec> OnAbilityRemoved;
+
+        /// <summary>当前所有已授予技能的只读集合（供 UI 列举技能栏 / 调试）。</summary>
+        public IReadOnlyCollection<GameplayAbilitySpec> GetGrantedAbilities() => _abilities.Values;
+
         /// <summary>授予一个技能（克隆模板成本角色实例）。</summary>
         public GameplayAbilitySpecHandle GiveAbility(GameplayAbility abilityTemplate, int level = 1)
         {
@@ -106,6 +115,7 @@ namespace Likeon.GAS
             instance.ASC = this;
             instance.Spec = spec;
             _abilities[handle.Id] = spec;
+            OnAbilityGiven?.Invoke(spec);
             return handle;
         }
 
@@ -116,6 +126,7 @@ namespace Likeon.GAS
             {
                 if (spec.IsActive) spec.Ability.CancelAbility();
                 _abilities.Remove(handle.Id);
+                OnAbilityRemoved?.Invoke(spec); // 在销毁前回调，订阅方仍可读 spec
                 if (spec.Ability != null) UnityEngine.Object.Destroy(spec.Ability);
             }
         }
