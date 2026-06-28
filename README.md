@@ -63,13 +63,13 @@ The only dependency is `com.unity.inputsystem`.
 - **MovementCancellation** — Animation-Event-driven window that toggles `Animator.applyRootMotion` when the player moves, so attack root-motion can be cancelled by movement. / root motion 取消窗口：移动时取消动画位移。
 
 ### Movement / 移动 — companion package / 配套包
-Movement & locomotion live in a **separate companion package**, [`com.likeon.gas.movement`](../com.likeon.gas.movement)
+Movement & locomotion live in a **separate companion package**, [`com.likeon.gas.movement`](https://github.com/forestlii/sigil-movement)
 (GameplayTag-driven movement state machine on a `CharacterController` + data-driven locomotion
 animation layer + sample Animator Controller generator). Kept out of the core on purpose:
 movement is a *consumer* of the state bus, not the ability system — so you can pair the GAS
 core with your own movement, or with this package.
 
-移动与运动动画在**独立配套包** [`com.likeon.gas.movement`](../com.likeon.gas.movement)（标签驱动的
+移动与运动动画在**独立配套包** [`com.likeon.gas.movement`](https://github.com/forestlii/sigil-movement)（标签驱动的
 CharacterController 移动状态机 + 数据驱动运动动画层 + 示例 Controller 生成器）。刻意不放核心：移动是
 状态总线的*消费方*、非能力系统——核心可配你自己的移动，也可搭这个包。
 

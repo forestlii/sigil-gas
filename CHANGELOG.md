@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-06-29
+
+Verified on Unity 6000.4.10f1 — **EditMode 21 + PlayMode 86 = 107 automated tests, all green**.
+
+在 Unity 6000.4.10f1 实测 **EditMode 21 + PlayMode 86 = 107 个自动化测试全过**。
+
 ### Changed / 变更
 
 - **BREAKING — Movement extracted to a companion package / 移动拆为配套包** `com.likeon.gas.movement`. `MovementSystemComponent`, `CharacterMovementSystemComponent`, the locomotion animation layer (`LocomotionAnimationDriver` / `LocomotionMath` / `LocomotionTypes`), `MovementDefinition` / `MovementSettings` / `MovementTags`, and the sample Animator Controller generator now live there. Namespace is unchanged (`Likeon.GAS`); install the companion package to keep using movement. Rationale: movement is a *consumer* of the GameplayTag state bus, not part of the ability system — keeping the GAS core focused. / 移动是 GAS 状态总线的消费方、非能力系统本身，拆出让核心专注；命名空间不变，装配套包即可继续用。
@@ -65,5 +71,6 @@ First public release. Verified on Unity 6000.4.10f1 — **EditMode 21 + PlayMode
 - The demo uses placeholder programmer art (capsules). / Demo 为程序员美术（胶囊体）。
 
 [Unreleased]: #unreleased
+[0.3.0]: #030---2026-06-29
 [0.2.0]: #020---2026-06-29
 [0.1.0]: #010---2026-06-29
