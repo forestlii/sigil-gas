@@ -22,6 +22,18 @@ namespace Likeon.GAS
         [Tooltip(">0 时为周期性效果，每隔该秒数结算一次（按 Instant 语义改基础值）")]
         public float Period = 0f;
 
+        [Header("叠层 Stacking（仅 Duration/Infinite 有效）")]
+        [Tooltip("None=每次施加各算各的独立实例；AggregateByTarget=按目标合并成带层数的一个实例；AggregateBySource=按来源各合并一个")]
+        public EGameplayEffectStackingType StackingType = EGameplayEffectStackingType.None;
+        [Tooltip("最大层数（>0 生效；0 或负数=无上限）")]
+        public int StackLimitCount = 0;
+        [Tooltip("再次施加时是否刷新时长")]
+        public EGameplayEffectStackingDurationRefreshPolicy StackDurationRefreshPolicy = EGameplayEffectStackingDurationRefreshPolicy.RefreshOnSuccessfulApplication;
+        [Tooltip("再次施加时是否重置周期计时")]
+        public EGameplayEffectStackingPeriodResetPolicy StackPeriodResetPolicy = EGameplayEffectStackingPeriodResetPolicy.ResetOnSuccessfulApplication;
+        [Tooltip("到期时：整组清空 / 掉一层并刷新 / 仅刷新")]
+        public EGameplayEffectStackingExpirationPolicy StackExpirationPolicy = EGameplayEffectStackingExpirationPolicy.ClearEntireStack;
+
         [Header("属性修改 Modifiers")]
         public List<GameplayModifierInfo> Modifiers = new List<GameplayModifierInfo>();
 
@@ -57,5 +69,6 @@ namespace Likeon.GAS
 
         public bool IsInstant => DurationType == EGameplayEffectDurationType.Instant;
         public bool IsPeriodic => Period > 0f;
+        public bool IsStackable => StackingType != EGameplayEffectStackingType.None;
     }
 }

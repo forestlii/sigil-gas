@@ -29,6 +29,8 @@ namespace Likeon.GAS
         public float PeriodRemaining;
         /// <summary>本效果是否因 Ongoing 标签条件不满足而被抑制（CurrentValue 不参与聚合）。</summary>
         public bool Inhibited;
+        /// <summary>当前层数（不可叠层的效果恒为 1）。修改量与周期结算按层数放大。</summary>
+        public int StackCount = 1;
 
         public GameplayEffect Def => Spec.Def;
 

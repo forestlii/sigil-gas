@@ -269,6 +269,9 @@ namespace Likeon.GAS
         /// <summary>一个激活效果被移除时触发（到期、显式移除、或被 RemoveEffectsWithTags 顶掉皆触发）。</summary>
         public event Action<ActiveGameplayEffect> OnActiveEffectRemoved;
 
+        /// <summary>叠层效果层数变化时触发（参数：效果, 旧层数, 新层数）。供 UI 刷新 ×N 角标。</summary>
+        public event Action<ActiveGameplayEffect, int, int> OnActiveEffectStackChanged;
+
         /// <summary>当前所有存活的持续/永久效果（只读视图，含剩余时长/抑制态）。供 UI 列举 buff/debuff。</summary>
         public IReadOnlyList<ActiveGameplayEffect> GetActiveGameplayEffects() => _activeEffects;
 
@@ -313,6 +316,17 @@ namespace Likeon.GAS
                 ExecuteEffectSpec(spec); // 立即改基础值
                 foreach (var cue in def.GameplayCues) ExecuteGameplayCue(cue, MakeCueParams(spec));
                 return ActiveGameplayEffectHandle.Invalid; // 瞬时效果不产生句柄
+            }
+
+            // 可叠层效果：命中已有同组实例则加层并按策略刷新，不新建实例
+            if (def.IsStackable)
+            {
+                var existing = FindStackableActiveEffect(spec);
+                if (existing != null)
+                {
+                    ApplyStackOnExisting(existing, spec);
+                    return existing.Handle;
+                }
             }
 
             // Duration / Infinite：登记为激活效果
@@ -364,15 +378,63 @@ namespace Likeon.GAS
             }
         }
 
+        // 找一个可与新 spec 合并的现有激活实例（同 Def + 同叠层组）
+        private ActiveGameplayEffect FindStackableActiveEffect(GameplayEffectSpec spec)
+        {
+            var def = spec.Def;
+            var newSource = spec.Context?.SourceASC; // AggregateBySource 用来源区分
+            for (int i = 0; i < _activeEffects.Count; i++)
+            {
+                var a = _activeEffects[i];
+                if (a.Def != def) continue;
+                if (def.StackingType == EGameplayEffectStackingType.AggregateBySource
+                    && a.Spec.Context?.SourceASC != newSource) continue;
+                return a;
+            }
+            return null;
+        }
+
+        // 命中已有实例：按上限加层 + 按策略刷新时长/周期，重算受影响属性
+        private void ApplyStackOnExisting(ActiveGameplayEffect existing, GameplayEffectSpec spec)
+        {
+            var def = spec.Def;
+            int oldCount = existing.StackCount;
+            int newCount = oldCount;
+            bool atCap = def.StackLimitCount > 0 && oldCount >= def.StackLimitCount;
+            if (!atCap) newCount = oldCount + 1;
+            existing.StackCount = newCount;
+
+            // 时长刷新
+            if (def.DurationType == EGameplayEffectDurationType.HasDuration
+                && def.StackDurationRefreshPolicy == EGameplayEffectStackingDurationRefreshPolicy.RefreshOnSuccessfulApplication)
+                existing.TimeRemaining = def.Duration;
+
+            // 周期重置
+            if (def.IsPeriodic
+                && def.StackPeriodResetPolicy == EGameplayEffectStackingPeriodResetPolicy.ResetOnSuccessfulApplication)
+                existing.PeriodRemaining = def.Period;
+
+            if (newCount != oldCount)
+            {
+                RecalculateAffectedAttributes(def); // 层数变了 → 修改量变了
+                OnActiveEffectStackChanged?.Invoke(existing, oldCount, newCount);
+            }
+        }
+
         // 立即结算一个效果（Instant 或 周期一次）：改基础值 + 执行计算 + PostGameplayEffectExecute 钩子
-        private void ExecuteEffectSpec(GameplayEffectSpec spec)
+        // stackCount：周期性叠层效果按层放大结算量（加法语义；其它运算符周期叠层罕见，按单次处理）
+        private void ExecuteEffectSpec(GameplayEffectSpec spec, int stackCount = 1)
         {
             var def = spec.Def;
 
             // 收集所有要施加的增量：普通修改 + 自定义执行
             var outputs = new List<GameplayExecutionOutput>();
             foreach (var mod in def.Modifiers)
-                outputs.Add(new GameplayExecutionOutput(mod.Attribute, mod.Magnitude.Evaluate(spec), mod.Operation));
+            {
+                float mag = mod.Magnitude.Evaluate(spec);
+                if (mod.Operation == EAttributeModifierOp.Add) mag *= stackCount; // 按层放大加法结算
+                outputs.Add(new GameplayExecutionOutput(mod.Attribute, mag, mod.Operation));
+            }
 
             foreach (var exec in def.Executions)
                 if (exec != null) exec.Execute(spec, spec.Context?.SourceASC, this, outputs);
@@ -456,15 +518,16 @@ namespace Likeon.GAS
             foreach (var active in _activeEffects)
             {
                 if (active.Inhibited) continue;
+                int stacks = active.StackCount; // 按层数放大：等价于该修改施加 stacks 次
                 foreach (var mod in active.Def.Modifiers)
                 {
                     if (!mod.Attribute.Equals(attribute)) continue;
                     float mag = mod.Magnitude.Evaluate(active.Spec);
                     switch (mod.Operation)
                     {
-                        case EAttributeModifierOp.Add: sumAdd += mag; break;
-                        case EAttributeModifierOp.Multiply: prodMul *= mag; break;
-                        case EAttributeModifierOp.Divide: if (!Mathf.Approximately(mag, 0f)) prodDiv *= mag; break;
+                        case EAttributeModifierOp.Add: sumAdd += mag * stacks; break;
+                        case EAttributeModifierOp.Multiply: prodMul *= Mathf.Pow(mag, stacks); break;
+                        case EAttributeModifierOp.Divide: if (!Mathf.Approximately(mag, 0f)) prodDiv *= Mathf.Pow(mag, stacks); break;
                         case EAttributeModifierOp.Override: hasOverride = true; overrideV = mag; break;
                     }
                 }
@@ -632,13 +695,13 @@ namespace Likeon.GAS
                 // Ongoing 标签条件 -> 抑制
                 UpdateInhibition(active);
 
-                // 周期结算
+                // 周期结算（叠层效果按层放大结算量）
                 if (active.Def.IsPeriodic && !active.Inhibited)
                 {
                     active.PeriodRemaining -= dt;
                     while (active.PeriodRemaining <= 0f)
                     {
-                        ExecuteEffectSpec(active.Spec); // 按 Instant 语义改基础值
+                        ExecuteEffectSpec(active.Spec, active.StackCount); // 按 Instant 语义改基础值
                         active.PeriodRemaining += active.Def.Period;
                     }
                 }
@@ -647,12 +710,40 @@ namespace Likeon.GAS
                 if (active.Def.DurationType == EGameplayEffectDurationType.HasDuration)
                 {
                     active.TimeRemaining -= dt;
-                    if (active.TimeRemaining <= 0f) _expiredScratch.Add(active);
+                    if (active.TimeRemaining <= 0f) HandleDurationExpired(active);
                 }
             }
 
             foreach (var expired in _expiredScratch)
                 RemoveActiveGameplayEffect(expired.Handle);
+        }
+
+        // 限时效果到期：不可叠层 / 整组清空 → 整体移除；否则按叠层到期策略掉层或仅刷新
+        private void HandleDurationExpired(ActiveGameplayEffect active)
+        {
+            var def = active.Def;
+            if (!def.IsStackable || def.StackExpirationPolicy == EGameplayEffectStackingExpirationPolicy.ClearEntireStack)
+            {
+                _expiredScratch.Add(active);
+                return;
+            }
+
+            if (def.StackExpirationPolicy == EGameplayEffectStackingExpirationPolicy.RemoveSingleStackAndRefreshDuration)
+            {
+                if (active.StackCount > 1)
+                {
+                    int old = active.StackCount;
+                    active.StackCount = old - 1;
+                    active.TimeRemaining = def.Duration; // 刷新，下一层继续计时
+                    RecalculateAffectedAttributes(def);
+                    OnActiveEffectStackChanged?.Invoke(active, old, active.StackCount);
+                }
+                else _expiredScratch.Add(active); // 最后一层 → 整体移除
+            }
+            else // RefreshDuration：不掉层，仅刷新（需显式移除）
+            {
+                active.TimeRemaining = def.Duration;
+            }
         }
 
         // 根据 Ongoing 标签要求更新抑制态，状态翻转时重算当前值

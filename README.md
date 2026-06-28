@@ -35,7 +35,7 @@ The only dependency is `com.unity.inputsystem`.
 ### Core ability system / 核心能力系统
 - **GameplayTag** — hierarchical tags, containers, ref-counted loose tags, tag queries. / 层级标签、容器、引用计数松散标签、标签查询。
 - **AttributeSet** — attributes with Pre/Post change hooks; built-in `AS_Health`, `AS_Stamina`, `AS_Mana`, `AS_Combat`, `AS_Poise`. / 属性 + Pre/Post 结算钩子；内置上述属性集。
-- **GameplayEffect** — Instant / Duration / Infinite, periodic, modifiers, custom execution calculations, granted tags, application conditions, SetByCaller. / 瞬时/持续/无限、周期、修改器、自定义执行计算、授予标签、施加条件、SetByCaller。
+- **GameplayEffect** — Instant / Duration / Infinite, periodic, modifiers, custom execution calculations, granted tags, application conditions, SetByCaller, **stacking** (aggregate by source/target, stack limit, duration-refresh / period-reset / expiration policies, magnitude scales by stack count). / 瞬时/持续/无限、周期、修改器、自定义执行计算、授予标签、施加条件、SetByCaller、**叠层**（按来源/目标合并、层数上限、刷新/重置/到期策略、修改量按层放大）。
 - **GameplayAbility** — activation policy (Parallel / Replaceable / Blocking), cost & cooldown, activation-owned tags, effect containers. / 激活策略（并行/可替换独占/阻断独占）、消耗与冷却、激活期标签、效果容器。
 - **AbilitySystemComponent** — the hub: owned tags, attribute sets, active effects, ability granting/activation, exclusivity, interaction rules. / 中枢：拥有标签、属性集、激活效果、技能授予与激活、独占、交互规则。
 - **AbilityLoadout** — batch-grant abilities + effects + attribute sets; revoke as one handle. / 批量授予技能+效果+属性集，整批撤销。
@@ -81,7 +81,7 @@ host project's job — Sigil's job is to expose the data. Key events:
 Sigil **只做逻辑、不绑 UI**：它对外广播变更事件，任何 UI 方案自行订阅渲染。画 HUD 是宿主的事，
 Sigil 负责把数据暴露出来。主要事件：
 
-- `AbilitySystemComponent`: `OnAttributeChanged` (health/mana/stamina bars), `OnTagChanged` (status icons), `OnAbilityActivated` / `OnAbilityEnded`, **`OnAbilityGiven` / `OnAbilityRemoved`** + read-only `GetGrantedAbilities()` for a loadout-driven ability bar, `OnGameplayEvent`, **`OnActiveEffectAdded` / `OnActiveEffectRemoved`** + read-only `GetActiveGameplayEffects()` / `GetActiveGameplayEffect(handle)` for buff/debuff bars with remaining time, and `GetCooldownRemainingForTags(...)` for cooldown fills. / 属性条、状态图标、技能激活、技能授予移除（含只读枚举）、激活效果增减（含只读枚举读剩余时长）、冷却查询。
+- `AbilitySystemComponent`: `OnAttributeChanged` (health/mana/stamina bars), `OnTagChanged` (status icons), `OnAbilityActivated` / `OnAbilityEnded`, **`OnAbilityGiven` / `OnAbilityRemoved`** + read-only `GetGrantedAbilities()` for a loadout-driven ability bar, `OnGameplayEvent`, **`OnActiveEffectAdded` / `OnActiveEffectRemoved` / `OnActiveEffectStackChanged`** + read-only `GetActiveGameplayEffects()` / `GetActiveGameplayEffect(handle)` for buff/debuff bars with remaining time and ×N stack badges, and `GetCooldownRemainingForTags(...)` for cooldown fills. / 属性条、状态图标、技能激活、技能授予移除（含只读枚举）、激活效果增减/层变（含只读枚举读剩余时长与层数）、冷却查询。
 - `CombatSystemComponent`: `OnDealtDamage` / `OnAttackResultReceived` (damage numbers). / 伤害飘字。
 - `PoiseComponent`: `OnPoiseBroken` / `OnPoiseRecovered`. `TargetingSystemComponent`: `OnTargetLockOn` / `OnTargetLockOff`. `WeaponComponent`: `OnEquipped` / `OnUnequipped` / `OnWeaponActiveStateChanged`. / 削韧、锁定、武器事件。
 

@@ -16,6 +16,48 @@ namespace Likeon.GAS
         Infinite
     }
 
+    /// <summary>
+    /// 效果叠层方式。决定同一个效果反复施加时如何合并。
+    /// None=不合并（每次施加各算各的独立实例）；
+    /// AggregateByTarget=按目标合并成一个带层数的实例（不分来源）；
+    /// AggregateBySource=按来源各合并一个（同一来源的多次施加合并，不同来源分开）。
+    /// </summary>
+    public enum EGameplayEffectStackingType
+    {
+        None,
+        AggregateByTarget,
+        AggregateBySource
+    }
+
+    /// <summary>叠层时的时长刷新策略：再次施加是否把倒计时刷回满。</summary>
+    public enum EGameplayEffectStackingDurationRefreshPolicy
+    {
+        /// <summary>每次成功施加都刷新时长（DoT 续期常用）。</summary>
+        RefreshOnSuccessfulApplication,
+        /// <summary>从不刷新（按首次施加的时长到期）。</summary>
+        NeverRefresh
+    }
+
+    /// <summary>叠层时的周期重置策略：再次施加是否把周期结算计时归零。</summary>
+    public enum EGameplayEffectStackingPeriodResetPolicy
+    {
+        /// <summary>每次成功施加都重置周期计时。</summary>
+        ResetOnSuccessfulApplication,
+        /// <summary>从不重置（周期照常推进）。</summary>
+        NeverReset
+    }
+
+    /// <summary>叠层效果到期时的处理策略。</summary>
+    public enum EGameplayEffectStackingExpirationPolicy
+    {
+        /// <summary>整组清空（一次性移除所有层）。</summary>
+        ClearEntireStack,
+        /// <summary>掉一层并刷新时长（逐层衰减，常用于 DoT）。</summary>
+        RemoveSingleStackAndRefreshDuration,
+        /// <summary>仅刷新时长（不掉层，需显式移除）。</summary>
+        RefreshDuration
+    }
+
     /// <summary>属性修改运算符。</summary>
     public enum EAttributeModifierOp
     {

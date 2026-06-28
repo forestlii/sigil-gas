@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added / 新增
 
+- **GameplayEffect stacking / 效果叠层** — `StackingType` (None / AggregateByTarget / AggregateBySource), `StackLimitCount`, duration-refresh & period-reset policies, and an expiration policy (clear entire stack / remove a single stack & refresh / refresh only). Modifiers and periodic execution scale by stack count; `OnActiveEffectStackChanged` (effect, old, new) + `ActiveGameplayEffect.StackCount` drive ×N UI badges. / 效果叠层：合并方式/上限/时长刷新/周期重置/到期策略，修改量与周期结算按层放大，层变事件 + 层数字段供 ×N 角标。
 - **Ability grant/removal observability / 技能授予移除可观测性** — `AbilitySystemComponent.OnAbilityGiven` / `OnAbilityRemoved` events (payload `GameplayAbilitySpec`, fired for loadout & global grants too; removal fires before the instance is destroyed) + read-only `GetGrantedAbilities()`, so a loadout-driven ability bar can auto-populate. / 技能授予/移除事件（含批量授予；移除在销毁前回调）+ 只读已授予枚举，供技能栏自动增删订阅。
 
 ## [0.1.0] - 2026-06-29
