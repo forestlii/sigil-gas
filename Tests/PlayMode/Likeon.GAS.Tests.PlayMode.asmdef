@@ -1,0 +1,21 @@
+{
+  "name": "Likeon.GAS.Tests.PlayMode",
+  "rootNamespace": "Likeon.GAS.PlayTests",
+  "references": [
+    "Likeon.GAS.Runtime",
+    "UnityEngine.TestRunner"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "nunit.framework.dll"
+  ],
+  "autoReferenced": false,
+  "defineConstraints": [
+    "UNITY_INCLUDE_TESTS"
+  ],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
