@@ -48,10 +48,12 @@ Controls (also shown in the top-left HUD):
 
 ## How it's built
 
-- `GASDemo.cs` (MonoBehaviour) **procedurally builds** the ground, camera, player and 3 enemies and wires them up in `Awake` — no external art assets (programmer art: capsules).
-- `DemoPlayerController.cs`: reads keyboard/mouse input and calls already-implemented framework features (ability activation / lock-on switching / applying buffs); it contains no combat logic itself.
+- `GASDemo.cs` (MonoBehaviour) **procedurally builds** the ground, camera, player and 3 enemies in `Awake` — no external art assets (programmer art: capsules). It also wires the `InputSystemComponent` + two `InputControlSetup`s (combat / vehicle), the two `WeaponComponent`s (Sword / Axe), the abilities, and an `AbilityInteractionRules` asset (Focus blocks melee; ranged cancels Focus).
+- `DemoPlayerController.cs`: reads keyboard/mouse and feeds it to `InputSystemComponent.ReceiveInput(InputTag, …)` (input dispatch — nothing calls `TryActivate` directly), plus weapon switching (1/2), Focus (G), vehicle toggle (V), lock-on, and stacking buffs. It contains no combat logic itself.
+- `DemoMeleeAbility.cs`: the melee ability — light or heavy depending on `TraceEntryIndex`; self-manages its hit window via `AbilityTask_WaitDelay`.
+- `DemoFocusAbility.cs`: a channeled "Focus" ability that grants `State.Focusing` while active (used by the block/cancel demo).
 - `DemoRangedAbility.cs` / `DemoRanged.cs`: a ranged ability (costs stamina) that fires from the muzzle via `BulletLauncher`; attaches a visible sphere to the logical bullet.
-- `DemoMeleeAbility.cs` / `DemoHealthBar.cs` / `DemoHUD.cs`: the melee ability, a world-space health bar, and the on-screen HUD.
+- `DemoHealthBar.cs` / `DemoHUD.cs`: a world-space health bar, and the on-screen HUD (weapon / vehicle / focus / horn indicators included).
 - `Editor/DemoSceneBuilder.cs`: menu **Likeon ▸ GAS ▸ Build Demo Scene** regenerates the scene in one click.
 
 ## Assemblies
@@ -62,5 +64,5 @@ Controls (also shown in the top-left HUD):
 ## Notes
 
 - This is a **feature demo**; the art is placeholder capsules — replace with your own models / animations / VFX in a real project.
-- The tags used by the demo (`Ability.MeleeAttack` / `Ability.RangedAttack` / `Data.Damage` / `Data.PoiseDamage` / `GameplayCue.Hit` / `State.Staggered` / `SurfaceType.Stone`) are registered at runtime via `RequestTag`; no need to pre-add them to the registry.
+- The tags used by the demo (`Ability.MeleeAttack` / `Ability.HeavyAttack` / `Ability.RangedAttack` / `Ability.Focus` / `Data.Damage` / `Data.PoiseDamage` / `GameplayCue.Hit` / `State.Staggered` / `State.Focusing` / `Weapon.Sword` / `Weapon.Axe` / `InputTag.Melee` / `InputTag.Ranged` / `InputTag.Focus` / `Event.Honk` / `SurfaceType.Stone`) are registered at runtime via `RequestTag`; no need to pre-add them to the registry.
 - The demo just exercises features that are **already implemented and tested** in the core package — it adds no extra combat logic.

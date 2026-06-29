@@ -48,10 +48,12 @@
 
 ## 它怎么搭起来的
 
-- `GASDemo.cs`（MonoBehaviour）在 `Awake` 里**程序化构建**地面、相机、玩家、3 个敌人并接好线——不依赖外部美术资产（程序员美术：胶囊体）。
-- `DemoPlayerController.cs`：读键鼠输入，调用框架已实现的功能（技能激活 / 锁定切换 / 施加 buff），不含战斗逻辑本身。
+- `GASDemo.cs`（MonoBehaviour）在 `Awake` 里**程序化构建**地面、相机、玩家、3 个敌人——不依赖外部美术资产（程序员美术：胶囊体）。它还接好 `InputSystemComponent` + 战斗/载具两套 `InputControlSetup`、两把 `WeaponComponent`（剑/斧）、各技能，以及一个 `AbilityInteractionRules` 资产（专注 block 近战、远程 cancel 专注）。
+- `DemoPlayerController.cs`：读键鼠，喂给 `InputSystemComponent.ReceiveInput(InputTag, …)`（走输入分发——没有任何地方直接 `TryActivate`），外加武器切换(1/2)、专注(G)、载具切换(V)、锁定、叠 buff。不含战斗逻辑本身。
+- `DemoMeleeAbility.cs`：近战技能——按 `TraceEntryIndex` 决定轻击/重击；用 `AbilityTask_WaitDelay` 自管判定窗口。
+- `DemoFocusAbility.cs`：持续型"专注"技能，激活期间挂 `State.Focusing`（供 block/cancel 演示）。
 - `DemoRangedAbility.cs` / `DemoRanged.cs`：远程技能（扣体力）→ 从枪口用 `BulletLauncher` 发射；给逻辑子弹挂可视小球。
-- `DemoMeleeAbility.cs` / `DemoHealthBar.cs` / `DemoHUD.cs`：近战技能、世界空间血条、屏幕 HUD。
+- `DemoHealthBar.cs` / `DemoHUD.cs`：世界空间血条、屏幕 HUD（含武器/载具/专注/鸣笛提示）。
 - `Editor/DemoSceneBuilder.cs`：菜单 **Likeon ▸ GAS ▸ Build Demo Scene** 可一键重新生成场景。
 
 ## 程序集
@@ -62,5 +64,5 @@
 ## 说明
 
 - 这是**功能演示**，美术为占位胶囊体；正式项目请替换为自己的模型/动画/特效。
-- demo 用到的标签（`Ability.MeleeAttack` / `Ability.RangedAttack` / `Data.Damage` / `Data.PoiseDamage` / `GameplayCue.Hit` / `State.Staggered` / `SurfaceType.Stone`）在运行时通过 `RequestTag` 注册，无需预先在注册表里添加。
+- demo 用到的标签（`Ability.MeleeAttack` / `Ability.HeavyAttack` / `Ability.RangedAttack` / `Ability.Focus` / `Data.Damage` / `Data.PoiseDamage` / `GameplayCue.Hit` / `State.Staggered` / `State.Focusing` / `Weapon.Sword` / `Weapon.Axe` / `InputTag.Melee` / `InputTag.Ranged` / `InputTag.Focus` / `Event.Honk` / `SurfaceType.Stone`）在运行时通过 `RequestTag` 注册，无需预先在注册表里添加。
 - demo 只是把核心包里**已实现并测试过**的功能调用出来给人看，不含任何额外战斗逻辑。
