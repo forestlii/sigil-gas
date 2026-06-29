@@ -31,13 +31,26 @@ namespace GASDemo
         public MeleeAttackTrace Melee { get; private set; }
         public DemoPlayerController Controller { get; private set; }
         public TargetingSystemComponent Targeting { get; private set; }
+        public InputSystemComponent InputSystem { get; private set; }
         public readonly List<AbilitySystemComponent> Enemies = new List<AbilitySystemComponent>();
 
         private static readonly GameplayTag MeleeTag = GameplayTag.RequestTag("Ability.MeleeAttack");
+        private static readonly GameplayTag HeavyTag = GameplayTag.RequestTag("Ability.HeavyAttack");
         private static readonly GameplayTag RangedTag = GameplayTag.RequestTag("Ability.RangedAttack");
+        private static readonly GameplayTag FocusTag = GameplayTag.RequestTag("Ability.Focus");
         private static readonly GameplayTag DataDamage = GameplayTag.RequestTag("Data.Damage");
         private static readonly GameplayTag DataPoiseDamage = GameplayTag.RequestTag("Data.PoiseDamage");
         private static readonly GameplayTag HitCue = GameplayTag.RequestTag("GameplayCue.Hit");
+        private static readonly GameplayTag FocusingTag = GameplayTag.RequestTag("State.Focusing");
+        // 输入分发：物理键 → 这些 InputTag → 控制集里的处理器 → 激活对应技能
+        private static readonly GameplayTag InputMelee = GameplayTag.RequestTag("InputTag.Melee");
+        private static readonly GameplayTag InputRanged = GameplayTag.RequestTag("InputTag.Ranged");
+        private static readonly GameplayTag InputFocus = GameplayTag.RequestTag("InputTag.Focus");
+        // 武器标签（装备时注入 owner ASC，供输入多态/技能门控按"当前武器"分支）
+        private static readonly GameplayTag SwordTag = GameplayTag.RequestTag("Weapon.Sword");
+        private static readonly GameplayTag AxeTag = GameplayTag.RequestTag("Weapon.Axe");
+        // 载具模式下近战键改广播的事件
+        private static readonly GameplayTag HonkTag = GameplayTag.RequestTag("Event.Honk");
 
         private static readonly Color EnemyColor = new Color(0.85f, 0.3f, 0.28f);
         private static readonly Color StaggerColor = new Color(0.95f, 0.85f, 0.35f);
@@ -112,19 +125,32 @@ namespace GASDemo
             socket.SetParent(p.transform);
             socket.localPosition = new Vector3(0, 0, 1.2f);
 
-            // 近战攻击定义（含削韧伤害）
-            var meleeAttack = Track(MakeAttack(MeleeDamage, MeleePoiseDamage));
+            // ── 近战：两条判定（轻击 entry0 / 重击 entry1），对应剑 / 斧 ──
+            var lightAttack = Track(MakeAttack(MeleeDamage, MeleePoiseDamage));
             melee.Entries.Add(new MeleeAttackTrace.AttackTraceEntry
             {
-                Attack = meleeAttack,
+                Attack = lightAttack,
                 Trace = new CollisionTraceDefinition { SocketTransforms = new List<Transform> { socket }, TraceRadius = 1.0f }
             });
+            var heavyAttack = Track(MakeAttack(MeleeDamage * 1.8f, MeleePoiseDamage * 2f)); // 斧=更重的一击
+            melee.Entries.Add(new MeleeAttackTrace.AttackTraceEntry
+            {
+                Attack = heavyAttack,
+                Trace = new CollisionTraceDefinition { SocketTransforms = new List<Transform> { socket }, TraceRadius = 1.1f }
+            });
 
-            // 近战技能（带体力消耗）
+            // 近战技能：剑=轻击(entry0)、斧=重击(entry1)，各带体力消耗
             var meleeAbility = Track(ScriptableObject.CreateInstance<DemoMeleeAbility>());
             meleeAbility.AbilityTags.Add(MeleeTag);
+            meleeAbility.TraceEntryIndex = 0;
             meleeAbility.CostEffect = MakeStaminaCostGE(-8f);
             asc.GiveAbility(meleeAbility);
+
+            var heavyAbility = Track(ScriptableObject.CreateInstance<DemoMeleeAbility>());
+            heavyAbility.AbilityTags.Add(HeavyTag);
+            heavyAbility.TraceEntryIndex = 1;
+            heavyAbility.CostEffect = MakeStaminaCostGE(-14f);
+            asc.GiveAbility(heavyAbility);
 
             // 锁定系统（视角来源=相机）
             var targeting = p.AddComponent<TargetingSystemComponent>();
@@ -148,11 +174,62 @@ namespace GASDemo
             rangedAbility.CostEffect = MakeStaminaCostGE(-5f);
             asc.GiveAbility(rangedAbility);
 
+            // ── 专注技能（演示 block/cancel）：激活期间挂 State.Focusing ──
+            var focusAbility = Track(ScriptableObject.CreateInstance<DemoFocusAbility>());
+            focusAbility.AbilityTags.Add(FocusTag);
+            focusAbility.ActivationOwnedLooseTags.Add(new GameplayTagCount(FocusingTag, 1));
+            asc.GiveAbility(focusAbility);
+
+            // 能力交互规则（数据驱动，对应 UE 蓝图那套）：专注期间挡住近战；开火远程则取消专注
+            var rules = Track(ScriptableObject.CreateInstance<AbilityInteractionRules>());
+            rules.AddBaseRule(new AbilityTagRule
+            {
+                AbilityTag = FocusTag,
+                AbilityTagsToBlock = new List<GameplayTag> { MeleeTag, HeavyTag },
+            });
+            rules.AddBaseRule(new AbilityTagRule
+            {
+                AbilityTag = RangedTag,
+                AbilityTagsToCancel = new List<GameplayTag> { FocusTag },
+            });
+            asc.SetInteractionRules(rules);
+
+            // ── 输入分发：InputSystemComponent + 控制集 ──
+            var inputSys = p.AddComponent<InputSystemComponent>(); // Awake 自动找同物体 ASC
+
+            // 战斗控制集（FirstOnly = 状态驱动多态）：近战键按当前武器多态（剑→轻击 / 斧→重击）
+            var combatSetup = Track(ScriptableObject.CreateInstance<InputControlSetup>());
+            combatSetup.ExecutionType = EInputProcessorExecutionType.FirstOnly;
+            combatSetup.AddProcessor(new InputProcessor_ActivateAbilityByTag
+            {
+                InputTags = TagSet(InputMelee), StateQuery = GameplayTagQuery.MakeQuery_MatchAllTags(SwordTag), AbilityTag = MeleeTag
+            });
+            combatSetup.AddProcessor(new InputProcessor_ActivateAbilityByTag
+            {
+                InputTags = TagSet(InputMelee), StateQuery = GameplayTagQuery.MakeQuery_MatchAllTags(AxeTag), AbilityTag = HeavyTag
+            });
+            combatSetup.AddProcessor(new InputProcessor_ActivateAbilityByTag { InputTags = TagSet(InputRanged), AbilityTag = RangedTag });
+            combatSetup.AddProcessor(new InputProcessor_ActivateAbilityByTag { InputTags = TagSet(InputFocus), AbilityTag = FocusTag });
+            inputSys.PushInputSetup(combatSetup);
+
+            // 载具控制集：同一个近战键现在改广播 Event.Honk（鸣笛）——演示整套键位切换
+            var vehicleSetup = Track(ScriptableObject.CreateInstance<InputControlSetup>());
+            vehicleSetup.ExecutionType = EInputProcessorExecutionType.FirstOnly;
+            vehicleSetup.AddProcessor(new InputProcessor_SendGameplayEvent { InputTags = TagSet(InputMelee), EventTag = HonkTag });
+
+            // ── 两把武器（WeaponComponent 装备时注入武器标签）──
+            var sword = MakeWeapon(p.transform, "Sword", SwordTag);
+            var axe = MakeWeapon(p.transform, "Axe", AxeTag);
+
             var ctrl = p.AddComponent<DemoPlayerController>();
             ctrl.ASC = asc; ctrl.Controller = cc; ctrl.Melee = melee; ctrl.Targeting = targeting;
             ctrl.PowerBuff = Track(MakePowerBuff());
+            ctrl.InputSystem = inputSys; ctrl.VehicleSetup = vehicleSetup;
+            ctrl.Sword = sword; ctrl.Axe = axe;
+            ctrl.MeleeInputTag = InputMelee; ctrl.RangedInputTag = InputRanged; ctrl.FocusInputTag = InputFocus;
+            ctrl.EquipSword(); // 默认装备剑（注入 Weapon.Sword → 近战键映射到轻击）
 
-            PlayerASC = asc; Melee = melee; Controller = ctrl; Targeting = targeting;
+            PlayerASC = asc; Melee = melee; Controller = ctrl; Targeting = targeting; InputSystem = inputSys;
             return p;
         }
 
@@ -204,6 +281,7 @@ namespace GASDemo
             hud.transform.SetParent(transform, false);
             hud.PlayerASC = PlayerASC;
             hud.Targeting = Targeting;
+            hud.Controller = Controller;
         }
 
         // ---------- GameplayCue：命中火花 ----------
@@ -298,6 +376,24 @@ namespace GASDemo
                 Magnitude = GameplayModifierMagnitude.ScalableFloat(10f)
             });
             return ge;
+        }
+
+        // 单标签容器（给输入处理器 InputTags 用）
+        private static GameplayTagContainer TagSet(GameplayTag t)
+        {
+            var c = new GameplayTagContainer();
+            c.AddTag(t);
+            return c;
+        }
+
+        // 造一把武器：子物体挂 WeaponComponent + 武器标签（装备时注入 owner ASC）
+        private WeaponComponent MakeWeapon(Transform parent, string label, GameplayTag weaponTag)
+        {
+            var go = new GameObject("Weapon_" + label);
+            go.transform.SetParent(parent, false);
+            var w = go.AddComponent<WeaponComponent>();
+            w.WeaponTags.AddTag(weaponTag);
+            return w;
         }
 
         private T Track<T>(T asset) where T : Object { _runtimeAssets.Add(asset); return asset; }

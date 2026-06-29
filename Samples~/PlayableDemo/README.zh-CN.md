@@ -24,6 +24,9 @@
 | **Tab** | 锁定 / 解锁 |
 | **Q / E** | 左 / 右切换锁定目标 |
 | **R** | 叠加 Power buff（演示 stacking）|
+| **1 / 2** | 切换武器：剑 / 斧（近战键变轻击 / 重击）|
+| **G** | 专注（持续；近战被挡，远程取消）|
+| **V** | 切换载具模式（近战键变鸣笛）|
 
 > ⚠️ 工程的 *Active Input Handling* 需为 **Input System Package**（或 Both）。本 demo 走新输入系统
 > （`Keyboard/Mouse.current`），纯旧 Input 会报错。
@@ -37,6 +40,10 @@
 | 锁定 | Tab 锁定最前方敌人，Q/E 在 3 个敌人间左右切换；HUD 显示当前目标 |
 | 削韧破防 | 持续攻击削减目标削韧条；归零 → 敌人变黄破防（HUD 显示削韧条 + ★破防）|
 | buff 叠层 | 连按 R 叠加 Power（+MaxHealth/层）；HUD 显示 `×N` 层数 + 倒计时 |
+| **输入分发**（键 → tag → 技能） | 按键喂 `InputSystemComponent.ReceiveInput(InputTag, …)`；一套 `InputProcessor_ActivateAbilityByTag` 的 `InputControlSetup` 把 InputTag → 技能——没有任何地方直接 `TryActivate` |
+| **武器 → 不同技能** | 1/2 装备 剑 / 斧（`WeaponComponent` 注入 `Weapon.Sword` / `Weapon.Axe`）；同一个近战键据此多态成轻击或重击（FirstOnly 处理器按武器标签门控）|
+| **技能 block / cancel** | 持续型专注（G）挂 `State.Focusing`；一个 `AbilityInteractionRules` 资产在专注期间 **block** 近战、并让远程 **cancel** 专注——HUD 显示"专注中—近战被挡" |
+| **上下文切换（载具）** | V 键 `PushInputSetup` 一套载具键位；同一个近战键改广播鸣笛 `GameplayEvent` 而非攻击。`PopInputSetup` 恢复战斗 |
 | 可观测性 | HUD 全靠订阅框架对外事件/只读枚举渲染——即"GAS 广播数据、UI 自接"的活演示 |
 
 ## 它怎么搭起来的

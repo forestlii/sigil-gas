@@ -1,8 +1,10 @@
-// Demo 玩家控制器：用新输入系统读键鼠，驱动一个极简 CharacterController 移动 + 近战/远程技能 + 锁定 + 自叠 buff + 第三人称相机。
-// 注：本 demo 刻意用最简单的 CharacterController 直推移动，不依赖 movement 配套包（com.likeon.gas.movement）；
-// 完整的运动状态机 / 运动动画层在该配套包里单独演示。
-// 本控制器只负责"读输入 → 调用框架已实现的功能"（技能激活 / 锁定切换 / 施加效果），不含任何战斗逻辑本身。
-using System.Collections;
+// Demo 玩家控制器：读键鼠 → 经 InputSystemComponent 分发 → 激活技能；外加锁定 / 自叠 buff / 武器切换 / 专注 / 载具模式。
+// 演示四件事：
+//  1) 输入分发：近战/远程/专注键 → ReceiveInput(InputTag) → 控制集处理器 → 激活对应技能（不直接 TryActivate）。
+//  2) 载具切换：V 键 Push/Pop 载具控制集 —— 同一个近战键在载具模式改成"鸣笛"。
+//  3) block/cancel：G 键专注（激活期间挂 State.Focusing），交互规则令近战被挡、开火远程取消专注。
+//  4) 武器→不同技能：1/2 键切剑/斧（WeaponComponent 注入武器标签），近战键据此多态成轻击/重击。
+// 注：移动用最简单的 CharacterController 直推（不依赖 movement 配套包）；控制器只"读输入→调框架功能"，不含战斗逻辑本身。
 using Likeon.GAS;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -16,24 +18,34 @@ namespace GASDemo
         [HideInInspector] public MeleeAttackTrace Melee;
         [HideInInspector] public ThirdPersonCameraBehavior ThirdPersonCamera;
         [HideInInspector] public TargetingSystemComponent Targeting;
-        [HideInInspector] public GameplayEffect PowerBuff;   // R 键叠加的 stacking buff
+        [HideInInspector] public GameplayEffect PowerBuff;       // R 键叠加的 stacking buff
+        [HideInInspector] public InputSystemComponent InputSystem; // 输入分发中枢
+        [HideInInspector] public InputControlSetup VehicleSetup;   // V 键压入的载具控制集
+        [HideInInspector] public WeaponComponent Sword;
+        [HideInInspector] public WeaponComponent Axe;
 
-        public GameplayTag MeleeAbilityTag = GameplayTag.RequestTag("Ability.MeleeAttack");
-        public GameplayTag RangedAbilityTag = GameplayTag.RequestTag("Ability.RangedAttack");
+        // 这些 InputTag 与控制集处理器里配的一致（GASDemo 注入）
+        public GameplayTag MeleeInputTag = GameplayTag.RequestTag("InputTag.Melee");
+        public GameplayTag RangedInputTag = GameplayTag.RequestTag("InputTag.Ranged");
+        public GameplayTag FocusInputTag = GameplayTag.RequestTag("InputTag.Focus");
+
         public float MouseSensitivity = 0.12f;
         public float WalkSpeed = 5f;
         public float SprintSpeed = 8f;
         public float RotationSpeed = 12f;
         public float Gravity = -20f;
-        public float AttackWindow = 0.3f;
         public float AttackCooldown = 0.5f;
         public float RangedCooldown = 0.35f;
         public float StaminaRegenPerSecond = 15f;
+
+        public bool InVehicle { get; private set; }
+        public string EquippedWeaponLabel => _equipped == Sword ? "Sword 剑（轻击）" : _equipped == Axe ? "Axe 斧（重击）" : "-";
 
         private float _nextAttackTime;
         private float _nextRangedTime;
         private float _verticalVelocity;
         private AS_Stamina _stamina;
+        private WeaponComponent _equipped;
 
         private void Start()
         {
@@ -48,6 +60,9 @@ namespace GASDemo
             HandleRanged();
             HandleLockOn();
             HandleBuff();
+            HandleWeaponSwitch();
+            HandleFocus();
+            HandleVehicle();
             RegenStamina();
         }
 
@@ -134,27 +149,68 @@ namespace GASDemo
                 ASC.ApplyGameplayEffectToSelf(PowerBuff); // 同组叠层 / 刷新时长
         }
 
-        /// <summary>触发一次近战攻击：激活近战技能（开判定），按时长关闭判定窗口。供控制器与测试调用。</summary>
+        private void HandleWeaponSwitch()
+        {
+            var kb = Keyboard.current;
+            if (kb == null) return;
+            if (kb.digit1Key.wasPressedThisFrame) EquipSword();
+            if (kb.digit2Key.wasPressedThisFrame) EquipAxe();
+        }
+
+        private void HandleFocus()
+        {
+            if (Keyboard.current != null && Keyboard.current.gKey.wasPressedThisFrame) Focus();
+        }
+
+        private void HandleVehicle()
+        {
+            if (Keyboard.current != null && Keyboard.current.vKey.wasPressedThisFrame) ToggleVehicle();
+        }
+
+        // ===================== 对外/测试入口 =====================
+
+        /// <summary>近战：经输入分发激活（近战键 → InputTag.Melee → 控制集按当前武器多态成轻击/重击）。</summary>
         public void TryAttack()
         {
-            if (Time.time < _nextAttackTime || ASC == null) return;
+            if (Time.time < _nextAttackTime) return;
             _nextAttackTime = Time.time + AttackCooldown;
-            if (ASC.TryActivateAbilitiesByTag(MeleeAbilityTag))
-                StartCoroutine(CloseAttackWindow());
+            InputSystem?.ReceiveInput(MeleeInputTag, InputTriggerEvent.Started, InputActionData.Empty);
         }
 
-        /// <summary>触发一次远程攻击：激活远程技能（由 DemoRangedAbility 扣体力并发射子弹）。</summary>
+        /// <summary>远程：经输入分发激活（远程键 → InputTag.Ranged → 远程技能；会取消专注）。</summary>
         public void TryRanged()
         {
-            if (Time.time < _nextRangedTime || ASC == null) return;
+            if (Time.time < _nextRangedTime) return;
             _nextRangedTime = Time.time + RangedCooldown;
-            ASC.TryActivateAbilitiesByTag(RangedAbilityTag);
+            InputSystem?.ReceiveInput(RangedInputTag, InputTriggerEvent.Started, InputActionData.Empty);
         }
 
-        private IEnumerator CloseAttackWindow()
+        /// <summary>专注：经输入分发激活（持续期间挂 State.Focusing，近战被交互规则挡住）。</summary>
+        public void Focus()
         {
-            yield return new WaitForSeconds(AttackWindow);
-            if (Melee != null) Melee.EndAttackTrace();
+            InputSystem?.ReceiveInput(FocusInputTag, InputTriggerEvent.Started, InputActionData.Empty);
+        }
+
+        /// <summary>装备剑：注入 Weapon.Sword → 近战键多态到轻击。</summary>
+        public void EquipSword() => Equip(Sword);
+
+        /// <summary>装备斧：注入 Weapon.Axe → 近战键多态到重击。</summary>
+        public void EquipAxe() => Equip(Axe);
+
+        private void Equip(WeaponComponent weapon)
+        {
+            if (weapon == null || _equipped == weapon) return;
+            if (_equipped != null) _equipped.Unequip();  // 移除旧武器标签
+            weapon.Equip(gameObject);                     // 注入新武器标签到 owner ASC
+            _equipped = weapon;
+        }
+
+        /// <summary>切换载具模式：Push/Pop 载具控制集（同一个近战键改成鸣笛）。</summary>
+        public void ToggleVehicle()
+        {
+            if (InputSystem == null || VehicleSetup == null) return;
+            if (InVehicle) { InputSystem.PopInputSetup(); InVehicle = false; }
+            else { InputSystem.PushInputSetup(VehicleSetup); InVehicle = true; }
         }
 
         private void RegenStamina()

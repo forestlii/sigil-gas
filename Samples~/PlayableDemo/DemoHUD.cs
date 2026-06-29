@@ -13,13 +13,17 @@ namespace GASDemo
     {
         [HideInInspector] public AbilitySystemComponent PlayerASC;
         [HideInInspector] public TargetingSystemComponent Targeting;
+        [HideInInspector] public DemoPlayerController Controller;
 
         private static readonly GameplayTag StaggeredTag = GameplayTag.RequestTag("State.Staggered");
+        private static readonly GameplayTag FocusingTag = GameplayTag.RequestTag("State.Focusing");
+        private static readonly GameplayTag HonkTag = GameplayTag.RequestTag("Event.Honk");
 
         private AS_Health _hp;
         private AS_Stamina _stamina;
-        private GUIStyle _box, _label, _small, _center;
+        private GUIStyle _box, _label, _small, _center, _banner;
         private readonly StringBuilder _sb = new StringBuilder();
+        private float _honkUntil;
 
         private void Start()
         {
@@ -27,7 +31,19 @@ namespace GASDemo
             {
                 _hp = PlayerASC.GetAttributeSet<AS_Health>();
                 _stamina = PlayerASC.GetAttributeSet<AS_Stamina>();
+                PlayerASC.OnGameplayEvent += OnGameplayEvent; // 在 Start 订阅：此时 PlayerASC 已被 GASDemo 赋值
             }
+        }
+
+        private void OnDestroy()
+        {
+            if (PlayerASC != null) PlayerASC.OnGameplayEvent -= OnGameplayEvent;
+        }
+
+        // 载具模式下近战键广播 Event.Honk → 闪一下 "HONK!"
+        private void OnGameplayEvent(GameplayTag eventTag, GameplayEventData data)
+        {
+            if (eventTag.MatchesTag(HonkTag)) _honkUntil = Time.time + 0.6f;
         }
 
         private void EnsureStyles()
@@ -37,6 +53,7 @@ namespace GASDemo
             _label = new GUIStyle(GUI.skin.label) { fontSize = 13, richText = true };
             _small = new GUIStyle(GUI.skin.label) { fontSize = 12, richText = true, normal = { textColor = new Color(0.8f, 0.8f, 0.8f) } };
             _center = new GUIStyle(GUI.skin.label) { fontSize = 14, richText = true, alignment = TextAnchor.MiddleCenter };
+            _banner = new GUIStyle(GUI.skin.label) { fontSize = 18, richText = true, alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold };
         }
 
         private void OnGUI()
@@ -45,19 +62,23 @@ namespace GASDemo
             DrawControls();
             DrawPlayerStatus();
             DrawLockTarget();
+            DrawModeBanners();
         }
 
         // ---------- 操作说明 ----------
         private void DrawControls()
         {
             const float w = 250f;
-            GUILayout.BeginArea(new Rect(10, 10, w, 200), GUIContent.none);
+            GUILayout.BeginArea(new Rect(10, 10, w, 230), GUIContent.none);
             GUILayout.BeginVertical(_box);
             GUILayout.Label("<b>Sigil · 功能展示 Demo</b>", _label);
             GUILayout.Label("WASD 移动 / Shift 冲刺 / 鼠标看", _small);
             GUILayout.Label("空格·左键：近战    右键·F：远程", _small);
             GUILayout.Label("Tab：锁定/解锁    Q/E：切换目标", _small);
             GUILayout.Label("R：叠加 Power buff（演示 stacking）", _small);
+            GUILayout.Label("<b>1/2</b>：切换 剑/斧（近战键多态）", _small);
+            GUILayout.Label("<b>G</b>：专注（近战被挡，远程取消）", _small);
+            GUILayout.Label("<b>V</b>：载具模式（近战键改鸣笛）", _small);
             GUILayout.EndVertical();
             GUILayout.EndArea();
         }
@@ -67,13 +88,18 @@ namespace GASDemo
         {
             if (PlayerASC == null) return;
             const float w = 250f;
-            GUILayout.BeginArea(new Rect(10, 218, w, 260), GUIContent.none);
+            GUILayout.BeginArea(new Rect(10, 250, w, 280), GUIContent.none);
             GUILayout.BeginVertical(_box);
 
             if (_hp != null)
                 GUILayout.Label($"HP  <b>{_hp.Health.CurrentValue:0}</b> / {_hp.MaxHealth.CurrentValue:0}", _label);
             if (_stamina != null)
                 GUILayout.Label($"体力  <b>{_stamina.Stamina.CurrentValue:0}</b> / {_stamina.MaxStamina.CurrentValue:0}", _label);
+
+            if (Controller != null)
+                GUILayout.Label($"武器 Weapon：<b>{Controller.EquippedWeaponLabel}</b>", _small);
+            if (PlayerASC.HasMatchingGameplayTag(FocusingTag))
+                GUILayout.Label("<color=#fd6>● 专注中 FOCUSING — 近战被挡</color>", _small);
 
             GUILayout.Space(4);
             GUILayout.Label("<b>激活效果 Active Effects</b>", _label);
@@ -127,6 +153,24 @@ namespace GASDemo
                 GUI.DrawTexture(new Rect(barRect.x, barRect.y, barRect.width * pct, barRect.height), Texture2D.whiteTexture);
                 GUI.color = Color.white;
                 GUI.Label(new Rect(cx - 100, y + 38, 200, 18), $"削韧 Poise {poise.Poise.CurrentValue:0.0}/{poise.MaxPoise.CurrentValue:0}", _center);
+            }
+        }
+
+        // ---------- 载具模式横幅 + 鸣笛闪现 ----------
+        private void DrawModeBanners()
+        {
+            float cx = Screen.width * 0.5f;
+            if (Controller != null && Controller.InVehicle)
+            {
+                GUI.color = new Color(1f, 0.6f, 0.2f);
+                GUI.Label(new Rect(cx - 200, 12, 400, 26), "🚗 载具模式 VEHICLE — 近战键=鸣笛 HORN", _banner);
+                GUI.color = Color.white;
+            }
+            if (Time.time < _honkUntil)
+            {
+                GUI.color = new Color(1f, 0.9f, 0.3f);
+                GUI.Label(new Rect(cx - 100, 42, 200, 26), "📣 HONK!", _banner);
+                GUI.color = Color.white;
             }
         }
     }

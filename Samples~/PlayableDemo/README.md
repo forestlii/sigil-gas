@@ -24,6 +24,9 @@ Controls (also shown in the top-left HUD):
 | **Tab** | lock-on toggle |
 | **Q / E** | switch lock-on target (left / right) |
 | **R** | stack a Power buff (stacking demo) |
+| **1 / 2** | switch weapon: Sword / Axe (melee key becomes light / heavy) |
+| **G** | Focus (channeled; melee blocked, ranged cancels it) |
+| **V** | toggle Vehicle mode (melee key becomes a horn) |
 
 > ⚠️ The project's *Active Input Handling* must be **Input System Package** (or Both). This demo uses the
 > new Input System (`Keyboard/Mouse.current`); the old Input Manager alone will throw.
@@ -37,6 +40,10 @@ Controls (also shown in the top-left HUD):
 | Lock-on | Tab locks the nearest enemy ahead; Q/E cycle between 3 enemies; HUD shows the current target |
 | Poise / stagger | Sustained attacks drain the target's poise bar; at zero the enemy turns yellow (HUD shows the poise bar + ★ stagger) |
 | Stacking buffs | Tap R to stack Power (+MaxHealth per stack); HUD shows the `×N` stack count + countdown |
+| **Input dispatch** (key → tag → ability) | Keys feed `InputSystemComponent.ReceiveInput(InputTag, …)`; an `InputControlSetup` of `InputProcessor_ActivateAbilityByTag` maps InputTag → ability — nothing calls `TryActivate` directly |
+| **Weapon → different abilities** | Press 1/2 to equip Sword / Axe (`WeaponComponent` injects `Weapon.Sword` / `Weapon.Axe`); the same melee key polymorphs to a light slash or a heavy hit (FirstOnly processors gated by the weapon tag) |
+| **Ability block / cancel** | Hold-cast Focus (G) grants `State.Focusing`; an `AbilityInteractionRules` asset **blocks** melee while focusing and lets ranged **cancel** Focus — HUD shows "FOCUSING — melee blocked" |
+| **Context switch (vehicle)** | Press V to `PushInputSetup` a vehicle scheme; the same melee key now broadcasts a horn `GameplayEvent` instead of attacking. `PopInputSetup` restores combat |
 | Observability | The HUD renders purely from the framework's public events / read-only enumerations — a live demo of "GAS broadcasts data, UI binds to it" |
 
 ## How it's built
