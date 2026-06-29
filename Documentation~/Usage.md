@@ -301,11 +301,13 @@ A new exclusive ability automatically interrupts the Replaceable group when it a
 
 ### 7.5 State-aware ability relationships
 
-`AbilityTagRelationshipMapping` (*Create → Likeon → GAS → Ability Tag Relationship Mapping*) data-drives "block/cancel/activation gating between abilities"; its **Layered** entries carry a `GameplayTagQuery` and take effect dynamically based on the character's current state. Attach it to the ASC:
+`AbilityInteractionRules` (*Create → Likeon → GAS → Ability Interaction Rules*) data-drives "block/cancel/activation gating between abilities": each `AbilityTagRule` has an `AbilityTag` (which abilities the rule applies to) + `AbilityTagsToBlock` / `AbilityTagsToCancel` (when this ability activates, block/cancel abilities carrying these tags) + `ActivationRequiredTags` / `ActivationBlockedTags` (activation gating). Its **conditional rules** `ConditionalAbilityTagRules` carry an `ActorTagQuery` (`GameplayTagQuery`) so the group only takes effect while the character's current tags match the query (state-aware). Attach it to the ASC:
 
 ```csharp
-asc.SetTagRelationshipMapping(myMapping);
+asc.SetInteractionRules(myRules);   // or set the asc.InteractionRules field directly
 ```
+
+> Implementation status (single-player build): `AbilityTagsToCancel` and the (rule/ability) `ActivationRequiredTags`/`ActivationBlockedTags` are enforced during activation; the `AbilityTagsToBlock` field is collected but not yet enforced ("block other abilities while active" is best expressed with tags: ability A grants `State.Casting` via `ActivationOwnedLooseTags`, and ability B lists `State.Casting` in its `ActivationBlockedTags`).
 
 ---
 
@@ -373,6 +375,16 @@ inputSys.ReceiveInput(
 
 With Unity's Input System, attach `UnityInputBinder` (binds an `InputActionReference` to an InputTag and calls ReceiveInput automatically).
 
+#### End to end: from a key to an ability
+
+"key → tag → ability" is a **two-stage mapping**, configured in two places (decoupled by the InputTag in the middle):
+
+1. **Key → InputTag**: attach `UnityInputBinder` to the character; each entry in its `bindings` list = an `InputActionReference` (a key from your Input Action asset, e.g. *Crouch*) → an `InputTag` (e.g. `InputTag.Crouch`).
+2. **InputTag → ability**: in the `InputControlSetup`'s `inputProcessors`, add an `InputProcessor_ActivateAbilityByTag` with `InputTags = InputTag.Crouch` and `AbilityTag = Ability.Crouch` (matched against the ability asset's `AbilityTags`, internally via `TryActivateAbilitiesByTag`).
+3. **Hook it up**: put that `InputControlSetup` into the `InputSystemComponent`'s `inputControlSetups`.
+
+At runtime: press the key → UnityInputBinder dispatches `InputTag.Crouch` → the current control setup filters the processors listening for it → activates `Ability.Crouch`. For "one key, many abilities", see the slide/crouch table in 9.2 below.
+
 ### 9.2 Control setups and polymorphism
 
 `InputControlSetup` (*Create → Likeon → GAS → Input Control Setup*) holds:
@@ -389,7 +401,16 @@ With Unity's Input System, attach `UnityInputBinder` (binds an `InputActionRefer
 
 Pressing the key while sprinting → [0]'s state condition passes → slide, and `FirstOnly` returns; not sprinting → [0] fails → [1] crouch.
 
-Push the control setup onto the stack: `inputSys.PushInputSetup(setup);` (push a different setup when entering aiming/vehicle/UI, `PopInputSetup` on exit).
+#### Swapping the whole control scheme (vehicle / aiming / UI)
+
+`InputSystemComponent` keeps a **stack of control setups**; the active one is always the top:
+
+```csharp
+inputSys.PushInputSetup(vehicleSetup);  // entering a vehicle: push the vehicle scheme, effective immediately
+inputSys.PopInputSetup();               // exiting: pop, automatically back to the previous scheme
+```
+
+**No manual "reload config" is needed** — `ReceiveInput` always dispatches to the top `GetCurrentInputSetup()`, so pushing a new `InputControlSetup` swaps the entire scheme (gating checkers + processors), and popping restores the previous one. Typical use: push a vehicle setup on entering a vehicle (so the same physical `InputTag.Brake` now maps to a brake ability instead of a character ability), or push a UI-only setup that lets only UI inputs through (usually with `EnableInputBuffer` off). `PopInputSetup` is a no-op when only one setup remains (the base scheme can't be popped away).
 
 > Where does this "sprint state" come from? The [movement system](#11-movement--locomotion-companion-package) writes `Movement.State.Sprint` onto the ASC's tags — that's the "state bus".
 
@@ -431,6 +452,21 @@ The hit flow (automatic): sphere-cast → affiliation filtering (`CombatTeamAgen
 ### 10.4 Damage formula
 
 By default SetByCaller goes straight to `IncomingDamage`; for mitigation, use `DamageExecutionCalculation` (reads `AS_Combat.Damage` − the target's mitigation → IncomingDamage) and put it into the damage GE's Executions.
+
+### 10.5 Weapons and abilities (different abilities per weapon)
+
+⚠️ **A common misconception first**: `WeaponComponent` **does not hold or grant ability assets** — it has no "ability list" field. On equip it only injects its `weaponTags` (e.g. `Weapon.Sword`) as loose tags onto the owner's ASC (`applyWeaponTagsToOwner`), and removes them on unequip. So "switch weapon → switch abilities" is done **via tags**, in one of two ways:
+
+**Path A (built-in, tag-gating, recommended, no code)**: grant all abilities to the ASC once, and on each weapon's abilities set `ActivationRequiredTags = [Weapon.Sword]` in the ability asset. Equip the sword → `Weapon.Sword` tag present → only the sword's abilities can activate; switch to a saber → the sword tag is removed and the saber tag injected → it automatically switches to the saber's abilities. The same attack key (`InputTag.Attack`) thus activates different abilities under different weapons (combine with the 9.2 polymorphism: give each weapon a higher-priority `InputProcessor_ActivateAbilityByTag` whose `StateQuery` requires that weapon's tag).
+
+**Path B (grant/revoke on equip, write your own glue)**: if you want a weapon to **carry** its own ability assets (granted on equip, revoked on unequip), there's no built-in field — subscribe to `WeaponComponent.OnEquipped` / `OnUnequipped` and call it yourself:
+
+```csharp
+weapon.OnEquipped   += owner => _handles = ownerASC.GrantLoadout(swordLoadout); // an AbilityLoadout asset
+weapon.OnUnequipped += ()    => _handles.RevokeFrom(ownerASC);                  // GrantedAbilityHandles.RevokeFrom
+```
+
+> Which to pick: use Path A to "gate already-granted abilities by the current weapon"; use Path B to "add/remove abilities dynamically with the weapon (the ability bar changes too)". They can be combined.
 
 ---
 
