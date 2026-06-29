@@ -1,0 +1,586 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-8141415449898375681
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 508739ed58c7ada45b1d1389c3d74349, type: 3}
+  m_Name: GE_PowerBuff
+  m_EditorClassIdentifier: Likeon.GAS.Runtime::Likeon.GAS.GameplayEffect
+  DurationType: 1
+  Duration: 5
+  Period: 0
+  StackingType: 1
+  StackLimitCount: 5
+  StackDurationRefreshPolicy: 0
+  StackPeriodResetPolicy: 0
+  StackExpirationPolicy: 0
+  Modifiers:
+  - Attribute:
+      attributeSetType: Likeon.GAS.AS_Health
+      attributeName: MaxHealth
+    Operation: 0
+    Magnitude:
+      type: 0
+      baseValue: 10
+      perLevel: 0
+      setByCallerTag:
+        tagName: 
+  Executions: []
+  GrantedTags: []
+  AssetTags: []
+  ApplicationRequiredTags: []
+  ApplicationBlockedTags: []
+  OngoingRequiredTags: []
+  GameplayCues: []
+  RemoveEffectsWithTags: []
+--- !u!114 &-6422669691160885029
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0433cf1ec1ba60348a4498a2815b4568, type: 3}
+  m_Name: Attack_Light
+  m_EditorClassIdentifier: Likeon.GAS.Runtime::Likeon.GAS.AttackDefinition
+  AttackTags: []
+  SetByCallerMagnitudes:
+  - Tag:
+      tagName: Data.Damage
+    Value: 20
+  - Tag:
+      tagName: Data.PoiseDamage
+    Value: 1.5
+  TargetEffect: {fileID: -2153180199835951278}
+  TargetEffectLevel: 1
+  TargetEffectContainer:
+    TargetGameplayEffects: []
+    SelfGameplayEffects: []
+  TargetGameplayCues: []
+  KnockbackDistance: 1
+  KnockbackMultiplier: 1
+  HitStallingDuration: 0
+  HitPlayRateFactor: 0.1
+--- !u!114 &-6313364705806099815
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ef149a5afa9d6847aca662852642d60, type: 3}
+  m_Name: Input_Vehicle
+  m_EditorClassIdentifier: Likeon.GAS.Runtime::Likeon.GAS.InputControlSetup
+  inputCheckers: []
+  enableInputBuffer: 0
+  inputProcessorExecutionType: 1
+  inputProcessors:
+  - rid: 7408843163805155328
+  references:
+    version: 2
+    RefIds:
+    - rid: 7408843163805155328
+      type: {class: InputProcessor_SendGameplayEvent, ns: Likeon.GAS, asm: Likeon.GAS.Runtime}
+      data:
+        InputTags:
+          tags:
+          - tagName: InputTag.Melee
+        TriggerEvents: 02000000
+        EventTag:
+          tagName: Event.Honk
+--- !u!114 &-3708153835976228844
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ef149a5afa9d6847aca662852642d60, type: 3}
+  m_Name: Input_Combat
+  m_EditorClassIdentifier: Likeon.GAS.Runtime::Likeon.GAS.InputControlSetup
+  inputCheckers: []
+  enableInputBuffer: 0
+  inputProcessorExecutionType: 1
+  inputProcessors:
+  - rid: 7408843163805155329
+  - rid: 7408843163805155330
+  - rid: 7408843163805155331
+  - rid: 7408843163805155332
+  references:
+    version: 2
+    RefIds:
+    - rid: 7408843163805155329
+      type: {class: InputProcessor_ActivateAbilityByTag, ns: Likeon.GAS, asm: Likeon.GAS.Runtime}
+      data:
+        InputTags:
+          tags:
+          - tagName: InputTag.Melee
+        TriggerEvents: 02000000
+        StateQuery:
+          exprType: 0
+          tags:
+          - tagName: Weapon.Sword
+          expressions: []
+          isEmpty: 0
+        AbilityTag:
+          tagName: Ability.MeleeAttack
+    - rid: 7408843163805155330
+      type: {class: InputProcessor_ActivateAbilityByTag, ns: Likeon.GAS, asm: Likeon.GAS.Runtime}
+      data:
+        InputTags:
+          tags:
+          - tagName: InputTag.Melee
+        TriggerEvents: 02000000
+        StateQuery:
+          exprType: 0
+          tags:
+          - tagName: Weapon.Axe
+          expressions: []
+          isEmpty: 0
+        AbilityTag:
+          tagName: Ability.HeavyAttack
+    - rid: 7408843163805155331
+      type: {class: InputProcessor_ActivateAbilityByTag, ns: Likeon.GAS, asm: Likeon.GAS.Runtime}
+      data:
+        InputTags:
+          tags:
+          - tagName: InputTag.Ranged
+        TriggerEvents: 02000000
+        StateQuery:
+          exprType: 0
+          tags: []
+          expressions: []
+          isEmpty: 1
+        AbilityTag:
+          tagName: Ability.RangedAttack
+    - rid: 7408843163805155332
+      type: {class: InputProcessor_ActivateAbilityByTag, ns: Likeon.GAS, asm: Likeon.GAS.Runtime}
+      data:
+        InputTags:
+          tags:
+          - tagName: InputTag.Focus
+        TriggerEvents: 02000000
+        StateQuery:
+          exprType: 0
+          tags: []
+          expressions: []
+          isEmpty: 1
+        AbilityTag:
+          tagName: Ability.Focus
+--- !u!114 &-2582084995836176776
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ea60cad4e5a26b5bf3351e87b922454, type: 3}
+  m_Name: GA_Melee
+  m_EditorClassIdentifier: Likeon.GAS.Sample.PlayableDemo::GASDemo.DemoMeleeAbility
+  AbilityTags:
+  - tagName: Ability.MeleeAttack
+  ActivationPolicy: 0
+  ActivationOwnedLooseTags: []
+  ActivationRequiredTags: []
+  ActivationBlockedTags: []
+  CostEffect: {fileID: 3246071863515394895}
+  CooldownEffect: {fileID: 0}
+  EffectContainerMap:
+    entries: []
+  TraceEntryIndex: 0
+  TraceWindow: 0.3
+--- !u!114 &-2153180199835951278
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 508739ed58c7ada45b1d1389c3d74349, type: 3}
+  m_Name: GE_Damage
+  m_EditorClassIdentifier: Likeon.GAS.Runtime::Likeon.GAS.GameplayEffect
+  DurationType: 0
+  Duration: 0
+  Period: 0
+  StackingType: 0
+  StackLimitCount: 0
+  StackDurationRefreshPolicy: 0
+  StackPeriodResetPolicy: 0
+  StackExpirationPolicy: 0
+  Modifiers:
+  - Attribute:
+      attributeSetType: Likeon.GAS.AS_Health
+      attributeName: IncomingDamage
+    Operation: 0
+    Magnitude:
+      type: 1
+      baseValue: 0
+      perLevel: 0
+      setByCallerTag:
+        tagName: Data.Damage
+  - Attribute:
+      attributeSetType: Likeon.GAS.AS_Poise
+      attributeName: IncomingPoiseDamage
+    Operation: 0
+    Magnitude:
+      type: 1
+      baseValue: 0
+      perLevel: 0
+      setByCallerTag:
+        tagName: Data.PoiseDamage
+  Executions: []
+  GrantedTags: []
+  AssetTags: []
+  ApplicationRequiredTags: []
+  ApplicationBlockedTags: []
+  OngoingRequiredTags: []
+  GameplayCues:
+  - tagName: GameplayCue.Hit
+  RemoveEffectsWithTags: []
+--- !u!114 &-1556265678228717875
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0433cf1ec1ba60348a4498a2815b4568, type: 3}
+  m_Name: Attack_Heavy
+  m_EditorClassIdentifier: Likeon.GAS.Runtime::Likeon.GAS.AttackDefinition
+  AttackTags: []
+  SetByCallerMagnitudes:
+  - Tag:
+      tagName: Data.Damage
+    Value: 36
+  - Tag:
+      tagName: Data.PoiseDamage
+    Value: 3
+  TargetEffect: {fileID: -2153180199835951278}
+  TargetEffectLevel: 1
+  TargetEffectContainer:
+    TargetGameplayEffects: []
+    SelfGameplayEffects: []
+  TargetGameplayCues: []
+  KnockbackDistance: 1
+  KnockbackMultiplier: 1
+  HitStallingDuration: 0
+  HitPlayRateFactor: 0.1
+--- !u!114 &-238563805191896720
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 508739ed58c7ada45b1d1389c3d74349, type: 3}
+  m_Name: GE_Cost_Heavy
+  m_EditorClassIdentifier: Likeon.GAS.Runtime::Likeon.GAS.GameplayEffect
+  DurationType: 0
+  Duration: 0
+  Period: 0
+  StackingType: 0
+  StackLimitCount: 0
+  StackDurationRefreshPolicy: 0
+  StackPeriodResetPolicy: 0
+  StackExpirationPolicy: 0
+  Modifiers:
+  - Attribute:
+      attributeSetType: Likeon.GAS.AS_Stamina
+      attributeName: Stamina
+    Operation: 0
+    Magnitude:
+      type: 0
+      baseValue: -14
+      perLevel: 0
+      setByCallerTag:
+        tagName: 
+  Executions: []
+  GrantedTags: []
+  AssetTags: []
+  ApplicationRequiredTags: []
+  ApplicationBlockedTags: []
+  OngoingRequiredTags: []
+  GameplayCues: []
+  RemoveEffectsWithTags: []
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 209e4901f6de8274db8334eed5ee6fed, type: 3}
+  m_Name: DemoConfig
+  m_EditorClassIdentifier: Likeon.GAS.Sample.PlayableDemo::GASDemo.DemoConfig
+  CombatInput: {fileID: -3708153835976228844}
+  VehicleInput: {fileID: -6313364705806099815}
+  InteractionRules: {fileID: 156750182159311128}
+  MeleeAbility: {fileID: -2582084995836176776}
+  HeavyAbility: {fileID: 805337279536004696}
+  RangedAbility: {fileID: 7685764293100694777}
+  FocusAbility: {fileID: 4436694237501189380}
+  LightAttack: {fileID: -6422669691160885029}
+  HeavyAttack: {fileID: -1556265678228717875}
+  Bullet: {fileID: 4001030571844643605}
+  PowerBuff: {fileID: -8141415449898375681}
+--- !u!114 &156750182159311128
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ddbe149056fb7a84086f6553e33e3c0c, type: 3}
+  m_Name: AbilityRules
+  m_EditorClassIdentifier: Likeon.GAS.Runtime::Likeon.GAS.AbilityInteractionRules
+  baseRules:
+  - AbilityTag:
+      tagName: Ability.Focus
+    AbilityTagsToBlock:
+    - tagName: Ability.MeleeAttack
+    - tagName: Ability.HeavyAttack
+    AbilityTagsToCancel: []
+    ActivationRequiredTags: []
+    ActivationBlockedTags: []
+  - AbilityTag:
+      tagName: Ability.RangedAttack
+    AbilityTagsToBlock: []
+    AbilityTagsToCancel:
+    - tagName: Ability.Focus
+    ActivationRequiredTags: []
+    ActivationBlockedTags: []
+  conditionalRules: []
+  references:
+    version: 2
+    RefIds: []
+--- !u!114 &805337279536004696
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ea60cad4e5a26b5bf3351e87b922454, type: 3}
+  m_Name: GA_Heavy
+  m_EditorClassIdentifier: Likeon.GAS.Sample.PlayableDemo::GASDemo.DemoMeleeAbility
+  AbilityTags:
+  - tagName: Ability.HeavyAttack
+  ActivationPolicy: 0
+  ActivationOwnedLooseTags: []
+  ActivationRequiredTags: []
+  ActivationBlockedTags: []
+  CostEffect: {fileID: -238563805191896720}
+  CooldownEffect: {fileID: 0}
+  EffectContainerMap:
+    entries: []
+  TraceEntryIndex: 1
+  TraceWindow: 0.3
+--- !u!114 &1432337312728486208
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 508739ed58c7ada45b1d1389c3d74349, type: 3}
+  m_Name: GE_Cost_Ranged
+  m_EditorClassIdentifier: Likeon.GAS.Runtime::Likeon.GAS.GameplayEffect
+  DurationType: 0
+  Duration: 0
+  Period: 0
+  StackingType: 0
+  StackLimitCount: 0
+  StackDurationRefreshPolicy: 0
+  StackPeriodResetPolicy: 0
+  StackExpirationPolicy: 0
+  Modifiers:
+  - Attribute:
+      attributeSetType: Likeon.GAS.AS_Stamina
+      attributeName: Stamina
+    Operation: 0
+    Magnitude:
+      type: 0
+      baseValue: -5
+      perLevel: 0
+      setByCallerTag:
+        tagName: 
+  Executions: []
+  GrantedTags: []
+  AssetTags: []
+  ApplicationRequiredTags: []
+  ApplicationBlockedTags: []
+  OngoingRequiredTags: []
+  GameplayCues: []
+  RemoveEffectsWithTags: []
+--- !u!114 &3198678146216708437
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0433cf1ec1ba60348a4498a2815b4568, type: 3}
+  m_Name: Attack_Ranged
+  m_EditorClassIdentifier: Likeon.GAS.Runtime::Likeon.GAS.AttackDefinition
+  AttackTags: []
+  SetByCallerMagnitudes:
+  - Tag:
+      tagName: Data.Damage
+    Value: 12
+  - Tag:
+      tagName: Data.PoiseDamage
+    Value: 1
+  TargetEffect: {fileID: -2153180199835951278}
+  TargetEffectLevel: 1
+  TargetEffectContainer:
+    TargetGameplayEffects: []
+    SelfGameplayEffects: []
+  TargetGameplayCues: []
+  KnockbackDistance: 1
+  KnockbackMultiplier: 1
+  HitStallingDuration: 0
+  HitPlayRateFactor: 0.1
+--- !u!114 &3246071863515394895
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 508739ed58c7ada45b1d1389c3d74349, type: 3}
+  m_Name: GE_Cost_Melee
+  m_EditorClassIdentifier: Likeon.GAS.Runtime::Likeon.GAS.GameplayEffect
+  DurationType: 0
+  Duration: 0
+  Period: 0
+  StackingType: 0
+  StackLimitCount: 0
+  StackDurationRefreshPolicy: 0
+  StackPeriodResetPolicy: 0
+  StackExpirationPolicy: 0
+  Modifiers:
+  - Attribute:
+      attributeSetType: Likeon.GAS.AS_Stamina
+      attributeName: Stamina
+    Operation: 0
+    Magnitude:
+      type: 0
+      baseValue: -8
+      perLevel: 0
+      setByCallerTag:
+        tagName: 
+  Executions: []
+  GrantedTags: []
+  AssetTags: []
+  ApplicationRequiredTags: []
+  ApplicationBlockedTags: []
+  OngoingRequiredTags: []
+  GameplayCues: []
+  RemoveEffectsWithTags: []
+--- !u!114 &4001030571844643605
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5c679fe486d8bee42a39547c8ab4da89, type: 3}
+  m_Name: Bullet
+  m_EditorClassIdentifier: Likeon.GAS.Runtime::Likeon.GAS.BulletDefinition
+  Duration: 3
+  BulletCount: 1
+  LaunchAngle: 0
+  LaunchAngleInterval: 10
+  LaunchElevationAngle: 0
+  InitialSpeed: 22
+  GravityScale: 0
+  HitRadius: 0.3
+  HitLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  PenetrateCharacter: 0
+  PenetrateMap: 0
+  Attack: {fileID: 3198678146216708437}
+  HitBulletDefinition: {fileID: 0}
+--- !u!114 &4436694237501189380
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5fdd14d2a1f94a268e95dd01caef1880, type: 3}
+  m_Name: GA_Focus
+  m_EditorClassIdentifier: Likeon.GAS.Sample.PlayableDemo::GASDemo.DemoFocusAbility
+  AbilityTags:
+  - tagName: Ability.Focus
+  ActivationPolicy: 0
+  ActivationOwnedLooseTags:
+  - Tag:
+      tagName: State.Focusing
+    Count: 1
+  ActivationRequiredTags: []
+  ActivationBlockedTags: []
+  CostEffect: {fileID: 0}
+  CooldownEffect: {fileID: 0}
+  EffectContainerMap:
+    entries: []
+  Duration: 1.5
+--- !u!114 &7685764293100694777
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9383de96447cfb04e87d2d4cc2890b6a, type: 3}
+  m_Name: GA_Ranged
+  m_EditorClassIdentifier: Likeon.GAS.Sample.PlayableDemo::GASDemo.DemoRangedAbility
+  AbilityTags:
+  - tagName: Ability.RangedAttack
+  ActivationPolicy: 0
+  ActivationOwnedLooseTags: []
+  ActivationRequiredTags: []
+  ActivationBlockedTags: []
+  CostEffect: {fileID: 1432337312728486208}
+  CooldownEffect: {fileID: 0}
+  EffectContainerMap:
+    entries: []

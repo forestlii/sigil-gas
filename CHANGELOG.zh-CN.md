@@ -15,7 +15,8 @@
 
 - **可玩 Demo 升级为功能展示场**。示例从"只演示近战"升级为多条战斗线同场展示（近战 / 远程子弹 / 3 敌人锁定切换 / 削韧破防 / buff 叠层）+ 自解释 HUD（全靠订阅可观测性事件渲染）。框架零改动，仅把已实现并测试过的功能调用出来。新增 demo 脚本 `DemoRanged` / `DemoRangedAbility` / `DemoHUD`。
 - **Demo 进一步演示输入/技能接线**：输入分发（键 → `InputTag` → `InputProcessor_ActivateAbilityByTag` → 技能，不直接 `TryActivate`）、上下文切换（`Push/PopInputSetup` 切载具键位，近战键改鸣笛）、用 `AbilityInteractionRules` 资产做技能 block/cancel（持续型专注挡近战、远程取消专注）、武器 → 不同技能（`WeaponComponent` 注入 `Weapon.Sword`/`Weapon.Axe`，近战键多态成轻击/重击）。新增 demo 脚本 `DemoFocusAbility`。仍无框架改动。
-- demo 冒烟测试从 1 个扩到 **9** 个（近战 / 锁定 / 远程 / 叠层 + 输入分发 / 武器切换 / 专注挡近战 / 远程取消专注 / 载具鸣笛）全过；现**随 Sample 发布**（`Samples~/PlayableDemo/Tests/`），导入可玩 Demo 即带可运行测试。测试总数升至 **EditMode 21 + PlayMode 100 = 121**。
+- **Demo 改为数据驱动**——全部配置（输入控制集、技能交互规则、技能、攻击、子弹、效果）收进一个**策划可在 Inspector 编辑**的 `DemoConfig` 资产（子资产嵌入其中）。`GASDemo` 从 `Config` 字段读取（demo 场景已接好）；留空则回退到代码建同一套默认值（裸 `AddComponent` / headless 冒烟测试仍可跑）。菜单 **Likeon ▸ GAS ▸ Generate Demo Config Assets** 可重新生成资产并接进场景。新增 `DemoConfig`、`DemoConfigBuilder`。
+- demo 冒烟测试从 1 个扩到 **11** 个（近战 / 锁定 / 远程 / 叠层 + 输入分发 / 武器切换 / 专注挡近战 / 远程取消专注 / 载具鸣笛 + 配置完整性 / 指定配置构建）全过；现**随 Sample 发布**（`Samples~/PlayableDemo/Tests/`），导入可玩 Demo 即带可运行测试。测试总数升至 **EditMode 21 + PlayMode 102 = 123**。
 - 测试迁入包内 `Tests/` 目录（PlayMode + EditMode），随包发布，用户加 `"testables"` 即可运行。
 
 ## [0.3.0] - 2026-06-29

@@ -48,6 +48,7 @@
 
 ## 它怎么搭起来的
 
+- `DemoConfig.cs`（ScriptableObject）汇总**全部策划可调配置**——输入控制集（键→tag→技能 + FirstOnly"互斥"）、`AbilityInteractionRules`（block/cancel）、技能、攻击、子弹、效果——都是资产引用。demo 场景把一个 `DemoConfig.asset` 接到 `GASDemo.Config` 上，策划在 Inspector 改这些 `.asset` 即可、不碰代码。（`Config` 留空时 `GASDemo` 会用 `DemoConfig.CreateDefault()` 在代码里建同一套默认值作回退。）用菜单 **Likeon ▸ GAS ▸ Generate Demo Config Assets**（`DemoConfigBuilder`）可重新生成资产并接好场景。
 - `GASDemo.cs`（MonoBehaviour）在 `Awake` 里**程序化构建**地面、相机、玩家、3 个敌人——不依赖外部美术资产（程序员美术：胶囊体）。它还接好 `InputSystemComponent` + 战斗/载具两套 `InputControlSetup`、两把 `WeaponComponent`（剑/斧）、各技能，以及一个 `AbilityInteractionRules` 资产（专注 block 近战、远程 cancel 专注）。
 - `DemoPlayerController.cs`：读键鼠，喂给 `InputSystemComponent.ReceiveInput(InputTag, …)`（走输入分发——没有任何地方直接 `TryActivate`），外加武器切换(1/2)、专注(G)、载具切换(V)、锁定、叠 buff。不含战斗逻辑本身。
 - `DemoMeleeAbility.cs`：近战技能——按 `TraceEntryIndex` 决定轻击/重击；用 `AbilityTask_WaitDelay` 自管判定窗口。

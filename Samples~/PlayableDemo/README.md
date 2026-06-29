@@ -48,6 +48,7 @@ Controls (also shown in the top-left HUD):
 
 ## How it's built
 
+- `DemoConfig.cs` (ScriptableObject) holds **all the designer-tunable config** — the input control setups (key→tag→ability + the FirstOnly "mutual exclusion"), the `AbilityInteractionRules` (block/cancel), the abilities, attacks, bullet and effects — as asset references. The demo scene wires a `DemoConfig.asset` onto `GASDemo.Config`, so a designer edits these `.asset`s in the Inspector without touching code. (Leave `Config` empty and `GASDemo` falls back to building the same defaults in code, via `DemoConfig.CreateDefault()`.) Regenerate the asset + scene wiring with the menu **Likeon ▸ GAS ▸ Generate Demo Config Assets** (`DemoConfigBuilder`).
 - `GASDemo.cs` (MonoBehaviour) **procedurally builds** the ground, camera, player and 3 enemies in `Awake` — no external art assets (programmer art: capsules). It also wires the `InputSystemComponent` + two `InputControlSetup`s (combat / vehicle), the two `WeaponComponent`s (Sword / Axe), the abilities, and an `AbilityInteractionRules` asset (Focus blocks melee; ranged cancels Focus).
 - `DemoPlayerController.cs`: reads keyboard/mouse and feeds it to `InputSystemComponent.ReceiveInput(InputTag, …)` (input dispatch — nothing calls `TryActivate` directly), plus weapon switching (1/2), Focus (G), vehicle toggle (V), lock-on, and stacking buffs. It contains no combat logic itself.
 - `DemoMeleeAbility.cs`: the melee ability — light or heavy depending on `TraceEntryIndex`; self-manages its hit window via `AbilityTask_WaitDelay`.

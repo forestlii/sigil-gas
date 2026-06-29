@@ -1,7 +1,11 @@
 // GASDemo：运行时构建一个可玩的"功能展示场"，演示框架已实现的多条战斗线——
-//   近战命中→扣血→Cue   远程子弹   锁定切换   削韧破防   buff 叠层   第三人称相机 + 血条 + HUD。
+//   近战命中→扣血→Cue   远程子弹   锁定切换   削韧破防   buff 叠层   第三人称相机 + 血条 + HUD，
+//   以及 输入分发(键→tag→技能) / 载具切换 / 技能 block-cancel / 武器换技能。
 // 把本组件挂到空场景的一个 GameObject 上，按 Play 即可游玩。
-// 操作：WASD 移动 / Shift 冲刺 / 鼠标看 / 空格·左键近战 / 右键·F 远程 / Tab 锁定 / Q·E 切目标 / R 叠 buff。
+//
+// 数据驱动：所有可配置数据（输入控制集 / 技能互斥规则 / 技能 / 攻击 / 子弹 / 效果）来自 Config(DemoConfig 资产)——
+//   · 场景里把 DemoConfig.asset 拖到下面的 Config 字段 → 策划在 Inspector 改这些 .asset 即可（真实工作流）；
+//   · Config 留空 → 用 DemoConfig.CreateDefault() 在内存里建同一套默认值（裸 AddComponent / headless 测试的回退）。
 // 注：本 demo 只是把核心包里"已经实现并测试过"的功能调用出来给人看，不含任何战斗逻辑本身。
 using System.Collections;
 using System.Collections.Generic;
@@ -12,11 +16,9 @@ namespace GASDemo
 {
     public class GASDemo : MonoBehaviour
     {
-        [Header("配置")]
-        public float MeleeDamage = 20f;
-        public float MeleePoiseDamage = 1.5f;
-        public float RangedDamage = 12f;
-        public float RangedPoiseDamage = 1f;
+        [Header("数据驱动配置（拖一个 DemoConfig.asset；留空=用代码默认）")]
+        [Tooltip("策划在此资产里配输入分发/技能互斥/技能/攻击/效果。用菜单 Likeon ▸ GAS ▸ Generate Demo Config Assets 可一键生成一套并接好。")]
+        public DemoConfig Config;
 
         // 敌人摆位（前方扇形，便于演示锁定左右切换）
         public Vector3[] EnemySpawns =
@@ -32,37 +34,22 @@ namespace GASDemo
         public DemoPlayerController Controller { get; private set; }
         public TargetingSystemComponent Targeting { get; private set; }
         public InputSystemComponent InputSystem { get; private set; }
+        public DemoConfig ActiveConfig => _config;
         public readonly List<AbilitySystemComponent> Enemies = new List<AbilitySystemComponent>();
-
-        private static readonly GameplayTag MeleeTag = GameplayTag.RequestTag("Ability.MeleeAttack");
-        private static readonly GameplayTag HeavyTag = GameplayTag.RequestTag("Ability.HeavyAttack");
-        private static readonly GameplayTag RangedTag = GameplayTag.RequestTag("Ability.RangedAttack");
-        private static readonly GameplayTag FocusTag = GameplayTag.RequestTag("Ability.Focus");
-        private static readonly GameplayTag DataDamage = GameplayTag.RequestTag("Data.Damage");
-        private static readonly GameplayTag DataPoiseDamage = GameplayTag.RequestTag("Data.PoiseDamage");
-        private static readonly GameplayTag HitCue = GameplayTag.RequestTag("GameplayCue.Hit");
-        private static readonly GameplayTag FocusingTag = GameplayTag.RequestTag("State.Focusing");
-        // 输入分发：物理键 → 这些 InputTag → 控制集里的处理器 → 激活对应技能
-        private static readonly GameplayTag InputMelee = GameplayTag.RequestTag("InputTag.Melee");
-        private static readonly GameplayTag InputRanged = GameplayTag.RequestTag("InputTag.Ranged");
-        private static readonly GameplayTag InputFocus = GameplayTag.RequestTag("InputTag.Focus");
-        // 武器标签（装备时注入 owner ASC，供输入多态/技能门控按"当前武器"分支）
-        private static readonly GameplayTag SwordTag = GameplayTag.RequestTag("Weapon.Sword");
-        private static readonly GameplayTag AxeTag = GameplayTag.RequestTag("Weapon.Axe");
-        // 载具模式下近战键改广播的事件
-        private static readonly GameplayTag HonkTag = GameplayTag.RequestTag("Event.Honk");
 
         private static readonly Color EnemyColor = new Color(0.85f, 0.3f, 0.28f);
         private static readonly Color StaggerColor = new Color(0.95f, 0.85f, 0.35f);
 
-        private readonly List<Object> _runtimeAssets = new List<Object>();
-        private GameplayEffect _damageGE; // 近战/远程共用的伤害效果（含削韧）
+        private DemoConfig _config;
+        private bool _ownsConfig; // 默认配置由本组件 new 出来 → 销毁时负责清理；拖进来的资产不清理
 
         private void Awake()
         {
+            _config = Config != null ? Config : DemoConfig.CreateDefault();
+            _ownsConfig = Config == null;
+
             BuildGround();
             var cam = EnsureCamera();
-            _damageGE = MakeDamageGE();
             var player = BuildPlayer(cam);
             foreach (var pos in EnemySpawns) BuildEnemy(pos);
             WireCamera(cam, player);
@@ -73,7 +60,11 @@ namespace GASDemo
         private void OnDestroy()
         {
             GameplayCueManager.Instance.OnGameplayCue -= OnCue;
-            foreach (var a in _runtimeAssets) if (a != null) Destroy(a);
+            if (_ownsConfig && _config != null)
+            {
+                foreach (var a in _config.EnumerateSubAssets()) if (a != null) Destroy(a);
+                Destroy(_config);
+            }
         }
 
         // ---------- 场景元素 ----------
@@ -125,108 +116,54 @@ namespace GASDemo
             socket.SetParent(p.transform);
             socket.localPosition = new Vector3(0, 0, 1.2f);
 
-            // ── 近战：两条判定（轻击 entry0 / 重击 entry1），对应剑 / 斧 ──
-            var lightAttack = Track(MakeAttack(MeleeDamage, MeleePoiseDamage));
+            // ── 近战：两条判定（轻击 entry0 / 重击 entry1），攻击定义来自配置 ──
             melee.Entries.Add(new MeleeAttackTrace.AttackTraceEntry
             {
-                Attack = lightAttack,
+                Attack = _config.LightAttack,
                 Trace = new CollisionTraceDefinition { SocketTransforms = new List<Transform> { socket }, TraceRadius = 1.0f }
             });
-            var heavyAttack = Track(MakeAttack(MeleeDamage * 1.8f, MeleePoiseDamage * 2f)); // 斧=更重的一击
             melee.Entries.Add(new MeleeAttackTrace.AttackTraceEntry
             {
-                Attack = heavyAttack,
+                Attack = _config.HeavyAttack,
                 Trace = new CollisionTraceDefinition { SocketTransforms = new List<Transform> { socket }, TraceRadius = 1.1f }
             });
 
-            // 近战技能：剑=轻击(entry0)、斧=重击(entry1)，各带体力消耗
-            var meleeAbility = Track(ScriptableObject.CreateInstance<DemoMeleeAbility>());
-            meleeAbility.AbilityTags.Add(MeleeTag);
-            meleeAbility.TraceEntryIndex = 0;
-            meleeAbility.CostEffect = MakeStaminaCostGE(-8f);
-            asc.GiveAbility(meleeAbility);
-
-            var heavyAbility = Track(ScriptableObject.CreateInstance<DemoMeleeAbility>());
-            heavyAbility.AbilityTags.Add(HeavyTag);
-            heavyAbility.TraceEntryIndex = 1;
-            heavyAbility.CostEffect = MakeStaminaCostGE(-14f);
-            asc.GiveAbility(heavyAbility);
+            // 技能（剑轻击 / 斧重击 / 远程 / 专注）—— GiveAbility 内部 Instantiate，不污染配置资产
+            asc.GiveAbility(_config.MeleeAbility);
+            asc.GiveAbility(_config.HeavyAbility);
 
             // 锁定系统（视角来源=相机）
             var targeting = p.AddComponent<TargetingSystemComponent>();
             targeting.ViewSource = cam.transform;
 
-            // 远程：枪口 + 子弹定义 + 射击组件 + 远程技能
+            // 远程：枪口 + 射击组件（子弹定义来自配置）
             var muzzle = new GameObject("Muzzle").transform;
             muzzle.SetParent(p.transform);
             muzzle.localPosition = new Vector3(0, 0.2f, 0.6f);
 
-            var bulletDef = Track(ScriptableObject.CreateInstance<BulletDefinition>());
-            bulletDef.name = "DemoBullet";
-            bulletDef.InitialSpeed = 22f; bulletDef.HitRadius = 0.3f; bulletDef.Duration = 3f; bulletDef.GravityScale = 0f;
-            bulletDef.Attack = Track(MakeAttack(RangedDamage, RangedPoiseDamage));
-
             var shooter = p.AddComponent<DemoRanged>();
-            shooter.ASC = asc; shooter.Muzzle = muzzle; shooter.Bullet = bulletDef; shooter.Targeting = targeting;
+            shooter.ASC = asc; shooter.Muzzle = muzzle; shooter.Bullet = _config.Bullet; shooter.Targeting = targeting;
 
-            var rangedAbility = Track(ScriptableObject.CreateInstance<DemoRangedAbility>());
-            rangedAbility.AbilityTags.Add(RangedTag);
-            rangedAbility.CostEffect = MakeStaminaCostGE(-5f);
-            asc.GiveAbility(rangedAbility);
+            asc.GiveAbility(_config.RangedAbility);
+            asc.GiveAbility(_config.FocusAbility);
 
-            // ── 专注技能（演示 block/cancel）：激活期间挂 State.Focusing ──
-            var focusAbility = Track(ScriptableObject.CreateInstance<DemoFocusAbility>());
-            focusAbility.AbilityTags.Add(FocusTag);
-            focusAbility.ActivationOwnedLooseTags.Add(new GameplayTagCount(FocusingTag, 1));
-            asc.GiveAbility(focusAbility);
+            // 技能互斥规则（数据驱动）：专注 block 近战、远程 cancel 专注
+            asc.SetInteractionRules(_config.InteractionRules);
 
-            // 能力交互规则（数据驱动，对应 UE 蓝图那套）：专注期间挡住近战；开火远程则取消专注
-            var rules = Track(ScriptableObject.CreateInstance<AbilityInteractionRules>());
-            rules.AddBaseRule(new AbilityTagRule
-            {
-                AbilityTag = FocusTag,
-                AbilityTagsToBlock = new List<GameplayTag> { MeleeTag, HeavyTag },
-            });
-            rules.AddBaseRule(new AbilityTagRule
-            {
-                AbilityTag = RangedTag,
-                AbilityTagsToCancel = new List<GameplayTag> { FocusTag },
-            });
-            asc.SetInteractionRules(rules);
-
-            // ── 输入分发：InputSystemComponent + 控制集 ──
+            // ── 输入分发：InputSystemComponent + 控制集（来自配置）──
             var inputSys = p.AddComponent<InputSystemComponent>(); // Awake 自动找同物体 ASC
-
-            // 战斗控制集（FirstOnly = 状态驱动多态）：近战键按当前武器多态（剑→轻击 / 斧→重击）
-            var combatSetup = Track(ScriptableObject.CreateInstance<InputControlSetup>());
-            combatSetup.ExecutionType = EInputProcessorExecutionType.FirstOnly;
-            combatSetup.AddProcessor(new InputProcessor_ActivateAbilityByTag
-            {
-                InputTags = TagSet(InputMelee), StateQuery = GameplayTagQuery.MakeQuery_MatchAllTags(SwordTag), AbilityTag = MeleeTag
-            });
-            combatSetup.AddProcessor(new InputProcessor_ActivateAbilityByTag
-            {
-                InputTags = TagSet(InputMelee), StateQuery = GameplayTagQuery.MakeQuery_MatchAllTags(AxeTag), AbilityTag = HeavyTag
-            });
-            combatSetup.AddProcessor(new InputProcessor_ActivateAbilityByTag { InputTags = TagSet(InputRanged), AbilityTag = RangedTag });
-            combatSetup.AddProcessor(new InputProcessor_ActivateAbilityByTag { InputTags = TagSet(InputFocus), AbilityTag = FocusTag });
-            inputSys.PushInputSetup(combatSetup);
-
-            // 载具控制集：同一个近战键现在改广播 Event.Honk（鸣笛）——演示整套键位切换
-            var vehicleSetup = Track(ScriptableObject.CreateInstance<InputControlSetup>());
-            vehicleSetup.ExecutionType = EInputProcessorExecutionType.FirstOnly;
-            vehicleSetup.AddProcessor(new InputProcessor_SendGameplayEvent { InputTags = TagSet(InputMelee), EventTag = HonkTag });
+            inputSys.PushInputSetup(_config.CombatInput);
 
             // ── 两把武器（WeaponComponent 装备时注入武器标签）──
-            var sword = MakeWeapon(p.transform, "Sword", SwordTag);
-            var axe = MakeWeapon(p.transform, "Axe", AxeTag);
+            var sword = MakeWeapon(p.transform, "Sword", DemoConfig.SwordTag);
+            var axe = MakeWeapon(p.transform, "Axe", DemoConfig.AxeTag);
 
             var ctrl = p.AddComponent<DemoPlayerController>();
             ctrl.ASC = asc; ctrl.Controller = cc; ctrl.Melee = melee; ctrl.Targeting = targeting;
-            ctrl.PowerBuff = Track(MakePowerBuff());
-            ctrl.InputSystem = inputSys; ctrl.VehicleSetup = vehicleSetup;
+            ctrl.PowerBuff = _config.PowerBuff;
+            ctrl.InputSystem = inputSys; ctrl.VehicleSetup = _config.VehicleInput;
             ctrl.Sword = sword; ctrl.Axe = axe;
-            ctrl.MeleeInputTag = InputMelee; ctrl.RangedInputTag = InputRanged; ctrl.FocusInputTag = InputFocus;
+            ctrl.MeleeInputTag = DemoConfig.InputMelee; ctrl.RangedInputTag = DemoConfig.InputRanged; ctrl.FocusInputTag = DemoConfig.InputFocus;
             ctrl.EquipSword(); // 默认装备剑（注入 Weapon.Sword → 近战键映射到轻击）
 
             PlayerASC = asc; Melee = melee; Controller = ctrl; Targeting = targeting; InputSystem = inputSys;
@@ -289,7 +226,7 @@ namespace GASDemo
 
         private void OnCue(GameObject target, GameplayTag cueTag, EGameplayCueEvent ev, GameplayCueParameters p)
         {
-            if (ev == EGameplayCueEvent.Executed && cueTag.MatchesTag(HitCue))
+            if (ev == EGameplayCueEvent.Executed && cueTag.MatchesTag(DemoConfig.HitCue))
                 StartCoroutine(HitSpark(p != null ? p.Location : Vector3.zero));
         }
 
@@ -316,76 +253,6 @@ namespace GASDemo
             if (rend != null) SetColor(rend, EnemyColor);
         }
 
-        // ---------- 运行时资产构造 ----------
-        // 伤害效果：扣血(SetByCaller Data.Damage) + 削韧(SetByCaller Data.PoiseDamage) + 命中 cue
-        private GameplayEffect MakeDamageGE()
-        {
-            var ge = Track(ScriptableObject.CreateInstance<GameplayEffect>());
-            ge.DurationType = EGameplayEffectDurationType.Instant;
-            ge.Modifiers.Add(new GameplayModifierInfo
-            {
-                Attribute = GameplayAttribute.From<AS_Health>("IncomingDamage"),
-                Operation = EAttributeModifierOp.Add,
-                Magnitude = GameplayModifierMagnitude.SetByCaller(DataDamage)
-            });
-            ge.Modifiers.Add(new GameplayModifierInfo
-            {
-                Attribute = GameplayAttribute.From<AS_Poise>("IncomingPoiseDamage"),
-                Operation = EAttributeModifierOp.Add,
-                Magnitude = GameplayModifierMagnitude.SetByCaller(DataPoiseDamage)
-            });
-            ge.GameplayCues.Add(HitCue);
-            return ge;
-        }
-
-        private AttackDefinition MakeAttack(float damage, float poiseDamage)
-        {
-            var attack = ScriptableObject.CreateInstance<AttackDefinition>();
-            attack.TargetEffect = _damageGE;
-            attack.SetByCallerMagnitudes.Add(new SetByCallerMagnitude { Tag = DataDamage, Value = damage });
-            attack.SetByCallerMagnitudes.Add(new SetByCallerMagnitude { Tag = DataPoiseDamage, Value = poiseDamage });
-            return attack;
-        }
-
-        private GameplayEffect MakeStaminaCostGE(float amount)
-        {
-            var ge = Track(ScriptableObject.CreateInstance<GameplayEffect>());
-            ge.DurationType = EGameplayEffectDurationType.Instant;
-            ge.Modifiers.Add(new GameplayModifierInfo
-            {
-                Attribute = GameplayAttribute.From<AS_Stamina>("Stamina"),
-                Operation = EAttributeModifierOp.Add,
-                Magnitude = GameplayModifierMagnitude.ScalableFloat(amount)
-            });
-            return ge;
-        }
-
-        // 叠层 buff：每层 +10 MaxHealth，限时 5s、按目标合并、上限 5 层、再施加刷新时长
-        private GameplayEffect MakePowerBuff()
-        {
-            var ge = ScriptableObject.CreateInstance<GameplayEffect>();
-            ge.name = "Power";
-            ge.DurationType = EGameplayEffectDurationType.HasDuration;
-            ge.Duration = 5f;
-            ge.StackingType = EGameplayEffectStackingType.AggregateByTarget;
-            ge.StackLimitCount = 5;
-            ge.Modifiers.Add(new GameplayModifierInfo
-            {
-                Attribute = GameplayAttribute.From<AS_Health>("MaxHealth"),
-                Operation = EAttributeModifierOp.Add,
-                Magnitude = GameplayModifierMagnitude.ScalableFloat(10f)
-            });
-            return ge;
-        }
-
-        // 单标签容器（给输入处理器 InputTags 用）
-        private static GameplayTagContainer TagSet(GameplayTag t)
-        {
-            var c = new GameplayTagContainer();
-            c.AddTag(t);
-            return c;
-        }
-
         // 造一把武器：子物体挂 WeaponComponent + 武器标签（装备时注入 owner ASC）
         private WeaponComponent MakeWeapon(Transform parent, string label, GameplayTag weaponTag)
         {
@@ -395,8 +262,6 @@ namespace GASDemo
             w.WeaponTags.AddTag(weaponTag);
             return w;
         }
-
-        private T Track<T>(T asset) where T : Object { _runtimeAssets.Add(asset); return asset; }
 
         // URP/标准 通用着色
         private static void SetColor(GameObject go, Color c) => SetColor(go.GetComponent<Renderer>(), c);

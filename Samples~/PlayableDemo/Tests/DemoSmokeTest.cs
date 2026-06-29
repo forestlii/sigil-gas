@@ -248,5 +248,62 @@ namespace Likeon.GAS.PlayTests
             Object.Destroy(host);
             yield return null;
         }
+
+        // ============ J) 数据驱动：DemoConfig 默认工厂产出完整且交叉引用接好 ============
+        [Test]
+        public void J_DemoConfig_CreateDefault_IsComplete()
+        {
+            var cfg = GASDemo.DemoConfig.CreateDefault();
+            Assert.IsNotNull(cfg.CombatInput, "CombatInput");
+            Assert.IsNotNull(cfg.VehicleInput, "VehicleInput");
+            Assert.IsNotNull(cfg.InteractionRules, "InteractionRules");
+            Assert.IsNotNull(cfg.MeleeAbility, "MeleeAbility");
+            Assert.IsNotNull(cfg.HeavyAbility, "HeavyAbility");
+            Assert.IsNotNull(cfg.RangedAbility, "RangedAbility");
+            Assert.IsNotNull(cfg.FocusAbility, "FocusAbility");
+            Assert.IsNotNull(cfg.LightAttack, "LightAttack");
+            Assert.IsNotNull(cfg.HeavyAttack, "HeavyAttack");
+            Assert.IsNotNull(cfg.Bullet, "Bullet");
+            Assert.IsNotNull(cfg.PowerBuff, "PowerBuff");
+            // 交叉引用接好
+            Assert.IsNotNull(cfg.LightAttack.TargetEffect, "LightAttack.TargetEffect");
+            Assert.IsNotNull(cfg.MeleeAbility.CostEffect, "MeleeAbility.CostEffect");
+            Assert.IsNotNull(cfg.Bullet.Attack, "Bullet.Attack");
+
+            foreach (var a in cfg.EnumerateSubAssets()) if (a != null) Object.DestroyImmediate(a);
+            Object.DestroyImmediate(cfg);
+        }
+
+        // ============ K) 数据驱动：指定 Config（非回退）也能正确构建并近战生效 ============
+        [UnityTest]
+        public IEnumerator K_AssignedConfig_BuildsAndMeleeWorks()
+        {
+            var host = new GameObject("DemoHost");
+            host.SetActive(false);                                 // 先停用，赶在 Awake 前赋 Config
+            var demo = host.AddComponent<GASDemo.GASDemo>();
+            demo.Config = GASDemo.DemoConfig.CreateDefault();      // 指定配置 → 走"用资产"路径（非回退）
+            host.SetActive(true);                                  // 此时 Awake 用 assigned config 构建
+            yield return null;
+            yield return new WaitForFixedUpdate();
+
+            Assert.IsNotNull(demo.PlayerASC, "应用 assigned config 构建出玩家");
+            Assert.AreSame(demo.Config, demo.ActiveConfig, "应使用 assigned config（非回退默认）");
+
+            var enemy = demo.Enemies[0];
+            var hp = enemy.GetAttributeSet<AS_Health>();
+            enemy.transform.position = new Vector3(0, 1, 1.2f);
+            yield return new WaitForFixedUpdate();
+
+            float before = hp.Health.CurrentValue;
+            demo.Controller.TryAttack();
+            yield return new WaitForSeconds(0.4f);
+            Assert.Less(hp.Health.CurrentValue, before, "用资产配置时近战仍应造成伤害");
+
+            var cfg = demo.Config;
+            Object.Destroy(host);
+            yield return null;
+            foreach (var a in cfg.EnumerateSubAssets()) if (a != null) Object.Destroy(a);
+            Object.Destroy(cfg);
+        }
     }
 }
