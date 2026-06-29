@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **`AbilityInteractionRules.AbilityTagsToBlock` is now enforced.** Previously the field was collected but never read, so "block other abilities from activating while this one is active" had no effect (only `AbilityTagsToCancel` worked). An active ability now contributes its block tags to a reference-counted set on the ASC; any ability whose `AbilityTags` match is denied activation until every blocking source ends. New API: `AbilitySystemComponent.AreAbilityTagsBlocked(...)` and `AbilityInteractionRules.AddBaseRule(...)` / `AddConditionalRules(...)` for building rules in code. Covered by 6 new PlayMode tests (`AbilityBlockTagsPlayTests`). Test totals: **EditMode 21 + PlayMode 95 = 116**.
+
 ### Changed
 
 - **Playable Demo upgraded to a feature showcase**. The bundled sample now puts several combat lines in one runtime-built scene — melee, **ranged projectiles**, **lock-on switching between 3 enemies**, **poise/stagger**, and **stacking buffs** — with a self-explanatory on-screen HUD rendered purely from the framework's observability events. No framework code changed; the demo simply exercises features that were already implemented and tested. New demo scripts: `DemoRanged` / `DemoRangedAbility` / `DemoHUD`.

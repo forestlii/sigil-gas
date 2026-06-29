@@ -82,10 +82,13 @@ namespace Likeon.GAS
                 foreach (var t in blocked) if (ASC.HasMatchingGameplayTag(t)) return false;
             }
 
-            // 3) 激活组互斥
+            // 3) 被其它激活中技能的 AbilityTagsToBlock 阻挡
+            if (ASC.AreAbilityTagsBlocked(GetAbilityTags())) return false;
+
+            // 4) 激活组互斥
             if (ASC.IsActivationPolicyBlocked(ActivationPolicy)) return false;
 
-            // 4) 消耗与冷却
+            // 5) 消耗与冷却
             if (!CheckCost()) return false;
             if (!CheckCooldown()) return false;
 

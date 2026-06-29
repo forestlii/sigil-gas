@@ -166,8 +166,8 @@ namespace Likeon.GAS
             if (ability.ActivationPolicy != EAbilityActivationPolicy.Parallel)
                 CancelAbilitiesWithPolicy(EAbilityActivationPolicy.Replaceable, ability);
 
-            // 按 TagRelationship 取消互斥技能
-            CancelConflictingAbilities(ability);
+            // 按 TagRelationship 取消互斥技能 + 登记本技能激活期间阻挡的技能标签
+            ApplyAbilityBlockAndCancelTags(ability);
 
             ability.Activate(triggerData);
             OnAbilityActivated?.Invoke(ability);
@@ -175,7 +175,10 @@ namespace Likeon.GAS
         }
 
         internal void NotifyAbilityEnded(GameplayAbility ability, bool wasCancelled)
-            => OnAbilityEnded?.Invoke(ability, wasCancelled);
+        {
+            RemoveBlockedAbilityTags(ability); // 撤销本技能激活期间贡献的"阻挡其它技能激活"标签
+            OnAbilityEnded?.Invoke(ability, wasCancelled);
+        }
 
         // ---- 激活组互斥 ----
         private readonly List<GameplayAbility>[] _policyBuckets =
@@ -239,23 +242,70 @@ namespace Likeon.GAS
             InteractionRules.CollectActivationRequirements(OwnedTagsSnapshot(), abilityTags, outRequired, outBlocked);
         }
 
-        // 按关系映射取消互斥技能
+        // 按关系映射取消互斥技能 + 登记激活期间阻挡的技能标签
         private readonly GameplayTagContainer _blockTagsCache = new GameplayTagContainer();
         private readonly GameplayTagContainer _cancelTagsCache = new GameplayTagContainer();
-        private void CancelConflictingAbilities(GameplayAbility ability)
+
+        // "激活期间阻挡其它技能激活"标签的引用计数累加器：
+        // 多个激活中技能可能各自贡献同一标签，靠计数避免一方结束误清。
+        // _blockedAbilityTagsView 与计数同步，是个 GameplayTagContainer，复用 HasAny 做层级匹配（与 cancel 路径一致）。
+        private readonly Dictionary<GameplayTag, int> _blockedAbilityTagCounts = new Dictionary<GameplayTag, int>();
+        private readonly GameplayTagContainer _blockedAbilityTagsView = new GameplayTagContainer();
+        // 每个激活技能此刻贡献了哪些 block 标签 —— 结束时按原样撤销（条件规则在激活/结束之间可能变化，故记录而非重算）。
+        private readonly Dictionary<GameplayAbility, List<GameplayTag>> _appliedBlockTags = new Dictionary<GameplayAbility, List<GameplayTag>>();
+
+        /// <summary>待激活技能的身份标签是否被某个激活中技能的 AbilityTagsToBlock 命中（层级匹配，与 cancel 同语义）。</summary>
+        public bool AreAbilityTagsBlocked(GameplayTagContainer abilityTags)
+            => !_blockedAbilityTagsView.IsEmpty && _blockedAbilityTagsView.HasAny(abilityTags);
+
+        private void ApplyAbilityBlockAndCancelTags(GameplayAbility ability)
         {
             if (InteractionRules == null) return;
             _blockTagsCache.Clear();
             _cancelTagsCache.Clear();
             InteractionRules.CollectBlockedAndCanceledTags(OwnedTagsSnapshot(), ability.GetAbilityTags(), _blockTagsCache, _cancelTagsCache);
-            if (_cancelTagsCache.IsEmpty) return;
 
-            var snapshot = new List<GameplayAbilitySpec>(_abilities.Values);
-            foreach (var spec in snapshot)
+            // 取消：打断已激活、命中 cancel 标签的技能
+            if (!_cancelTagsCache.IsEmpty)
             {
-                if (spec.Ability == ability || !spec.Ability.IsActive) continue;
-                if (_cancelTagsCache.HasAny(spec.Ability.GetAbilityTags()))
-                    spec.Ability.CancelAbility();
+                var snapshot = new List<GameplayAbilitySpec>(_abilities.Values);
+                foreach (var spec in snapshot)
+                {
+                    if (spec.Ability == ability || !spec.Ability.IsActive) continue;
+                    if (_cancelTagsCache.HasAny(spec.Ability.GetAbilityTags()))
+                        spec.Ability.CancelAbility();
+                }
+            }
+
+            // 阻挡：登记本技能激活期间要阻挡的技能标签（CanActivate 据此拒绝后续激活，技能结束时撤销）
+            if (!_blockTagsCache.IsEmpty)
+                AddBlockedAbilityTags(ability, _blockTagsCache);
+        }
+
+        private void AddBlockedAbilityTags(GameplayAbility ability, GameplayTagContainer tags)
+        {
+            List<GameplayTag> applied = null;
+            foreach (var t in tags)
+            {
+                if (!t.IsValid) continue;
+                _blockedAbilityTagCounts.TryGetValue(t, out int c);
+                if (c == 0) _blockedAbilityTagsView.AddTag(t);
+                _blockedAbilityTagCounts[t] = c + 1;
+                (applied ??= new List<GameplayTag>()).Add(t);
+            }
+            if (applied != null) _appliedBlockTags[ability] = applied;
+        }
+
+        private void RemoveBlockedAbilityTags(GameplayAbility ability)
+        {
+            if (!_appliedBlockTags.TryGetValue(ability, out var applied)) return;
+            _appliedBlockTags.Remove(ability);
+            foreach (var t in applied)
+            {
+                if (!_blockedAbilityTagCounts.TryGetValue(t, out int c)) continue;
+                c -= 1;
+                if (c <= 0) { _blockedAbilityTagCounts.Remove(t); _blockedAbilityTagsView.RemoveTag(t); }
+                else _blockedAbilityTagCounts[t] = c;
             }
         }
 

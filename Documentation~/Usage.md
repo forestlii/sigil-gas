@@ -307,7 +307,7 @@ A new exclusive ability automatically interrupts the Replaceable group when it a
 asc.SetInteractionRules(myRules);   // or set the asc.InteractionRules field directly
 ```
 
-> Implementation status (single-player build): `AbilityTagsToCancel` and the (rule/ability) `ActivationRequiredTags`/`ActivationBlockedTags` are enforced during activation; the `AbilityTagsToBlock` field is collected but not yet enforced ("block other abilities while active" is best expressed with tags: ability A grants `State.Casting` via `ActivationOwnedLooseTags`, and ability B lists `State.Casting` in its `ActivationBlockedTags`).
+> Implementation status (single-player build): `AbilityTagsToBlock`, `AbilityTagsToCancel` and the (rule/ability) `ActivationRequiredTags`/`ActivationBlockedTags` are all enforced during activation. While an ability is active, the ability tags it contributes via `AbilityTagsToBlock` prevent any other ability whose `AbilityTags` match those tags from activating; the block is reference-counted across all active sources and lifts when they end (`AbilitySystemComponent.AreAbilityTagsBlocked(...)` exposes the live set). This differs from `AbilityTagsToCancel`, which interrupts already-active abilities rather than gating future activations.
 
 ---
 

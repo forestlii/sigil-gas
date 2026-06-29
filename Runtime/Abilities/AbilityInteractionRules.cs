@@ -46,6 +46,12 @@ namespace Likeon.GAS
         [Header("条件规则（按角色当前标签查询生效）")]
         [SerializeField] private List<ConditionalAbilityTagRules> conditionalRules = new List<ConditionalAbilityTagRules>();
 
+        /// <summary>运行时追加一条基础规则（始终生效）。便于代码构造规则，亦供测试使用。</summary>
+        public void AddBaseRule(AbilityTagRule rule) => baseRules.Add(rule);
+
+        /// <summary>运行时追加一组条件规则（满足查询时才生效）。</summary>
+        public void AddConditionalRules(ConditionalAbilityTagRules group) => conditionalRules.Add(group);
+
         /// <summary>收集本技能要 block / cancel 的标签（叠加满足查询的条件规则）。</summary>
         public void CollectBlockedAndCanceledTags(GameplayTagContainer actorTags, GameplayTagContainer abilityTags,
             GameplayTagContainer outBlock, GameplayTagContainer outCancel)

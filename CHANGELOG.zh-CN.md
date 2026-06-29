@@ -7,6 +7,10 @@
 
 ## [未发布]
 
+### 修复
+
+- **`AbilityInteractionRules.AbilityTagsToBlock` 现已强制生效**。此前该字段被收集却从未被读取，"激活期间阻挡其它技能激活"实际不生效（只有 `AbilityTagsToCancel` 有效）。现在激活中的技能会把它的 block 标签贡献到 ASC 上一个**引用计数**的集合；任何 `AbilityTags` 命中的技能在所有阻挡来源结束前都被拒绝激活。新增 API：`AbilitySystemComponent.AreAbilityTagsBlocked(...)`，以及 `AbilityInteractionRules.AddBaseRule(...)` / `AddConditionalRules(...)`（便于用代码构造规则）。由 6 个新增 PlayMode 测试覆盖（`AbilityBlockTagsPlayTests`）。测试总数：**EditMode 21 + PlayMode 95 = 116**。
+
 ### 变更
 
 - **可玩 Demo 升级为功能展示场**。示例从"只演示近战"升级为多条战斗线同场展示（近战 / 远程子弹 / 3 敌人锁定切换 / 削韧破防 / buff 叠层）+ 自解释 HUD（全靠订阅可观测性事件渲染）。框架零改动，仅把已实现并测试过的功能调用出来。新增 demo 脚本 `DemoRanged` / `DemoRangedAbility` / `DemoHUD`。
