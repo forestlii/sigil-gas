@@ -95,6 +95,17 @@ stacking buffs**, with a self-explanatory on-screen HUD that renders purely from
 observability events. Controls: WASD move · Shift sprint · mouse look · Space/LMB melee · RMB/F ranged ·
 Tab lock-on · Q/E switch target · R stack a buff.
 
+## Configuration (data-driven)
+
+Sigil is **data-driven**: you configure behaviour by authoring **ScriptableObject assets** in the Inspector — no code — so designers can tune it. The main config assets (all under *Create → Likeon → GAS → …*):
+
+- **Input dispatch & mutual exclusion** — `InputControlSetup`: a list of `InputProcessor`s mapping an `InputTag` to an ability, with `ExecutionType = FirstOnly` for "one key, one ability" polymorphism (the first processor whose `StateQuery` passes wins). Bind physical keys → `InputTag`s with a `UnityInputBinder`. Push/pop setups to swap whole schemes (vehicle / UI).
+- **Ability mutual exclusion** — `AbilityInteractionRules`: data-driven block / cancel / activation-gating between abilities (state-aware via tag queries). Plus each `GameplayAbility` has its own `ActivationGroup` / `ActivationRequiredTags` / `ActivationBlockedTags`.
+- **Abilities / effects / attacks** — `GameplayAbility`, `GameplayEffect` (incl. stacking), `AttackDefinition`, `BulletDefinition`, `AbilityLoadout`.
+
+→ Step-by-step configuration (incl. "one key → different ability per weapon") is in the [usage guide](Documentation~/Usage.md) §9 (input) and §7.5 (ability rules).
+→ **A complete worked example ships with the Playable Demo**: import it and open `DemoConfig.asset` to inspect/copy fully-wired input setups, interaction rules, abilities and effects.
+
 ## Quick start
 
 ```csharp

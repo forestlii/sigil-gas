@@ -308,6 +308,8 @@ asc.SetInteractionRules(myRules);   // 或直接设 asc.InteractionRules 字段
 
 > 实现现状（单机版）：`AbilityTagsToBlock`、`AbilityTagsToCancel` 与（规则/技能上的）`ActivationRequiredTags`/`ActivationBlockedTags` 均已在激活流程中强制生效。技能激活期间，它经 `AbilityTagsToBlock` 贡献的标签会阻止任何 `AbilityTags` 命中这些标签的技能激活；该阻挡按所有激活中来源**引用计数**、来源全部结束时解除（`AbilitySystemComponent.AreAbilityTagsBlocked(...)` 暴露当前阻挡集）。这与 `AbilityTagsToCancel` 不同——后者是打断已激活技能，而非门控后续激活。
 
+> 📦 **完整范例**：**Playable Demo** 的 `DemoConfig.asset` 里有一份配好的 `AbilityInteractionRules`——持续型*专注*技能 block 近战（`AbilityTagsToBlock`）、开火远程 cancel 专注（`AbilityTagsToCancel`）。导入示例打开即可看/抄。
+
 ---
 
 ## 8. AbilitySystemComponent 速查
@@ -399,6 +401,17 @@ inputSys.ReceiveInput(
 | [1] 下蹲（排后） | InputProcessor_ActivateAbilityByTag | （空） | `Ability.Crouch` |
 
 冲刺中按键 → [0] 状态条件通过 → 滑铲，`FirstOnly` 返回；非冲刺 → [0] 不通过 → [1] 下蹲。
+
+**同一套路、按武器门控（一个近战键 → 不同武器不同技能）**——`StateQuery` 改查武器标签即可。`WeaponComponent` 装备时把 `Weapon.Sword` / `Weapon.Axe` 注入 ASC，于是：
+
+| 顺序 | InputTags | StateQuery | AbilityTag |
+|---|---|---|---|
+| [0] | `InputTag.Melee` | `MatchAllTags(Weapon.Sword)` | `Ability.MeleeAttack`（轻击） |
+| [1] | `InputTag.Melee` | `MatchAllTags(Weapon.Axe)` | `Ability.HeavyAttack`（重击） |
+
+装备剑 → 只有 [0] 通过 → 轻击；换斧 → 只有 [1] 通过 → 重击。这就是"武器 → 不同技能"，纯靠数据配。
+
+> 📦 **想看一套完整能跑的配置？** 导入 **Playable Demo** 示例，打开它的 `DemoConfig.asset`——里面有接好线的 `InputControlSetup`（正是这套近战多态 + 远程 + 专注，外加一套载具键位），可在 Inspector 里看、抄、改。
 
 #### 切换整套键位（载具 / 瞄准 / UI）
 

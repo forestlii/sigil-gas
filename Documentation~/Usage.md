@@ -309,6 +309,8 @@ asc.SetInteractionRules(myRules);   // or set the asc.InteractionRules field dir
 
 > Implementation status (single-player build): `AbilityTagsToBlock`, `AbilityTagsToCancel` and the (rule/ability) `ActivationRequiredTags`/`ActivationBlockedTags` are all enforced during activation. While an ability is active, the ability tags it contributes via `AbilityTagsToBlock` prevent any other ability whose `AbilityTags` match those tags from activating; the block is reference-counted across all active sources and lifts when they end (`AbilitySystemComponent.AreAbilityTagsBlocked(...)` exposes the live set). This differs from `AbilityTagsToCancel`, which interrupts already-active abilities rather than gating future activations.
 
+> 📦 **Worked example**: the **Playable Demo**'s `DemoConfig.asset` contains a configured `AbilityInteractionRules` — a channeled *Focus* ability blocks melee (`AbilityTagsToBlock`), and firing ranged cancels Focus (`AbilityTagsToCancel`). Import the sample and open it to inspect/copy.
+
 ---
 
 ## 8. AbilitySystemComponent cheat sheet
@@ -400,6 +402,17 @@ At runtime: press the key → UnityInputBinder dispatches `InputTag.Crouch` → 
 | [1] crouch (second) | InputProcessor_ActivateAbilityByTag | (empty) | `Ability.Crouch` |
 
 Pressing the key while sprinting → [0]'s state condition passes → slide, and `FirstOnly` returns; not sprinting → [0] fails → [1] crouch.
+
+**Same pattern, weapon-gated (one melee key → a different ability per weapon)** — the `StateQuery` just checks a weapon tag instead of a movement tag. A `WeaponComponent` injects `Weapon.Sword` / `Weapon.Axe` onto the ASC when equipped, so:
+
+| Order | InputTags | StateQuery | AbilityTag |
+|---|---|---|---|
+| [0] | `InputTag.Melee` | `MatchAllTags(Weapon.Sword)` | `Ability.MeleeAttack` (light slash) |
+| [1] | `InputTag.Melee` | `MatchAllTags(Weapon.Axe)` | `Ability.HeavyAttack` (heavy hit) |
+
+Equip the sword → only [0] passes → light slash; switch to the axe → only [1] passes → heavy hit. That's "weapon → different abilities", configured purely as data.
+
+> 📦 **Want to see a complete, working configuration?** Import the **Playable Demo** sample and open its `DemoConfig.asset` — it has fully-wired `InputControlSetup`s (this exact melee polymorphism + ranged + focus, plus a vehicle scheme) you can inspect, copy, and tweak in the Inspector.
 
 #### Swapping the whole control scheme (vehicle / aiming / UI)
 

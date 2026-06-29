@@ -87,6 +87,17 @@ Sigil **只做逻辑、不绑 UI**：它对外广播变更事件，让*任意* U
 渲染的自解释 HUD。操作：WASD 移动 · Shift 冲刺 · 鼠标看 · 空格/左键 近战 · 右键/F 远程 ·
 Tab 锁定 · Q/E 切目标 · R 叠 buff。
 
+## 配置（数据驱动）
+
+Sigil 是**数据驱动**的：行为靠在 Inspector 里编辑 **ScriptableObject 资产**来配——不写代码，策划即可调。主要配置资产（都在 *Create → Likeon → GAS → …*）：
+
+- **输入分发 & 互斥** — `InputControlSetup`：一组 `InputProcessor` 把 `InputTag` 映射到技能，`ExecutionType = FirstOnly` 实现"一键一技能"多态（第一个 `StateQuery` 通过的处理器胜出）。用 `UnityInputBinder` 把物理键 → `InputTag`。push/pop 控制集可整套切换键位（载具 / UI）。
+- **技能互斥** — `AbilityInteractionRules`：数据驱动的技能间 block / cancel / 激活准入（按标签查询、状态感知）。另外每个 `GameplayAbility` 自身有 `ActivationGroup` / `ActivationRequiredTags` / `ActivationBlockedTags`。
+- **技能 / 效果 / 攻击** — `GameplayAbility`、`GameplayEffect`（含叠层）、`AttackDefinition`、`BulletDefinition`、`AbilityLoadout`。
+
+→ 分步配置（含"一个键 → 不同武器不同技能"）见[使用文档](Documentation~/Usage.zh-CN.md) §9（输入）与 §7.5（技能规则）。
+→ **Playable Demo 自带一套完整范例**：导入它、打开 `DemoConfig.asset`，即可看/抄接好线的输入控制集、交互规则、技能与效果。
+
 ## 快速上手
 
 ```csharp
