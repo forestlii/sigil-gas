@@ -10,7 +10,7 @@ namespace Likeon.GAS.Editor
 {
     internal static class SigilDocMenu
     {
-        private const string DocRelPath = "Documentation~/使用文档.md";
+        private const string DocRelPath = "Documentation~/Usage.md";
 
         [MenuItem("Likeon/GAS/Documentation", priority = 1)]
         public static void OpenDocumentation()
@@ -30,7 +30,7 @@ namespace Likeon.GAS.Editor
             // 兜底：找不到随包文档时给出提示（README / CHANGELOG 也含说明）。
             EditorUtility.DisplayDialog(
                 "Sigil 文档 Documentation",
-                "未找到随包文档 Documentation~/使用文档.md。\n包内 README.md 与 CHANGELOG.md 也含使用说明。",
+                "未找到随包文档 Documentation~/Usage.md（中文见 Usage.zh-CN.md）。\n包内 README.md 与 CHANGELOG.md 也含使用说明。",
                 "OK");
         }
     }

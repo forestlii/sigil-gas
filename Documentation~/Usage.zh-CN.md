@@ -1,5 +1,7 @@
 # Sigil 使用文档
 
+[English](Usage.md) | [简体中文](Usage.zh-CN.md)
+
 **Sigil — Action Combat & Ability Framework for Unity (GAS-style)**　by Likeon
 
 一套面向 Unity 的动作战斗与能力框架，核心思想是 GameplayTag 驱动的状态总线架构（GAS 风格）。
@@ -439,7 +441,7 @@ public void EndAttackTrace();
 
 配套包提供：`MovementSystemComponent` / `CharacterMovementSystemComponent`（标签驱动的 CharacterController 移动状态机，状态可镜像到 ASC，驱动"冲刺→滑铲"这类[输入多态](#9-输入分发状态驱动按键多态)）、`LocomotionAnimationDriver` + `LocomotionMath`（运动动画数据层 → Animator 参数）、`MovementDefinition` / `MovementSettings` / `MovementTags`、示例分层 Animator Controller 生成器。
 
-👉 **完整用法见配套包的使用文档**：`com.likeon.gas.movement/Documentation~/使用文档.md`。
+👉 **完整用法见配套包的使用文档**：`com.likeon.gas.movement/Documentation~/Usage.zh-CN.md`。
 
 ---
 
