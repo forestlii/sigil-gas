@@ -29,9 +29,9 @@ namespace Likeon.GAS
         [Header("授予时常驻施加的效果（如初始化属性的 GE）")]
         public List<GameplayEffect> GrantedEffects = new List<GameplayEffect>();
 
-        [Header("添加的属性集类型全名（如 Likeon.GAS.AS_Health）")]
-        [Tooltip("运行时按类型名 Activator 创建并加入 ASC")]
-        public List<string> GrantedAttributeSetTypes = new List<string>();
+        [Header("添加的属性集（强类型；Inspector 选具体子类，如 AS_Health）")]
+        [Tooltip("对齐 UE TSoftClassPtr<UAttributeSet> 强类型引用；授予时按所选类型新建实例加入 ASC（比字符串类型名更安全：重命名不断链、Inspector 有类型选单）")]
+        [SerializeReference] public List<AttributeSet> GrantedAttributeSets = new List<AttributeSet>();
     }
 
     /// <summary>一次技能装载授予产出的句柄集合，用于整批撤销。</summary>

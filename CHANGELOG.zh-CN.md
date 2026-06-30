@@ -24,6 +24,7 @@
 ### 变更
 
 - **BREAKING — 激活组改名**。枚举 `EAbilityActivationPolicy` → `EAbilityActivationGroup`，值 `Parallel` / `Replaceable` / `Blocking` → `Independent` / `ExclusiveReplaceable` / `ExclusiveBlocking`；字段 `GameplayAbility.ActivationPolicy` → `ActivationGroup`；ASC 方法 `IsActivationPolicyBlocked` / `RegisterAbilityPolicy` / `UnregisterAbilityPolicy` / `CancelAbilitiesWithPolicy` → `…ActivationGroup`。让**命名**与底层概念一致（这些方法本就叫 `ChangeActivationGroup`）。现有技能资产经 `[FormerlySerializedAs]` 保留取值，枚举 int 顺序不变。
+- **BREAKING — `AbilityLoadout` 属性集改强类型**。`GrantedAttributeSetTypes`（`List<string>` 类型名 + 反射解析）改为 `[SerializeReference] List<AttributeSet> GrantedAttributeSets`——Inspector 选具体属性集子类，授予时按所选类型给每个 ASC 新建独立实例。重命名类不再静默断链、不再有类型名字符串。原先用字符串列表配的 loadout 资产需重新选一遍属性集。
 - **BREAKING — `OnAttributeChanged` 现携带来源**。事件签名从 `Action<GameplayAttribute, float, float>` 改为 `Action<AttributeChangeData>`，`AttributeChangeData` 含 `Attribute` / `OldValue` / `NewValue` / `Source`（一个 `GameplayEffectContext`——谁/哪个效果造成的变更；无单一来源时为 null，如移除或抑制翻转）。伤害/治疗路径会把攻击者上下文透传过去，飘血字 UI 现在能知道"谁打了谁"。
 
 ### 修复

@@ -286,7 +286,7 @@ asc.ClearAbility(h); // 移除
 
 ### 7.3 批量授予 AbilityLoadout
 
-`AbilityLoadout` 资产（*Create → Likeon → GAS → Ability Loadout*）打包"技能 + 常驻效果 + 属性集类型"，一次授予：
+`AbilityLoadout` 资产（*Create → Likeon → GAS → Ability Loadout*）打包"技能 + 常驻效果 + 属性集（强类型，Inspector 选具体子类）"，一次授予：
 
 ```csharp
 var handles = asc.GrantLoadout(defaultLoadout); // 返回 GrantedAbilityHandles，可整批回收

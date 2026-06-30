@@ -70,7 +70,7 @@ namespace Likeon.GAS.Tests
             });
 
             var loadout = ScriptableObject.CreateInstance<AbilityLoadout>();
-            loadout.GrantedAttributeSetTypes.Add(typeof(AS_Health).FullName);
+            loadout.GrantedAttributeSets.Add(new AS_Health());
             loadout.GrantedEffects.Add(initGe);
 
             asc.GrantLoadout(loadout);

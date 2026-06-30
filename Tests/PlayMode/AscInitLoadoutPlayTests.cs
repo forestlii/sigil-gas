@@ -18,7 +18,7 @@ namespace Likeon.GAS.PlayTests
             var asc = go.AddComponent<AbilitySystemComponent>();
 
             var loadout = ScriptableObject.CreateInstance<AbilityLoadout>();
-            loadout.GrantedAttributeSetTypes.Add(typeof(AS_Health).FullName);
+            loadout.GrantedAttributeSets.Add(new AS_Health());
             asc.InitialLoadouts.Add(loadout);
 
             go.SetActive(true); // 触发 Awake → 自动 GrantLoadout

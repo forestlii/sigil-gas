@@ -287,7 +287,7 @@ asc.ClearAbility(h); // remove
 
 ### 7.3 Batch grant with AbilityLoadout
 
-An `AbilityLoadout` asset (*Create → Likeon → GAS → Ability Loadout*) bundles "abilities + persistent effects + attribute-set types" for a single grant:
+An `AbilityLoadout` asset (*Create → Likeon → GAS → Ability Loadout*) bundles "abilities + persistent effects + attribute sets (typed, pick the concrete subclass in the Inspector)" for a single grant:
 
 ```csharp
 var handles = asc.GrantLoadout(defaultLoadout); // returns GrantedAbilityHandles, revocable as a batch

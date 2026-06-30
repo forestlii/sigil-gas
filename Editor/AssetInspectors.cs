@@ -70,7 +70,7 @@ namespace Likeon.GAS.Editor
             var set = (AbilityLoadout)target;
             int abilities = set.GrantedAbilities != null ? set.GrantedAbilities.Count : 0;
             int effects = set.GrantedEffects != null ? set.GrantedEffects.Count : 0;
-            int attrSets = set.GrantedAttributeSetTypes != null ? set.GrantedAttributeSetTypes.Count : 0;
+            int attrSets = set.GrantedAttributeSets != null ? set.GrantedAttributeSets.Count : 0;
             EditorGUILayout.HelpBox($"Ability Set — 技能 {abilities} · 效果 {effects} · 属性集 {attrSets}", MessageType.None);
 
             DrawDefaultInspector();

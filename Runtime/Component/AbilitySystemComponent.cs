@@ -733,17 +733,15 @@ namespace Likeon.GAS
             var handles = new GrantedAbilityHandles();
             if (set == null) return handles;
 
-            // 属性集
-            foreach (var typeName in set.GrantedAttributeSetTypes)
+            // 属性集（强类型引用）：按所选模板的实际类型新建独立实例加入本 ASC
+            foreach (var template in set.GrantedAttributeSets)
             {
-                if (string.IsNullOrEmpty(typeName)) continue;
-                var type = Type.GetType(typeName) ?? FindTypeByName(typeName);
-                if (type != null && Activator.CreateInstance(type) is AttributeSet attrSet)
+                if (template == null) continue;
+                if (Activator.CreateInstance(template.GetType()) is AttributeSet attrSet)
                 {
                     AddAttributeSet(attrSet);
                     handles.AddedAttributeSets.Add(attrSet);
                 }
-                else Debug.LogWarning($"[GAS] 找不到属性集类型: {typeName}");
             }
 
             // 常驻效果（含属性初始化 GE）：按 attributeInitializeLevel 施加（曲线表 magnitude 据此查值）
@@ -762,16 +760,6 @@ namespace Likeon.GAS
             }
 
             return handles;
-        }
-
-        private static Type FindTypeByName(string fullName)
-        {
-            foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
-            {
-                var t = asm.GetType(fullName);
-                if (t != null) return t;
-            }
-            return null;
         }
 
         // ===================== 游戏事件 GameplayEvent =====================
