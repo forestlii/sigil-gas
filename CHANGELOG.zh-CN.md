@@ -7,6 +7,8 @@
 
 ## [未发布]
 
+## [0.4.0] - 2026-07-01
+
 ### 新增
 
 - **模块化额外消耗**（`AbilityCost`）。技能现在可在单一的属性消耗 `CostEffect` 之外，挂一组可插拔的**非属性**消耗（弹药、充能、自定义资源）。每个 `AbilityCost` 是 `ScriptableObject`，带 `CheckCost` / `ApplyCost` 与 `OnlyApplyCostOnHit` 开关；激活要求**所有**消耗都买得起，`CommitAbility` 扣"非命中"的那些，命中后由 `GameplayAbility.ApplyOnHitCosts()` 扣"仅命中"的那些。消耗随每个被授予的技能实例克隆（对齐 UE `Instanced`），充能状态不会在角色间串味。

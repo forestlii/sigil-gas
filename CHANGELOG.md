@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-07-01
+
 ### Added
 
 - **Modular additional ability costs** (`AbilityCost`). Abilities can now carry a list of pluggable, non-attribute costs (ammo, charges, custom resources) beyond the single attribute-based `CostEffect`. Each `AbilityCost` is a `ScriptableObject` with `CheckCost` / `ApplyCost` and an `OnlyApplyCostOnHit` flag; activation requires *all* costs to be affordable, `CommitAbility` pays the non-on-hit ones, and `GameplayAbility.ApplyOnHitCosts()` pays the on-hit ones once a hit is confirmed. Costs are cloned per granted ability instance (mirrors UE `Instanced` costs), so charge state never leaks between characters.
