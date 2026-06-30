@@ -19,7 +19,7 @@ namespace Likeon.GAS
         {
             public GameplayAbility Ability;
             [Min(1)] public int Level;
-            [Tooltip("授予时附加到该技能实例的动态标签（对齐 UE FGGA_AbilitySet_GameplayAbility.DynamicTags）；参与 TagRelationship 匹配，如标 Slot.Primary")]
+            [Tooltip("授予时附加到该技能实例的动态标签（对齐 UE 技能集授予项的动态标签）；参与 TagRelationship 匹配，如标 Slot.Primary")]
             public List<GameplayTag> DynamicTags;
         }
 

@@ -1,4 +1,4 @@
-// PlayMode 测试：ASC.Awake 自动应用 initialLoadouts（对齐 UE GGA_AbilitySystem.DefaultAbilitySet）。
+// PlayMode 测试：ASC.Awake 自动应用 initialLoadouts（对齐 UE 技能系统的 DefaultAbilitySet）。
 // 放 PlayMode：Awake 仅在播放时触发；用 SetActive(false)→配置→SetActive(true) 赶在 Awake 前填 loadout。
 using System.Collections;
 using NUnit.Framework;

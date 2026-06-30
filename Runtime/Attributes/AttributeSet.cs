@@ -6,7 +6,7 @@ using System.Collections.Generic;
 namespace Likeon.GAS
 {
     /// <summary>
-    /// 属性变更通知载荷（对齐 UE FGGA_AttributeEvent：带来源信息）。
+    /// 属性变更通知载荷（对齐 UE 属性变更事件：带来源信息）。
     /// <see cref="Source"/> 携带"谁打的/哪个效果"（Instigator/EffectCauser/SourceASC/触发技能），
     /// 由聚合重算的来源效果填充；无单一来源的变更（移除/抑制翻转）时为 null。
     /// </summary>

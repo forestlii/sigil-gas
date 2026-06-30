@@ -14,7 +14,7 @@ namespace Likeon.GAS
     public class AbilitySystemComponent : MonoBehaviour
     {
         // ===================== 默认技能装载 Default Loadouts =====================
-        // 对应 UE GGA_AbilitySystem.DefaultAbilitySet（一组 AbilitySet）：每个 AbilityLoadout = 一组 属性集 + 技能 + 初始化效果。
+        // 对应 UE 技能系统的 DefaultAbilitySet（一组 AbilitySet）：每个 AbilityLoadout = 一组 属性集 + 技能 + 初始化效果。
         [Header("默认技能装载 Initial Loadouts")]
         [Tooltip("Inspector 配一组 AbilityLoadout（对齐 UE DefaultAbilitySet 复数）：每个装载一组 属性集 + 技能 + 初始化效果。Awake 时按序全部 GrantLoadout —— 角色的初始属性/技能在 prefab 即可配，无需代码 AddAttributeSet/GiveAbility。")]
         [SerializeField] private List<AbilityLoadout> initialLoadouts = new List<AbilityLoadout>();
@@ -74,7 +74,7 @@ namespace Likeon.GAS
         private readonly List<AttributeSet> _attributeSets = new List<AttributeSet>();
 
         /// <summary>属性当前值变化时触发（载 <see cref="AttributeChangeData"/>：属性/旧值/新值/来源）。UI/表现订阅。
-        /// 对齐 UE FGGA_AttributeEvent——来源效果可用时随事件带出"谁打的/哪个效果"，无单一来源时 Source=null。</summary>
+        /// 对齐 UE 属性变更事件——来源效果可用时随事件带出"谁打的/哪个效果"，无单一来源时 Source=null。</summary>
         public event Action<AttributeChangeData> OnAttributeChanged;
 
         public T AddAttributeSet<T>() where T : AttributeSet, new()
@@ -141,7 +141,7 @@ namespace Likeon.GAS
 
             var instance = UnityEngine.Object.Instantiate(abilityTemplate); // InstancedPerActor：每角色独立实例
             instance.hideFlags = HideFlags.HideAndDontSave;
-            // 授予时附加的动态标签（对齐 UE FGGA_AbilitySet_GameplayAbility.DynamicTags）：加到克隆实例的身份标签，参与 TagRelationship 匹配
+            // 授予时附加的动态标签（对齐 UE 技能集授予项的动态标签）：加到克隆实例的身份标签，参与 TagRelationship 匹配
             if (dynamicTags != null)
                 for (int i = 0; i < dynamicTags.Count; i++)
                     if (dynamicTags[i].IsValid && !instance.AbilityTags.Contains(dynamicTags[i]))
@@ -401,7 +401,7 @@ namespace Likeon.GAS
         /// <summary>叠层效果层数变化时触发（参数：效果, 旧层数, 新层数）。供 UI 刷新 ×N 角标。</summary>
         public event Action<ActiveGameplayEffect, int, int> OnActiveEffectStackChanged;
 
-        /// <summary>任意 GameplayEffect 结算（改基础值）后触发——组件级统一钩子（对齐 UE GGA_AttributeSystemComponent.OnPostGameplayEffectExecute）。
+        /// <summary>任意 GameplayEffect 结算（改基础值）后触发——组件级统一钩子（对齐 UE 属性系统组件的“GE 结算后”事件）。
         /// 供"想统一监听所有 GE 结算"的订阅方（伤害统计/AI 感知）用，无需逐 AttributeSet 重写。</summary>
         public event Action<GameplayEffectModCallbackData> OnPostGameplayEffectExecute;
 
@@ -808,7 +808,7 @@ namespace Likeon.GAS
             TickActiveEffects(dt);
         }
 
-        // 驱动激活中、且 EnableTick=true 的技能逐帧回调（对齐 UE GGA AbilityTick）。
+        // 驱动激活中、且 EnableTick=true 的技能逐帧回调（对齐 UE AbilityTick）。
         // 快照迭代：AbilityTick 内可能结束/授予技能而改动集合。
         private readonly List<GameplayAbility> _tickScratch = new List<GameplayAbility>();
         private void TickActiveAbilities(float dt)

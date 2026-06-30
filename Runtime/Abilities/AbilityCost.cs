@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Likeon. Licensed under the MIT License.
-// 模块化技能消耗：可插拔的非属性消耗（弹药、充能次数等），对齐 UE GGA AdditionalCosts。
+// 模块化技能消耗：可插拔的非属性消耗（弹药、充能次数等），对齐 UE AdditionalCosts。
 // 一个技能可挂多个 AbilityCost；激活前 CheckCost 全部要能支付，激活时 ApplyCost 扣除
 //（标了 OnlyApplyCostOnHit 的留到命中时由技能调 GameplayAbility.ApplyOnHitCosts 扣）。
 
@@ -13,7 +13,7 @@ namespace Likeon.GAS
     /// </summary>
     public abstract class AbilityCost : ScriptableObject
     {
-        [Tooltip("仅在技能成功命中时才扣（对齐 UE bOnlyApplyCostOnHit）。" +
+        [Tooltip("仅在技能成功命中时才扣（对齐 UE 仅命中才扣的开关）。" +
                  "false=激活即扣；true=由技能逻辑确认命中后调 ApplyOnHitCosts 扣。")]
         public bool OnlyApplyCostOnHit = false;
 

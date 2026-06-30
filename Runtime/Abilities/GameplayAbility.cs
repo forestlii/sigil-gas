@@ -30,7 +30,7 @@ namespace Likeon.GAS
         public EAbilityActivationGroup ActivationGroup = EAbilityActivationGroup.Independent;
 
         [Header("逐帧 Tick")]
-        [Tooltip("激活期间是否每帧回调 AbilityTick（对齐 UE GGA bEnableTick）。默认关，逐帧逻辑也可用 AbilityTask 协程。")]
+        [Tooltip("激活期间是否每帧回调 AbilityTick（对齐 UE 技能逐帧 tick）。默认关，逐帧逻辑也可用 AbilityTask 协程。")]
         public bool EnableTick = false;
 
         [Header("授予即激活 Passive / OnSpawn")]
@@ -53,7 +53,7 @@ namespace Likeon.GAS
         [Tooltip("冷却效果。其 GrantedTags 作为冷却标签")]
         public GameplayEffect CooldownEffect;
 
-        [Tooltip("额外消耗（对齐 UE GGA AdditionalCosts）：弹药/充能等非属性消耗，可多个；带 OnlyApplyCostOnHit 的仅命中才扣")]
+        [Tooltip("额外消耗（对齐 UE AdditionalCosts）：弹药/充能等非属性消耗，可多个；带 OnlyApplyCostOnHit 的仅命中才扣")]
         public List<AbilityCost> AdditionalCosts = new List<AbilityCost>();
 
         [Header("效果容器 Effect Containers")]
@@ -159,7 +159,7 @@ namespace Likeon.GAS
         }
 
         /// <summary>
-        /// 施加"仅命中才扣"的额外消耗（对齐 UE bOnlyApplyCostOnHit）。
+        /// 施加"仅命中才扣"的额外消耗（对齐 UE 仅命中才扣的开关）。
         /// 由技能逻辑在确认命中后调用（如近战 trace 命中、子弹击中目标）。
         /// </summary>
         public void ApplyOnHitCosts()
@@ -193,7 +193,7 @@ namespace Likeon.GAS
         protected abstract void OnActivateAbility(GameplayEventData triggerData);
 
         /// <summary>
-        /// 激活期间每帧回调（仅当 <see cref="EnableTick"/>=true 时由 ASC 驱动；对齐 UE GGA AbilityTick）。
+        /// 激活期间每帧回调（仅当 <see cref="EnableTick"/>=true 时由 ASC 驱动；对齐 UE AbilityTick）。
         /// 子类重写做逐帧逻辑（蓄力进度、持续扫描等）；不想用协程时的替代。
         /// </summary>
         public virtual void AbilityTick(float deltaTime) { }

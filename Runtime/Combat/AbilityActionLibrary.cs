@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 能力动作库：把若干 AbilityActionSet 按"能力标签"汇集成一个资产，
-// 对齐 UE GCS_AbilityActionSetSettings——给一个能力标签 + 施法者/目标状态，选出该技能此刻该播的动作。
+// 对齐 UE 能力动作集设置——给一个能力标签 + 施法者/目标状态，选出该技能此刻该播的动作。
 // （此前 AbilityActionSet 只有数据壳、无容器、无消费者；此库 + CombatSystemComponent.QueryAbilityActions 把它接入。）
 
 using System.Collections.Generic;

@@ -45,7 +45,7 @@ namespace Likeon.GAS
         public static bool IsHostile(GameObject source, GameObject target)
         {
             if (source == null || target == null) return false;
-            // 调试开关：禁用归属检查 → 跨队伍均可命中（对齐 UE bDisableAffiliationCheck）
+            // 调试开关：禁用归属检查 → 跨队伍均可命中（对齐 UE 跨队伍伤害调试开关）
             if (CombatSettings.Active.DisableAffiliationCheck) return true;
             var agent = source.GetComponentInParent<CombatTeamAgent>();
             if (agent == null) return true; // 无阵营组件默认都可命中

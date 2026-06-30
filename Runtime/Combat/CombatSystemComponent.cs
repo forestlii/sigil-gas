@@ -98,7 +98,7 @@ namespace Likeon.GAS
 
         /// <summary>
         /// 从动作库按能力标签 + 施法者/目标状态选出动作组，写入 <paramref name="outActions"/>。
-        /// 对齐 UE GCS_CombatInterface.QueryAbilityActions。库未配则返回 false。
+        /// 对齐 UE 战斗接口的 QueryAbilityActions。库未配则返回 false。
         /// </summary>
         public bool QueryAbilityActions(GameplayTagContainer abilityTags,
             GameplayTagContainer sourceTags, GameplayTagContainer targetTags, List<AbilityAction> outActions)

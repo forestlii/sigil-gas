@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Likeon. Licensed under the MIT License.
 // 战斗契约接口：参与战斗的角色/组件实现它，战斗系统据此查询目标/动作/武器/移动模式/死亡状态。
-// 对齐 UE GCS_CombatInterface（类型适配 Unity：AActor→GameObject、USceneComponent→Transform、FGameplayTag→GameplayTag）。
+// 对齐 UE 战斗接口（类型适配 Unity：AActor→GameObject、USceneComponent→Transform、FGameplayTag→GameplayTag）。
 // 这是"契约"——由宿主角色实现；GAS 核心通过 CombatInterface.Get(go) 取到它来查询。
 
 using System.Collections.Generic;
@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace Likeon.GAS
 {
-    /// <summary>战斗角色契约。宿主角色实现，战斗系统/技能据此查询。对齐 UE IGCS_CombatInterface。</summary>
+    /// <summary>战斗角色契约。宿主角色实现，战斗系统/技能据此查询。对齐 UE 战斗接口。</summary>
     public interface ICombatInterface
     {
         // ---- 目标 ----
@@ -21,7 +21,7 @@ namespace Likeon.GAS
         /// <summary>按能力标签 + 施法者/目标状态查询该播的动作（通常委托给 AbilityActionLibrary）。</summary>
         bool QueryAbilityActions(GameplayTagContainer abilityTags, GameplayTagContainer sourceTags,
             GameplayTagContainer targetTags, List<AbilityAction> outActions);
-        /// <summary>当前武器（对齐 UE GCS_GetWeapon / QueryWeapon）。</summary>
+        /// <summary>当前武器（对齐 UE 取武器 / QueryWeapon）。</summary>
         IWeapon GetCurrentWeapon();
 
         // ---- 输入 ----
