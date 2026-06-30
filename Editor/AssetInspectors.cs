@@ -37,7 +37,7 @@ namespace Likeon.GAS.Editor
         {
             var ab = (GameplayAbility)target;
             int tagCount = ab.AbilityTags != null ? ab.AbilityTags.Count : 0;
-            EditorGUILayout.HelpBox($"激活组: {ab.ActivationPolicy}    身份标签: {tagCount} 个", MessageType.None);
+            EditorGUILayout.HelpBox($"激活组: {ab.ActivationGroup}    身份标签: {tagCount} 个", MessageType.None);
             if (tagCount == 0)
                 EditorGUILayout.HelpBox("没有 AbilityTags：将无法用 TryActivateAbilitiesByTag / 标签关系来匹配本技能。", MessageType.Warning);
 

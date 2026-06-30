@@ -6,6 +6,28 @@ using System.Collections.Generic;
 namespace Likeon.GAS
 {
     /// <summary>
+    /// 属性变更通知载荷（对齐 UE FGGA_AttributeEvent：带来源信息）。
+    /// <see cref="Source"/> 携带"谁打的/哪个效果"（Instigator/EffectCauser/SourceASC/触发技能），
+    /// 由聚合重算的来源效果填充；无单一来源的变更（移除/抑制翻转）时为 null。
+    /// </summary>
+    public readonly struct AttributeChangeData
+    {
+        public readonly GameplayAttribute Attribute;
+        public readonly float OldValue;
+        public readonly float NewValue;
+        /// <summary>触发本次变更的效果上下文（可空——来源未知时为 null，对齐 UE"部分参数可能为 null"）。</summary>
+        public readonly GameplayEffectContext Source;
+
+        public AttributeChangeData(GameplayAttribute attribute, float oldValue, float newValue, GameplayEffectContext source)
+        {
+            Attribute = attribute;
+            OldValue = oldValue;
+            NewValue = newValue;
+            Source = source;
+        }
+    }
+
+    /// <summary>
     /// 属性集基类。子类（如 AS_Health）声明若干 <see cref="GameplayAttributeData"/> 字段，
     /// 在 <see cref="RegisterAttributes"/> 里登记名字，并可重写 GameplayEffect 结算钩子。
     /// 由 <see cref="AbilitySystemComponent"/> 持有（一个 ASC 可有多个集）。

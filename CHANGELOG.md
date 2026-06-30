@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **Modular additional ability costs** (`AbilityCost`). Abilities can now carry a list of pluggable, non-attribute costs (ammo, charges, custom resources) beyond the single attribute-based `CostEffect`. Each `AbilityCost` is a `ScriptableObject` with `CheckCost` / `ApplyCost` and an `OnlyApplyCostOnHit` flag; activation requires *all* costs to be affordable, `CommitAbility` pays the non-on-hit ones, and `GameplayAbility.ApplyOnHitCosts()` pays the on-hit ones once a hit is confirmed. Costs are cloned per granted ability instance (mirrors UE `Instanced` costs), so charge state never leaks between characters.
+- **Per-frame ability tick** (`GameplayAbility.AbilityTick(float)` gated by `EnableTick`). The ASC drives `AbilityTick` each frame for active abilities that opt in — an alternative to coroutine `AbilityTask`s for charge/scan loops.
+
+### Changed
+
+- **BREAKING — activation-group rename.** The enum `EAbilityActivationPolicy` → `EAbilityActivationGroup` and its values `Parallel` / `Replaceable` / `Blocking` → `Independent` / `ExclusiveReplaceable` / `ExclusiveBlocking`; the field `GameplayAbility.ActivationPolicy` → `ActivationGroup`; ASC methods `IsActivationPolicyBlocked` / `RegisterAbilityPolicy` / `UnregisterAbilityPolicy` / `CancelAbilitiesWithPolicy` → `…ActivationGroup`. This aligns the *naming* with the underlying concept (the methods were already called `ChangeActivationGroup`). Existing ability assets keep their values via `[FormerlySerializedAs]` and the enum's int order is unchanged.
+- **BREAKING — `OnAttributeChanged` now carries the source.** The event signature changed from `Action<GameplayAttribute, float, float>` to `Action<AttributeChangeData>`, where `AttributeChangeData` carries `Attribute` / `OldValue` / `NewValue` / `Source` (a `GameplayEffectContext` — who/what caused the change; null when there is no single source, e.g. removal or inhibition). Damage/healing paths thread the attacker's context through, so a floating-damage-number UI can now tell *who hit whom*.
+
 ### Fixed
 
 - **`AbilityInteractionRules.AbilityTagsToBlock` is now enforced.** Previously the field was collected but never read, so "block other abilities from activating while this one is active" had no effect (only `AbilityTagsToCancel` worked). An active ability now contributes its block tags to a reference-counted set on the ASC; any ability whose `AbilityTags` match is denied activation until every blocking source ends. New API: `AbilitySystemComponent.AreAbilityTagsBlocked(...)` and `AbilityInteractionRules.AddBaseRule(...)` / `AddConditionalRules(...)` for building rules in code. Covered by 6 new PlayMode tests (`AbilityBlockTagsPlayTests`). Test totals: **EditMode 21 + PlayMode 95 = 116**.

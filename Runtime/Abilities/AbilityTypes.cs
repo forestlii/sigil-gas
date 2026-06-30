@@ -8,17 +8,17 @@ using UnityEngine;
 namespace Likeon.GAS
 {
     /// <summary>
-    /// 技能激活策略——管理技能间的并行与独占打断。
+    /// 技能激活组——管理技能间的并行与独占打断（对齐 UE GGA AbilityActivationGroup 概念）。
     /// 例"冲刺中按键触发滑铲"会打断其它独占技能，就靠它。
     /// </summary>
-    public enum EAbilityActivationPolicy
+    public enum EAbilityActivationGroup
     {
-        /// <summary>并行运行，不与其它技能互斥。</summary>
-        Parallel,
-        /// <summary>独占，但可被其它独占技能取消并替换。</summary>
-        Replaceable,
-        /// <summary>独占，且阻止其它独占技能激活。</summary>
-        Blocking,
+        /// <summary>独立运行，不与其它技能互斥（UE Independent）。</summary>
+        Independent,
+        /// <summary>独占，但可被其它独占技能取消并替换（UE Exclusive_Replaceable）。</summary>
+        ExclusiveReplaceable,
+        /// <summary>独占，且阻止其它独占技能激活（UE Exclusive_Blocking）。</summary>
+        ExclusiveBlocking,
         MAX
     }
 

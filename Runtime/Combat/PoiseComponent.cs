@@ -67,15 +67,15 @@ namespace Likeon.GAS
         private AS_Poise ResolvePoise()
             => _poise ??= abilitySystem != null ? abilitySystem.GetAttributeSet<AS_Poise>() : null;
 
-        private void HandleAttributeChanged(GameplayAttribute attribute, float oldValue, float newValue)
+        private void HandleAttributeChanged(AttributeChangeData data)
         {
             var poise = ResolvePoise();
-            if (poise == null || attribute != poise.PoiseAttribute) return;
+            if (poise == null || data.Attribute != poise.PoiseAttribute) return;
 
             // 受削 → 重置恢复延迟
-            if (newValue < oldValue) _recoverDelayTimer = recoverDelay;
+            if (data.NewValue < data.OldValue) _recoverDelayTimer = recoverDelay;
             // 归零 → 破防
-            if (newValue <= 0f && !IsStaggered) Break();
+            if (data.NewValue <= 0f && !IsStaggered) Break();
         }
 
         private void Update()

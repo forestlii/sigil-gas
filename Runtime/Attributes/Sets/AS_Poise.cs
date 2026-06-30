@@ -63,7 +63,7 @@ namespace Likeon.GAS
                 float dmg = IncomingPoiseDamage.BaseValue;
                 IncomingPoiseDamage.Initialize(0f);
                 if (dmg > 0f)
-                    Owner.ApplyModToAttributeBase(PoiseAttribute, EAttributeModifierOp.Add, -dmg);
+                    Owner.ApplyModToAttributeBase(PoiseAttribute, EAttributeModifierOp.Add, -dmg, data.Spec?.Context);
             }
 
             // 对应源码：Poise 结算后 clamp 到 [0, MaxPoise]

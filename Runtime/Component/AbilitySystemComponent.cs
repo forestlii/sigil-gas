@@ -73,8 +73,9 @@ namespace Likeon.GAS
         // ===================== 属性集 Attribute Sets =====================
         private readonly List<AttributeSet> _attributeSets = new List<AttributeSet>();
 
-        /// <summary>(被改的属性, 旧值, 新值) —— 当前值变化时触发，UI/表现订阅。</summary>
-        public event Action<GameplayAttribute, float, float> OnAttributeChanged;
+        /// <summary>属性当前值变化时触发（载 <see cref="AttributeChangeData"/>：属性/旧值/新值/来源）。UI/表现订阅。
+        /// 对齐 UE FGGA_AttributeEvent——来源效果可用时随事件带出"谁打的/哪个效果"，无单一来源时 Source=null。</summary>
+        public event Action<AttributeChangeData> OnAttributeChanged;
 
         public T AddAttributeSet<T>() where T : AttributeSet, new()
         {
@@ -140,6 +141,15 @@ namespace Likeon.GAS
 
             var instance = UnityEngine.Object.Instantiate(abilityTemplate); // InstancedPerActor：每角色独立实例
             instance.hideFlags = HideFlags.HideAndDontSave;
+            // 额外消耗也按实例克隆（对齐 UE Instanced）：否则多个技能实例会共享同一 cost SO 的状态（如充能计数互相干扰）
+            for (int i = 0; i < instance.AdditionalCosts.Count; i++)
+            {
+                var c = instance.AdditionalCosts[i];
+                if (c == null) continue;
+                var clone = UnityEngine.Object.Instantiate(c);
+                clone.hideFlags = HideFlags.HideAndDontSave;
+                instance.AdditionalCosts[i] = clone;
+            }
             var handle = new GameplayAbilitySpecHandle(_nextAbilityId++);
             var spec = new GameplayAbilitySpec(handle, instance, level);
             instance.ASC = this;
@@ -157,7 +167,13 @@ namespace Likeon.GAS
                 if (spec.IsActive) spec.Ability.CancelAbility();
                 _abilities.Remove(handle.Id);
                 OnAbilityRemoved?.Invoke(spec); // 在销毁前回调，订阅方仍可读 spec
-                if (spec.Ability != null) UnityEngine.Object.Destroy(spec.Ability);
+                if (spec.Ability != null)
+                {
+                    // 销毁随实例克隆的额外消耗对象，避免泄漏
+                    foreach (var c in spec.Ability.AdditionalCosts)
+                        if (c != null) UnityEngine.Object.Destroy(c);
+                    UnityEngine.Object.Destroy(spec.Ability);
+                }
             }
         }
 
@@ -193,8 +209,8 @@ namespace Likeon.GAS
             if (!ability.CanActivate(out var failReason)) { OnAbilityActivationFailed?.Invoke(ability, failReason); return false; }
 
             // 独占技能激活：先打断可替换的独占技能
-            if (ability.ActivationPolicy != EAbilityActivationPolicy.Parallel)
-                CancelAbilitiesWithPolicy(EAbilityActivationPolicy.Replaceable, ability);
+            if (ability.ActivationGroup != EAbilityActivationGroup.Independent)
+                CancelAbilitiesWithActivationGroup(EAbilityActivationGroup.ExclusiveReplaceable, ability);
 
             // 按 TagRelationship 取消互斥技能 + 登记本技能激活期间阻挡的技能标签
             ApplyAbilityBlockAndCancelTags(ability);
@@ -211,77 +227,77 @@ namespace Likeon.GAS
         }
 
         // ---- 激活组互斥 ----
-        private readonly List<GameplayAbility>[] _policyBuckets =
+        private readonly List<GameplayAbility>[] _activationGroupBuckets =
         {
             new List<GameplayAbility>(), // Independent
-            new List<GameplayAbility>(), // Replaceable
-            new List<GameplayAbility>()  // Blocking
+            new List<GameplayAbility>(), // ExclusiveReplaceable
+            new List<GameplayAbility>()  // ExclusiveBlocking
         };
 
         /// <summary>该激活组当前是否被阻挡。</summary>
-        public bool IsActivationPolicyBlocked(EAbilityActivationPolicy group)
+        public bool IsActivationGroupBlocked(EAbilityActivationGroup group)
         {
             switch (group)
             {
-                case EAbilityActivationPolicy.Parallel:
+                case EAbilityActivationGroup.Independent:
                     return false; // 独立技能永不被阻挡
-                case EAbilityActivationPolicy.Replaceable:
-                    // 仅被 Blocking 阻挡
-                    return _policyBuckets[(int)EAbilityActivationPolicy.Blocking].Count > 0;
-                case EAbilityActivationPolicy.Blocking:
+                case EAbilityActivationGroup.ExclusiveReplaceable:
+                    // 仅被 ExclusiveBlocking 阻挡
+                    return _activationGroupBuckets[(int)EAbilityActivationGroup.ExclusiveBlocking].Count > 0;
+                case EAbilityActivationGroup.ExclusiveBlocking:
                     // 被任意独占技能阻挡
-                    return _policyBuckets[(int)EAbilityActivationPolicy.Replaceable].Count > 0
-                        || _policyBuckets[(int)EAbilityActivationPolicy.Blocking].Count > 0;
+                    return _activationGroupBuckets[(int)EAbilityActivationGroup.ExclusiveReplaceable].Count > 0
+                        || _activationGroupBuckets[(int)EAbilityActivationGroup.ExclusiveBlocking].Count > 0;
                 default:
                     return false;
             }
         }
 
-        public void RegisterAbilityPolicy(EAbilityActivationPolicy group, GameplayAbility ability)
+        public void RegisterAbilityActivationGroup(EAbilityActivationGroup group, GameplayAbility ability)
         {
-            if (group == EAbilityActivationPolicy.MAX) return;
-            var list = _policyBuckets[(int)group];
+            if (group == EAbilityActivationGroup.MAX) return;
+            var list = _activationGroupBuckets[(int)group];
             if (!list.Contains(ability)) list.Add(ability);
         }
 
-        public void UnregisterAbilityPolicy(EAbilityActivationPolicy group, GameplayAbility ability)
+        public void UnregisterAbilityActivationGroup(EAbilityActivationGroup group, GameplayAbility ability)
         {
-            if (group == EAbilityActivationPolicy.MAX) return;
-            _policyBuckets[(int)group].Remove(ability);
+            if (group == EAbilityActivationGroup.MAX) return;
+            _activationGroupBuckets[(int)group].Remove(ability);
         }
 
         /// <summary>取消某激活组里的技能（可忽略一个）。</summary>
-        public void CancelAbilitiesWithPolicy(EAbilityActivationPolicy group, GameplayAbility ignore)
+        public void CancelAbilitiesWithActivationGroup(EAbilityActivationGroup group, GameplayAbility ignore)
         {
-            if (group == EAbilityActivationPolicy.MAX) return;
-            var snapshot = new List<GameplayAbility>(_policyBuckets[(int)group]);
+            if (group == EAbilityActivationGroup.MAX) return;
+            var snapshot = new List<GameplayAbility>(_activationGroupBuckets[(int)group]);
             foreach (var ab in snapshot)
                 if (ab != ignore && ab.IsActive) ab.CancelAbility();
         }
 
         /// <summary>能否把技能换到新激活组（排除自身占位后，新组当前不被其它技能阻挡）。对齐 UE CanChangeActivationGroup。</summary>
-        public bool CanChangeActivationGroup(EAbilityActivationPolicy newGroup, GameplayAbility ability)
+        public bool CanChangeActivationGroup(EAbilityActivationGroup newGroup, GameplayAbility ability)
         {
-            if (ability == null || newGroup == EAbilityActivationPolicy.MAX) return false;
-            if (ability.ActivationPolicy == newGroup) return true;
+            if (ability == null || newGroup == EAbilityActivationGroup.MAX) return false;
+            if (ability.ActivationGroup == newGroup) return true;
             bool registered = ability.IsActive; // 激活中才在 bucket
-            if (registered) UnregisterAbilityPolicy(ability.ActivationPolicy, ability);
-            bool blocked = IsActivationPolicyBlocked(newGroup);
-            if (registered) RegisterAbilityPolicy(ability.ActivationPolicy, ability);
+            if (registered) UnregisterAbilityActivationGroup(ability.ActivationGroup, ability);
+            bool blocked = IsActivationGroupBlocked(newGroup);
+            if (registered) RegisterAbilityActivationGroup(ability.ActivationGroup, ability);
             return !blocked;
         }
 
         /// <summary>把技能换到新激活组（如蓄力→释放切组）。成功返回 true。对齐 UE ChangeActivationGroup。</summary>
-        public bool ChangeActivationGroup(EAbilityActivationPolicy newGroup, GameplayAbility ability)
+        public bool ChangeActivationGroup(EAbilityActivationGroup newGroup, GameplayAbility ability)
         {
             if (!CanChangeActivationGroup(newGroup, ability)) return false;
             if (ability.IsActive)
             {
-                UnregisterAbilityPolicy(ability.ActivationPolicy, ability);
-                ability.ActivationPolicy = newGroup;
-                RegisterAbilityPolicy(newGroup, ability);
+                UnregisterAbilityActivationGroup(ability.ActivationGroup, ability);
+                ability.ActivationGroup = newGroup;
+                RegisterAbilityActivationGroup(newGroup, ability);
             }
-            else ability.ActivationPolicy = newGroup;
+            else ability.ActivationGroup = newGroup;
             return true;
         }
 
@@ -446,7 +462,7 @@ namespace Likeon.GAS
             foreach (var cue in def.GameplayCues) AddGameplayCue(cue, MakeCueParams(spec));
 
             UpdateInhibition(active);
-            RecalculateAffectedAttributes(def);
+            RecalculateAffectedAttributes(def, spec.Context);
 
             OnActiveEffectAdded?.Invoke(active);
             return handle;
@@ -522,7 +538,7 @@ namespace Likeon.GAS
 
             if (newCount != oldCount)
             {
-                RecalculateAffectedAttributes(def); // 层数变了 → 修改量变了
+                RecalculateAffectedAttributes(def, spec.Context); // 层数变了 → 修改量变了
                 OnActiveEffectStackChanged?.Invoke(existing, oldCount, newCount);
             }
         }
@@ -566,7 +582,7 @@ namespace Likeon.GAS
                 data.BaseValue = newBase;
 
                 // 重算当前值（基础值变了）
-                RecalculateCurrentValue(set, output.Attribute);
+                RecalculateCurrentValue(set, output.Attribute, spec.Context);
 
                 // PostGameplayEffectExecute 钩子 —— Meta Attribute 伤害管线落点
                 callback.EvaluatedMagnitude = newBase - oldBase;
@@ -578,7 +594,7 @@ namespace Likeon.GAS
         /// 直接对某属性的基础值施加一个修改并重算当前值（不走 GE 结算钩子，避免递归）。
         ///。Meta 属性映射（IncomingDamage→-Health）用它。
         /// </summary>
-        public void ApplyModToAttributeBase(GameplayAttribute attribute, EAttributeModifierOp op, float magnitude)
+        public void ApplyModToAttributeBase(GameplayAttribute attribute, EAttributeModifierOp op, float magnitude, GameplayEffectContext source = null)
         {
             var set = GetAttributeSet(attribute.AttributeSetTypeName);
             var data = attribute.ResolveData(this);
@@ -586,7 +602,7 @@ namespace Likeon.GAS
             float newBase = ApplyOp(data.BaseValue, op, magnitude);
             set.PreAttributeBaseChange(attribute, ref newBase);
             data.BaseValue = newBase;
-            RecalculateCurrentValue(set, attribute);
+            RecalculateCurrentValue(set, attribute, source);
         }
 
         private static float ApplyOp(float current, EAttributeModifierOp op, float magnitude)
@@ -602,17 +618,17 @@ namespace Likeon.GAS
         }
 
         // ---- 当前值聚合（base + 所有激活的 Duration/Infinite 修改）----
-        private void RecalculateAffectedAttributes(GameplayEffect def)
+        private void RecalculateAffectedAttributes(GameplayEffect def, GameplayEffectContext source = null)
         {
             if (def == null) return;
             foreach (var mod in def.Modifiers)
             {
                 var set = GetAttributeSet(mod.Attribute.AttributeSetTypeName);
-                if (set != null) RecalculateCurrentValue(set, mod.Attribute);
+                if (set != null) RecalculateCurrentValue(set, mod.Attribute, source);
             }
         }
 
-        private void RecalculateCurrentValue(AttributeSet set, GameplayAttribute attribute)
+        private void RecalculateCurrentValue(AttributeSet set, GameplayAttribute attribute, GameplayEffectContext source = null)
         {
             var data = set.GetAttributeData(attribute.AttributeName);
             if (data == null) return;
@@ -650,7 +666,7 @@ namespace Likeon.GAS
             {
                 data.CurrentValue = result;
                 set.PostAttributeChange(attribute, old, result);
-                OnAttributeChanged?.Invoke(attribute, old, result);
+                OnAttributeChanged?.Invoke(new AttributeChangeData(attribute, old, result, source));
             }
         }
 
@@ -784,7 +800,23 @@ namespace Likeon.GAS
         // ===================== Tick =====================
         protected virtual void Update()
         {
-            TickActiveEffects(Time.deltaTime);
+            float dt = Time.deltaTime;
+            TickActiveAbilities(dt);
+            TickActiveEffects(dt);
+        }
+
+        // 驱动激活中、且 EnableTick=true 的技能逐帧回调（对齐 UE GGA AbilityTick）。
+        // 快照迭代：AbilityTick 内可能结束/授予技能而改动集合。
+        private readonly List<GameplayAbility> _tickScratch = new List<GameplayAbility>();
+        private void TickActiveAbilities(float dt)
+        {
+            if (_abilities.Count == 0) return;
+            _tickScratch.Clear();
+            foreach (var spec in _abilities.Values)
+                if (spec.IsActive && spec.Ability != null && spec.Ability.EnableTick)
+                    _tickScratch.Add(spec.Ability);
+            for (int i = 0; i < _tickScratch.Count; i++)
+                if (_tickScratch[i].IsActive) _tickScratch[i].AbilityTick(dt);
         }
 
         private readonly List<ActiveGameplayEffect> _expiredScratch = new List<ActiveGameplayEffect>();

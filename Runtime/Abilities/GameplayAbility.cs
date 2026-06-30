@@ -4,6 +4,7 @@
 
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Likeon.GAS
 {
@@ -25,7 +26,12 @@ namespace Likeon.GAS
         public List<GameplayTag> AbilityTags = new List<GameplayTag>();
 
         [Header("激活组 Activation Group")]
-        public EAbilityActivationPolicy ActivationPolicy = EAbilityActivationPolicy.Parallel;
+        [FormerlySerializedAs("ActivationPolicy")]
+        public EAbilityActivationGroup ActivationGroup = EAbilityActivationGroup.Independent;
+
+        [Header("逐帧 Tick")]
+        [Tooltip("激活期间是否每帧回调 AbilityTick（对齐 UE GGA bEnableTick）。默认关，逐帧逻辑也可用 AbilityTask 协程。")]
+        public bool EnableTick = false;
 
         [Header("激活期间挂在角色身上的松散标签")]
         [Tooltip("如滑铲激活时挂 State.Sliding")]
@@ -42,6 +48,9 @@ namespace Likeon.GAS
         public GameplayEffect CostEffect;
         [Tooltip("冷却效果。其 GrantedTags 作为冷却标签")]
         public GameplayEffect CooldownEffect;
+
+        [Tooltip("额外消耗（对齐 UE GGA AdditionalCosts）：弹药/充能等非属性消耗，可多个；带 OnlyApplyCostOnHit 的仅命中才扣")]
+        public List<AbilityCost> AdditionalCosts = new List<AbilityCost>();
 
         [Header("效果容器 Effect Containers")]
         [Tooltip("按标签组织'命中要施加的效果'")]
@@ -97,7 +106,7 @@ namespace Likeon.GAS
             if (ASC.AreAbilityTagsBlocked(GetAbilityTags())) { failReason = EAbilityActivationFailReason.BlockedByOtherAbility; return false; }
 
             // 4) 激活组互斥
-            if (ASC.IsActivationPolicyBlocked(ActivationPolicy)) { failReason = EAbilityActivationFailReason.ActivationGroupBlocked; return false; }
+            if (ASC.IsActivationGroupBlocked(ActivationGroup)) { failReason = EAbilityActivationFailReason.ActivationGroupBlocked; return false; }
 
             // 5) 消耗与冷却
             if (!CheckCost()) { failReason = EAbilityActivationFailReason.CostNotMet; return false; }
@@ -106,11 +115,14 @@ namespace Likeon.GAS
             return true;
         }
 
-        /// <summary>检查能否支付消耗。</summary>
+        /// <summary>检查能否支付消耗（属性消耗 + 所有额外消耗）。</summary>
         public virtual bool CheckCost()
         {
-            if (CostEffect == null) return true;
-            return ASC.CanApplyAttributeModifiers(CostEffect, Spec?.Level ?? 1);
+            if (CostEffect != null && !ASC.CanApplyAttributeModifiers(CostEffect, Spec?.Level ?? 1)) return false;
+            // 额外消耗：全部都要能支付（含 OnlyApplyCostOnHit 的，激活时也要先确认买得起）
+            for (int i = 0; i < AdditionalCosts.Count; i++)
+                if (AdditionalCosts[i] != null && !AdditionalCosts[i].CheckCost(this)) return false;
+            return true;
         }
 
         /// <summary>检查是否在冷却中。</summary>
@@ -134,6 +146,25 @@ namespace Likeon.GAS
         public virtual void ApplyCost()
         {
             if (CostEffect != null) ASC.ApplyGameplayEffectToSelf(CostEffect, Spec?.Level ?? 1);
+            // 额外消耗：激活即扣的部分（OnlyApplyCostOnHit 的留到命中时由 ApplyOnHitCosts 扣）
+            for (int i = 0; i < AdditionalCosts.Count; i++)
+            {
+                var c = AdditionalCosts[i];
+                if (c != null && !c.OnlyApplyCostOnHit) c.ApplyCost(this);
+            }
+        }
+
+        /// <summary>
+        /// 施加"仅命中才扣"的额外消耗（对齐 UE bOnlyApplyCostOnHit）。
+        /// 由技能逻辑在确认命中后调用（如近战 trace 命中、子弹击中目标）。
+        /// </summary>
+        public void ApplyOnHitCosts()
+        {
+            for (int i = 0; i < AdditionalCosts.Count; i++)
+            {
+                var c = AdditionalCosts[i];
+                if (c != null && c.OnlyApplyCostOnHit) c.ApplyCost(this);
+            }
         }
 
         public virtual void ApplyCooldown()
@@ -150,12 +181,18 @@ namespace Likeon.GAS
             // 挂上激活期间的松散标签
             foreach (var tc in ActivationOwnedLooseTags)
                 ASC.AddLooseGameplayTag(tc.Tag, tc.Count);
-            ASC.RegisterAbilityPolicy(ActivationPolicy, this);
+            ASC.RegisterAbilityActivationGroup(ActivationGroup, this);
             OnActivateAbility(triggerData);
         }
 
         /// <summary>技能逻辑入口。子类必须实现。</summary>
         protected abstract void OnActivateAbility(GameplayEventData triggerData);
+
+        /// <summary>
+        /// 激活期间每帧回调（仅当 <see cref="EnableTick"/>=true 时由 ASC 驱动；对齐 UE GGA AbilityTick）。
+        /// 子类重写做逐帧逻辑（蓄力进度、持续扫描等）；不想用协程时的替代。
+        /// </summary>
+        public virtual void AbilityTick(float deltaTime) { }
 
         /// <summary>结束技能。</summary>
         public void EndAbility(bool wasCancelled = false)
@@ -171,7 +208,7 @@ namespace Likeon.GAS
             // 卸下激活期间的松散标签
             foreach (var tc in ActivationOwnedLooseTags)
                 ASC.RemoveLooseGameplayTag(tc.Tag, tc.Count);
-            ASC.UnregisterAbilityPolicy(ActivationPolicy, this);
+            ASC.UnregisterAbilityActivationGroup(ActivationGroup, this);
             ASC.NotifyAbilityEnded(this, wasCancelled);
         }
 

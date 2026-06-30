@@ -117,13 +117,13 @@ namespace Likeon.GAS.Tests
             var asc = go.AddComponent<AbilitySystemComponent>();
 
             var tmpl = ScriptableObject.CreateInstance<TestAbility_Hold>();
-            tmpl.ActivationPolicy = EAbilityActivationPolicy.Replaceable;
+            tmpl.ActivationGroup = EAbilityActivationGroup.ExclusiveReplaceable;
             var handle = asc.GiveAbility(tmpl);
             var ability = asc.FindAbilitySpec(handle).Ability;
 
-            Assert.IsTrue(asc.CanChangeActivationGroup(EAbilityActivationPolicy.Blocking, ability), "无冲突时应可换组");
-            Assert.IsTrue(asc.ChangeActivationGroup(EAbilityActivationPolicy.Blocking, ability), "换组应成功");
-            Assert.AreEqual(EAbilityActivationPolicy.Blocking, ability.ActivationPolicy, "ActivationPolicy 应更新为 Blocking");
+            Assert.IsTrue(asc.CanChangeActivationGroup(EAbilityActivationGroup.ExclusiveBlocking, ability), "无冲突时应可换组");
+            Assert.IsTrue(asc.ChangeActivationGroup(EAbilityActivationGroup.ExclusiveBlocking, ability), "换组应成功");
+            Assert.AreEqual(EAbilityActivationGroup.ExclusiveBlocking, ability.ActivationGroup, "ActivationGroup 应更新为 ExclusiveBlocking");
 
             Object.DestroyImmediate(go);
             Object.DestroyImmediate(tmpl);

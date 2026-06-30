@@ -55,14 +55,14 @@ namespace Likeon.GAS
                 float dmg = IncomingDamage.BaseValue;
                 IncomingDamage.Initialize(0f); // 清空 Meta
                 if (dmg > 0f)
-                    Owner.ApplyModToAttributeBase(HealthAttribute, EAttributeModifierOp.Add, -dmg);
+                    Owner.ApplyModToAttributeBase(HealthAttribute, EAttributeModifierOp.Add, -dmg, data.Spec?.Context);
             }
             else if (data.Attribute == IncomingHealingAttribute)
             {
                 float heal = IncomingHealing.BaseValue;
                 IncomingHealing.Initialize(0f);
                 if (heal > 0f)
-                    Owner.ApplyModToAttributeBase(HealthAttribute, EAttributeModifierOp.Add, heal);
+                    Owner.ApplyModToAttributeBase(HealthAttribute, EAttributeModifierOp.Add, heal, data.Spec?.Context);
             }
 
             // 对应源码：Health 被直接结算后 clamp 到 [0, MaxHealth]

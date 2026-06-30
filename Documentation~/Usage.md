@@ -92,8 +92,8 @@ public class Character : MonoBehaviour
         ASC.AddAttributeSet(new AS_Stamina());
 
         // Listen for health changes (drives a health-bar UI)
-        ASC.OnAttributeChanged += (attr, oldV, newV) =>
-            Debug.Log($"{attr} : {oldV} -> {newV}");
+        ASC.OnAttributeChanged += d =>
+            Debug.Log($"{d.Attribute} : {d.OldValue} -> {d.NewValue} (by {d.Source?.SourceASC})");
     }
 }
 ```
@@ -254,10 +254,12 @@ asc.RemoveActiveGameplayEffect(handle);                // remove a duration effe
 
 Derive from `GameplayAbility`, override `OnActivateAbility`. Common fields (set in the Inspector):
 - **AbilityTags**: identity tags (used for activate-by-tag / relationship matching)
-- **ActivationGroup**: `Independent` / `Exclusive_Replaceable` / `Exclusive_Blocking` (exclusivity)
+- **ActivationGroup**: `Independent` / `ExclusiveReplaceable` / `ExclusiveBlocking` (exclusivity)
 - **ActivationOwnedLooseTags**: tags placed on the character while active (e.g. slide grants `State.Sliding`)
 - **ActivationRequiredTags / BlockedTags**: activation gating
 - **CostEffect / CooldownEffect**: cost and cooldown (the CooldownEffect's GrantedTags act as the cooldown tags)
+- **AdditionalCosts**: modular non-attribute costs (ammo, charges…) — a list of `AbilityCost` ScriptableObjects, each with `OnlyApplyCostOnHit`. `CommitAbility` pays the non-on-hit ones; call `ApplyOnHitCosts()` from your ability once a hit lands
+- **EnableTick**: when true, the ASC calls `AbilityTick(deltaTime)` each frame while the ability is active (override it for charge/scan loops; a non-coroutine alternative to AbilityTask)
 - **EffectContainerMap**: organizes "effects to apply on hit" by tag
 
 ```csharp
@@ -294,10 +296,10 @@ var handles = asc.GrantLoadout(defaultLoadout); // returns GrantedAbilityHandles
 ### 7.4 Activation-group exclusivity
 
 - `Independent`: not exclusive
-- `Exclusive_Replaceable`: can be interrupted/replaced by another exclusive ability
-- `Exclusive_Blocking`: prevents other exclusive abilities from activating
+- `ExclusiveReplaceable`: can be interrupted/replaced by another exclusive ability
+- `ExclusiveBlocking`: prevents other exclusive abilities from activating
 
-A new exclusive ability automatically interrupts the Replaceable group when it activates.
+A new exclusive ability automatically interrupts the `ExclusiveReplaceable` group when it activates. Switch an active ability's group at runtime with `asc.ChangeActivationGroup(...)` (guarded by `CanChangeActivationGroup`).
 
 ### 7.5 State-aware ability relationships
 
@@ -343,7 +345,7 @@ IReadOnlyList<ActiveGameplayEffect> actives = asc.GetActiveGameplayEffects();
 ActiveGameplayEffect one = asc.GetActiveGameplayEffect(ge); // by handle; read one.TimeRemaining
 
 // Events
-asc.OnAttributeChanged += (attr, oldV, newV) => { };
+asc.OnAttributeChanged += d => { /* d.Attribute / d.OldValue / d.NewValue / d.Source */ };
 asc.OnAbilityActivated += ability => { };
 asc.OnAbilityEnded += (ability, cancelled) => { };
 asc.OnTagChanged += (tag, present) => { };
@@ -657,7 +659,7 @@ Sigil is **logic-only and ships no UI framework** — it broadcasts "things that
 
 | What the UI draws | Subscribe to |
 |---|---|
-| Health/mana/stamina bars | `asc.OnAttributeChanged(attr, old, new)` |
+| Health/mana/stamina bars | `asc.OnAttributeChanged(AttributeChangeData)` — `.Attribute/.OldValue/.NewValue/.Source` |
 | Status icons (stun / buff present) | `asc.OnTagChanged(tag, present)` |
 | Buff/debuff icon bars (with countdown + ×N stacks) | `asc.OnActiveEffectAdded/Removed/StackChanged` + poll `asc.GetActiveGameplayEffects()` reading `TimeRemaining` / `StackCount` |
 | Ability cooldown fills | poll `asc.GetCooldownRemainingForTags(...)` |

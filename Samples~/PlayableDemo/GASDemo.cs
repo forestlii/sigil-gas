@@ -193,9 +193,9 @@ namespace GASDemo
 
             // 受击闪红 + 破防变色
             var rend = e.GetComponent<Renderer>();
-            asc.OnAttributeChanged += (attr, oldV, newV) =>
+            asc.OnAttributeChanged += data =>
             {
-                if (attr == health.HealthAttribute && newV < oldV && !poiseComp.IsStaggered)
+                if (data.Attribute == health.HealthAttribute && data.NewValue < data.OldValue && !poiseComp.IsStaggered)
                     StartCoroutine(FlashRed(rend));
             };
             poiseComp.OnPoiseBroken += () => SetColor(rend, StaggerColor);

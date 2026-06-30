@@ -150,11 +150,11 @@ namespace Likeon.GAS.Tests
             var asc = go.AddComponent<AbilitySystemComponent>();
 
             var blocking = ScriptableObject.CreateInstance<TestAbility_Hold>();
-            blocking.ActivationPolicy = EAbilityActivationPolicy.Blocking;
+            blocking.ActivationGroup = EAbilityActivationGroup.ExclusiveBlocking;
             var hBlock = asc.GiveAbility(blocking);
 
             var replaceable = ScriptableObject.CreateInstance<TestAbility_Hold>();
-            replaceable.ActivationPolicy = EAbilityActivationPolicy.Replaceable;
+            replaceable.ActivationGroup = EAbilityActivationGroup.ExclusiveReplaceable;
             var hRepl = asc.GiveAbility(replaceable);
 
             Assert.IsTrue(asc.TryActivateAbility(hBlock), "Blocking 技能应能先激活");

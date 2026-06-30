@@ -128,7 +128,7 @@ asc.AddAttributeSet(new AS_Stamina());
 asc.GrantLoadout(defaultLoadout);                 // 批量授予
 var handle = asc.GiveAbility(slideAbility);        // 单独授予
 
-asc.OnAttributeChanged += (attr, oldV, newV) => Debug.Log($"{attr} : {oldV} -> {newV}");
+asc.OnAttributeChanged += d => Debug.Log($"{d.Attribute} : {d.OldValue} -> {d.NewValue}（来源 {d.Source?.SourceASC}）");
 
 asc.AddLooseGameplayTag(GameplayTag.RequestTag("Movement.State.Sprint"));
 asc.TryActivateAbility(handle);

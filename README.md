@@ -37,7 +37,7 @@ package to `"testables"` in your project's `Packages/manifest.json`, then open
 - **GameplayTag** — hierarchical tags, containers, ref-counted loose tags, tag queries.
 - **AttributeSet** — attributes with Pre/Post change hooks; built-in `AS_Health`, `AS_Stamina`, `AS_Mana`, `AS_Combat`, `AS_Poise`.
 - **GameplayEffect** — Instant / Duration / Infinite, periodic, modifiers, custom execution calculations, granted tags, application conditions, SetByCaller, **stacking** (aggregate by source/target, stack limit, duration-refresh / period-reset / expiration policies, magnitude scales by stack count).
-- **GameplayAbility** — activation policy (Parallel / Replaceable / Blocking), cost & cooldown, activation-owned tags, effect containers.
+- **GameplayAbility** — activation group (Independent / ExclusiveReplaceable / ExclusiveBlocking), cost & cooldown (incl. modular `AbilityCost`), optional per-frame `AbilityTick`, activation-owned tags, effect containers.
 - **AbilitySystemComponent** — the hub: owned tags, attribute sets, active effects, ability granting/activation, exclusivity, interaction rules.
 - **AbilityLoadout** — batch-grant abilities + effects + attribute sets; revoke as one handle.
 - **AbilityInteractionRules** — state-aware block / cancel / activation rules driven by the character's current tags.
@@ -136,7 +136,7 @@ asc.AddAttributeSet(new AS_Stamina());
 asc.GrantLoadout(defaultLoadout);                 // batch grant
 var handle = asc.GiveAbility(slideAbility);        // single grant
 
-asc.OnAttributeChanged += (attr, oldV, newV) => Debug.Log($"{attr} : {oldV} -> {newV}");
+asc.OnAttributeChanged += d => Debug.Log($"{d.Attribute} : {d.OldValue} -> {d.NewValue} (by {d.Source?.SourceASC})");
 
 asc.AddLooseGameplayTag(GameplayTag.RequestTag("Movement.State.Sprint"));
 asc.TryActivateAbility(handle);
