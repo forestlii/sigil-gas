@@ -164,5 +164,25 @@ namespace Likeon.GAS.Tests
             Object.DestroyImmediate(blocking);
             Object.DestroyImmediate(replaceable);
         }
+
+        [Test]
+        public void ActivateOnGranted_AutoActivatesOnGive()
+        {
+            var go = new GameObject("ASC");
+            var asc = go.AddComponent<AbilitySystemComponent>();
+
+            var passive = ScriptableObject.CreateInstance<TestAbility_Hold>();
+            passive.ActivateOnGranted = true;
+            var h = asc.GiveAbility(passive);
+            Assert.IsTrue(asc.FindAbilitySpec(h).IsActive, "ActivateOnGranted 技能应在授予时即激活");
+
+            var normal = ScriptableObject.CreateInstance<TestAbility_Hold>();
+            var h2 = asc.GiveAbility(normal);
+            Assert.IsFalse(asc.FindAbilitySpec(h2).IsActive, "普通技能授予时不应自动激活");
+
+            Object.DestroyImmediate(go);
+            Object.DestroyImmediate(passive);
+            Object.DestroyImmediate(normal);
+        }
     }
 }

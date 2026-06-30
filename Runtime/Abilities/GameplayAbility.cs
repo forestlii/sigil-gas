@@ -33,6 +33,10 @@ namespace Likeon.GAS
         [Tooltip("激活期间是否每帧回调 AbilityTick（对齐 UE GGA bEnableTick）。默认关，逐帧逻辑也可用 AbilityTask 协程。")]
         public bool EnableTick = false;
 
+        [Header("授予即激活 Passive / OnSpawn")]
+        [Tooltip("被授予时立即尝试激活（对齐 UE TryActivateAbilityOnSpawn）。用于被动 / 光环 / 常驻技能。仍走 CanActivate 检查。")]
+        public bool ActivateOnGranted = false;
+
         [Header("激活期间挂在角色身上的松散标签")]
         [Tooltip("如滑铲激活时挂 State.Sliding")]
         public List<GameplayTagCount> ActivationOwnedLooseTags = new List<GameplayTagCount>();

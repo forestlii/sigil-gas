@@ -156,6 +156,8 @@ namespace Likeon.GAS
             instance.Spec = spec;
             _abilities[handle.Id] = spec;
             OnAbilityGiven?.Invoke(spec);
+            // 被动 / 光环技能：授予即尝试激活（对齐 UE TryActivateAbilityOnSpawn），仍走 CanActivate 检查
+            if (instance.ActivateOnGranted) TryActivateSpec(spec, null);
             return handle;
         }
 

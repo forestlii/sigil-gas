@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 - **Modular additional ability costs** (`AbilityCost`). Abilities can now carry a list of pluggable, non-attribute costs (ammo, charges, custom resources) beyond the single attribute-based `CostEffect`. Each `AbilityCost` is a `ScriptableObject` with `CheckCost` / `ApplyCost` and an `OnlyApplyCostOnHit` flag; activation requires *all* costs to be affordable, `CommitAbility` pays the non-on-hit ones, and `GameplayAbility.ApplyOnHitCosts()` pays the on-hit ones once a hit is confirmed. Costs are cloned per granted ability instance (mirrors UE `Instanced` costs), so charge state never leaks between characters.
 - **Per-frame ability tick** (`GameplayAbility.AbilityTick(float)` gated by `EnableTick`). The ASC drives `AbilityTick` each frame for active abilities that opt in — an alternative to coroutine `AbilityTask`s for charge/scan loops.
+- **Activate-on-granted (passive / aura abilities)** — `GameplayAbility.ActivateOnGranted`. When set, the ability tries to activate the moment it's granted (mirrors UE `TryActivateAbilityOnSpawn`), still subject to `CanActivate`. Works through any grant path (`GiveAbility` / `GrantLoadout` / `GlobalAbilitySystem`).
 
 ### Changed
 
