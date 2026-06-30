@@ -17,6 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - **Combat settings** (`CombatSettings`) — a ScriptableObject with a static `Active` accessor, mirroring UE `GCS_CombatSystemSettings`: `MainMeshLookupTag` and `DisableAffiliationCheck` (a debug toggle that lets attacks ignore team affiliation; wired into `CombatTeamAgent.IsHostile`, default off).
 - **Combat interface** (`ICombatInterface`) — the contract a combat-capable character implements (combat target, `QueryAbilityActions`, current weapon, block input, rotation/movement-set/movement-state tags, death lifecycle, movement input direction), mirroring UE `GCS_CombatInterface` with Unity types. Helper `CombatInterface.Get(go)` resolves it from a GameObject hierarchy.
 
+- **Dynamic tags on grant** — `AbilityLoadout.GrantedAbility.DynamicTags` and a `GiveAbility(template, level, dynamicTags)` overload append tags to the granted ability instance (template untouched), mirroring UE `FGGA_AbilitySet_GameplayAbility.DynamicTags` (e.g. tag a grant with `Slot.Primary`).
+- **`AbilityTask.ExternalConfirm(endTask)`** — mirrors UE `UAbilityTask::ExternalConfirm`; base ends the task when asked, `AbilityTask_WaitTargetData` overrides it to confirm targeting.
+- **`Custom` targeting confirmation** — added to `EGameplayTargetingConfirmation` (waits for external/custom confirmation, like UserConfirmed but driven by custom logic).
+- **Component-level `OnPostGameplayEffectExecute`** — `AbilitySystemComponent` now broadcasts after any gameplay-effect execute (mirrors UE `GGA_AttributeSystemComponent`), so damage-stat / AI-perception listeners don't have to override per-AttributeSet hooks.
+
 ### Changed
 
 - **BREAKING — activation-group rename.** The enum `EAbilityActivationPolicy` → `EAbilityActivationGroup` and its values `Parallel` / `Replaceable` / `Blocking` → `Independent` / `ExclusiveReplaceable` / `ExclusiveBlocking`; the field `GameplayAbility.ActivationPolicy` → `ActivationGroup`; ASC methods `IsActivationPolicyBlocked` / `RegisterAbilityPolicy` / `UnregisterAbilityPolicy` / `CancelAbilitiesWithPolicy` → `…ActivationGroup`. This aligns the *naming* with the underlying concept (the methods were already called `ChangeActivationGroup`). Existing ability assets keep their values via `[FormerlySerializedAs]` and the enum's int order is unchanged.

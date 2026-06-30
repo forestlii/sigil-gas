@@ -60,6 +60,15 @@ namespace Likeon.GAS
         /// <summary>被外部取消（技能结束或被打断时由 <see cref="GameplayAbility"/> 调）。</summary>
         public void ExternalCancel() => FinishInternal(abilityEnded: true);
 
+        /// <summary>
+        /// 外部确认（对齐 UE UAbilityTask::ExternalConfirm）。含义由具体任务定；
+        /// 基类默认仅在 <paramref name="endTask"/>=true 时结束任务。子类（如等待目标数据）可重写做确认逻辑。
+        /// </summary>
+        public virtual void ExternalConfirm(bool endTask)
+        {
+            if (endTask) EndTask();
+        }
+
         private void FinishInternal(bool abilityEnded)
         {
             if (_ended) return;

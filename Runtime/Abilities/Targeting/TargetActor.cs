@@ -10,13 +10,15 @@ using UnityEngine;
 
 namespace Likeon.GAS
 {
-    /// <summary>目标确认方式。</summary>
+    /// <summary>目标确认方式（对齐 UE EGameplayTargetingConfirmation）。</summary>
     public enum EGameplayTargetingConfirmation
     {
         /// <summary>StartTargeting 后立即采集并确认（瞄准即得）。</summary>
         Instant,
-        /// <summary>等外部显式调用 ConfirmTargeting（玩家确认 / 自定义时机）。</summary>
-        UserConfirmed
+        /// <summary>等玩家显式确认（外部调用 ConfirmTargeting）。</summary>
+        UserConfirmed,
+        /// <summary>由自定义逻辑决定确认时机（与 UserConfirmed 同样不自动确认，交由 ability/外部择机 ConfirmTargeting）。</summary>
+        Custom
     }
 
     /// <summary>

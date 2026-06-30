@@ -50,6 +50,13 @@ namespace Likeon.GAS
             EndTask();
         }
 
+        /// <summary>外部确认：让目标采集器立即确认（对齐 UE，UserConfirmed/Custom 时由外部择机调）。</summary>
+        public override void ExternalConfirm(bool endTask)
+        {
+            _targetActor?.ConfirmTargeting();
+            base.ExternalConfirm(endTask);
+        }
+
         protected override void OnDestroy(bool abilityEnded)
         {
             if (_targetActor != null)

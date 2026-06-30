@@ -16,6 +16,11 @@
 - **战斗设置**（`CombatSettings`）——一个带静态 `Active` 访问器的 ScriptableObject，对齐 UE `GCS_CombatSystemSettings`：`MainMeshLookupTag` 与 `DisableAffiliationCheck`（调试开关，让攻击无视队伍归属；接入 `CombatTeamAgent.IsHostile`，默认关）。
 - **战斗契约接口**（`ICombatInterface`）——战斗角色实现的契约（战斗目标、`QueryAbilityActions`、当前武器、防御输入、旋转/移动集/移动状态标签、死亡生命周期、移动输入方向），对齐 UE `GCS_CombatInterface`、类型适配 Unity。辅助 `CombatInterface.Get(go)` 从 GameObject 层级解析。
 
+- **授予时动态标签**——`AbilityLoadout.GrantedAbility.DynamicTags` + `GiveAbility(template, level, dynamicTags)` 重载，把标签附加到被授予的技能实例（模板不动），对齐 UE `FGGA_AbilitySet_GameplayAbility.DynamicTags`（如给一次授予标 `Slot.Primary`）。
+- **`AbilityTask.ExternalConfirm(endTask)`**——对齐 UE `UAbilityTask::ExternalConfirm`；基类按需结束任务，`AbilityTask_WaitTargetData` 重写为确认目标采集。
+- **`Custom` 目标确认类型**——`EGameplayTargetingConfirmation` 加 `Custom`（与 UserConfirmed 一样等外部确认，但交由自定义逻辑择机）。
+- **组件级 `OnPostGameplayEffectExecute`**——`AbilitySystemComponent` 现在在任意 GameplayEffect 结算后广播（对齐 UE `GGA_AttributeSystemComponent`），伤害统计 / AI 感知的订阅方无需逐 AttributeSet 重写钩子。
+
 ### 变更
 
 - **BREAKING — 激活组改名**。枚举 `EAbilityActivationPolicy` → `EAbilityActivationGroup`，值 `Parallel` / `Replaceable` / `Blocking` → `Independent` / `ExclusiveReplaceable` / `ExclusiveBlocking`；字段 `GameplayAbility.ActivationPolicy` → `ActivationGroup`；ASC 方法 `IsActivationPolicyBlocked` / `RegisterAbilityPolicy` / `UnregisterAbilityPolicy` / `CancelAbilitiesWithPolicy` → `…ActivationGroup`。让**命名**与底层概念一致（这些方法本就叫 `ChangeActivationGroup`）。现有技能资产经 `[FormerlySerializedAs]` 保留取值，枚举 int 顺序不变。

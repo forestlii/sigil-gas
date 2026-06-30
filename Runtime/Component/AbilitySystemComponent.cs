@@ -134,13 +134,18 @@ namespace Likeon.GAS
         /// <summary>当前所有已授予技能的只读集合（供 UI 列举技能栏 / 调试）。</summary>
         public IReadOnlyCollection<GameplayAbilitySpec> GetGrantedAbilities() => _abilities.Values;
 
-        /// <summary>授予一个技能（克隆模板成本角色实例）。</summary>
-        public GameplayAbilitySpecHandle GiveAbility(GameplayAbility abilityTemplate, int level = 1)
+        /// <summary>授予一个技能（克隆模板成本角色实例）。<paramref name="dynamicTags"/> 在授予时附加到实例的 AbilityTags（对齐 UE DynamicTags）。</summary>
+        public GameplayAbilitySpecHandle GiveAbility(GameplayAbility abilityTemplate, int level = 1, IReadOnlyList<GameplayTag> dynamicTags = null)
         {
             if (abilityTemplate == null) return GameplayAbilitySpecHandle.Invalid;
 
             var instance = UnityEngine.Object.Instantiate(abilityTemplate); // InstancedPerActor：每角色独立实例
             instance.hideFlags = HideFlags.HideAndDontSave;
+            // 授予时附加的动态标签（对齐 UE FGGA_AbilitySet_GameplayAbility.DynamicTags）：加到克隆实例的身份标签，参与 TagRelationship 匹配
+            if (dynamicTags != null)
+                for (int i = 0; i < dynamicTags.Count; i++)
+                    if (dynamicTags[i].IsValid && !instance.AbilityTags.Contains(dynamicTags[i]))
+                        instance.AbilityTags.Add(dynamicTags[i]);
             // 额外消耗也按实例克隆（对齐 UE Instanced）：否则多个技能实例会共享同一 cost SO 的状态（如充能计数互相干扰）
             for (int i = 0; i < instance.AdditionalCosts.Count; i++)
             {
@@ -396,6 +401,10 @@ namespace Likeon.GAS
         /// <summary>叠层效果层数变化时触发（参数：效果, 旧层数, 新层数）。供 UI 刷新 ×N 角标。</summary>
         public event Action<ActiveGameplayEffect, int, int> OnActiveEffectStackChanged;
 
+        /// <summary>任意 GameplayEffect 结算（改基础值）后触发——组件级统一钩子（对齐 UE GGA_AttributeSystemComponent.OnPostGameplayEffectExecute）。
+        /// 供"想统一监听所有 GE 结算"的订阅方（伤害统计/AI 感知）用，无需逐 AttributeSet 重写。</summary>
+        public event Action<GameplayEffectModCallbackData> OnPostGameplayEffectExecute;
+
         /// <summary>当前所有存活的持续/永久效果（只读视图，含剩余时长/抑制态）。供 UI 列举 buff/debuff。</summary>
         public IReadOnlyList<ActiveGameplayEffect> GetActiveGameplayEffects() => _activeEffects;
 
@@ -592,6 +601,7 @@ namespace Likeon.GAS
                 // PostGameplayEffectExecute 钩子 —— Meta Attribute 伤害管线落点
                 callback.EvaluatedMagnitude = newBase - oldBase;
                 set.PostGameplayEffectExecute(callback);
+                OnPostGameplayEffectExecute?.Invoke(callback); // 组件级统一钩子（#35）
             }
         }
 
@@ -748,7 +758,7 @@ namespace Likeon.GAS
             foreach (var ga in set.GrantedAbilities)
             {
                 if (ga.Ability == null) continue;
-                handles.AbilityHandles.Add(GiveAbility(ga.Ability, Mathf.Max(1, ga.Level)));
+                handles.AbilityHandles.Add(GiveAbility(ga.Ability, Mathf.Max(1, ga.Level), ga.DynamicTags));
             }
 
             return handles;
