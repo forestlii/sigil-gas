@@ -20,6 +20,7 @@
 - **`AbilityTask.ExternalConfirm(endTask)`**——对齐 UE `UAbilityTask::ExternalConfirm`；基类按需结束任务，`AbilityTask_WaitTargetData` 重写为确认目标采集。
 - **`Custom` 目标确认类型**——`EGameplayTargetingConfirmation` 加 `Custom`（与 UserConfirmed 一样等外部确认，但交由自定义逻辑择机）。
 - **组件级 `OnPostGameplayEffectExecute`**——`AbilitySystemComponent` 现在在任意 GameplayEffect 结算后广播（对齐 UE `GGA_AttributeSystemComponent`），伤害统计 / AI 感知的订阅方无需逐 AttributeSet 重写钩子。
+- **武器来源对象 + 瞄准开关 + 多 trace 段**（`IWeapon` / `WeaponComponent`）。武器现在可携带 `SourceObject`（它背靠的装备实例 / 数据资产——做装备、掉落、数据表系统时溯源用），暴露武器层瞄准开关（`SetTargeting` / `ToggleTargeting` / `IsTargeting` + `OnTargetingChanged`，区别于锁定系统），并能通过 `AdditionalTraces`（+ `RefreshTraceInstances()`）同时驱动多套碰撞判定（双刃 / 主副多段命中），不再只有单判定 + 下标。原有的单个 `MeleeTrace` 仍作主判定段照常工作。
 
 ### 变更
 

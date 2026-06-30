@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - **`AbilityTask.ExternalConfirm(endTask)`** — mirrors UE `UAbilityTask::ExternalConfirm`; base ends the task when asked, `AbilityTask_WaitTargetData` overrides it to confirm targeting.
 - **`Custom` targeting confirmation** — added to `EGameplayTargetingConfirmation` (waits for external/custom confirmation, like UserConfirmed but driven by custom logic).
 - **Component-level `OnPostGameplayEffectExecute`** — `AbilitySystemComponent` now broadcasts after any gameplay-effect execute (mirrors UE `GGA_AttributeSystemComponent`), so damage-stat / AI-perception listeners don't have to override per-AttributeSet hooks.
+- **Weapon source object, targeting toggle, and multi-segment traces** (`IWeapon` / `WeaponComponent`). A weapon can now carry a `SourceObject` (the equipment instance / data asset it's backed by — for equipment, loot, or data-table systems to trace a weapon back to its source), expose a weapon-level targeting toggle (`SetTargeting` / `ToggleTargeting` / `IsTargeting` + `OnTargetingChanged`, distinct from the lock-on system), and drive several simultaneous collision traces through `AdditionalTraces` (+ `RefreshTraceInstances()`) instead of just one trace + index — for dual-blade or main/secondary hit segments. The existing single `MeleeTrace` keeps working as the primary segment.
 
 ### Changed
 
