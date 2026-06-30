@@ -85,6 +85,22 @@ namespace Likeon.GAS.Tests
             Object.DestroyImmediate(loadout);
         }
 
+        // #20 回归：AbilityLoadout.GrantedAttributeSets 是 [SerializeReference] List<AttributeSet>。要把所选属性集类型
+        // 落盘进资产/prefab（GrantLoadout 据类型新建实例），AttributeSet 及其子类必须 [Serializable]，否则保存被 Unity
+        // 丢弃 → 持久化的 loadout/prefab 授不到属性集（曾在 demo prefab 化时撞到，in-memory GrantLoadout 测不出）。
+        [Test]
+        public void AttributeSets_AreSerializable_ForLoadoutSerializeReferencePersistence()
+        {
+            var types = new[]
+            {
+                typeof(AttributeSet), typeof(AS_Health), typeof(AS_Stamina),
+                typeof(AS_Poise), typeof(AS_Mana), typeof(AS_Combat)
+            };
+            foreach (var t in types)
+                Assert.IsTrue(System.Attribute.IsDefined(t, typeof(System.SerializableAttribute)),
+                    $"{t.Name} 必须 [Serializable]：SerializeReference 落盘需要（否则 loadout/prefab 存盘丢属性集）");
+        }
+
         [Test]
         public void ActivationFailed_FiresWithReason()
         {

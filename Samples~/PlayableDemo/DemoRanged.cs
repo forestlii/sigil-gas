@@ -8,10 +8,11 @@ namespace GASDemo
 {
     public class DemoRanged : MonoBehaviour
     {
-        [HideInInspector] public AbilitySystemComponent ASC;
-        [HideInInspector] public Transform Muzzle;
-        [HideInInspector] public BulletDefinition Bullet;
-        [HideInInspector] public TargetingSystemComponent Targeting;
+        // prefab 内部引用（ASC/Muzzle/Targeting 同 prefab）/ 资产引用（Bullet）—— 可见，prefab 上看得到接线
+        public AbilitySystemComponent ASC;
+        public Transform Muzzle;
+        public BulletDefinition Bullet;
+        public TargetingSystemComponent Targeting;
 
         public Color BulletColor = new Color(1f, 0.85f, 0.2f);
         public float BulletVisualScale = 0.25f;

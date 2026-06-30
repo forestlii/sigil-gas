@@ -7,6 +7,7 @@
 namespace Likeon.GAS
 {
     /// <summary>战斗中间属性集：承载一次结算的伤害/减伤中间量。</summary>
+    [System.Serializable] // 见 AttributeSet：SerializeReference 落盘需要
     public sealed class AS_Combat : AttributeSet
     {
         public readonly GameplayAttributeData Damage = new GameplayAttributeData(0f);

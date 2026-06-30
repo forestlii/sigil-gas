@@ -12,6 +12,7 @@ namespace Likeon.GAS
     /// 削韧（抗打击）属性集。Poise/MaxPoise/PoiseRecover（每秒恢复量）+ IncomingPoiseDamage（Meta）。
     ///（标签前缀与本包其余属性集一致）。
     /// </summary>
+    [System.Serializable] // 见 AttributeSet：SerializeReference 落盘需要
     public sealed class AS_Poise : AttributeSet
     {
         public static readonly GameplayTag TagPoise = GameplayTag.RequestTag("Attribute.PoiseSet.Poise");

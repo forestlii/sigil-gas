@@ -2,7 +2,8 @@
   "name": "Likeon.GAS.Sample.PlayableDemo.Editor",
   "rootNamespace": "GASDemo.Editor",
   "references": [
-    "Likeon.GAS.Sample.PlayableDemo"
+    "Likeon.GAS.Sample.PlayableDemo",
+    "Likeon.GAS.Runtime"
   ],
   "includePlatforms": [
     "Editor"

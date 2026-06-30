@@ -8,6 +8,7 @@
 namespace Likeon.GAS
 {
     /// <summary>生命属性集。Health/MaxHealth + IncomingDamage/IncomingHealing（Meta）。</summary>
+    [System.Serializable] // 见 AttributeSet：SerializeReference 落盘需要
     public sealed class AS_Health : AttributeSet
     {
         // 标签名沿用源码: "Attribute.HealthSet.*"

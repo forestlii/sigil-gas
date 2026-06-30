@@ -29,6 +29,7 @@
 
 ### 修复
 
+- **`AbilityLoadout` 的属性集现在能存盘了**。`AttributeSet` 及其子类缺 `[Serializable]`，导致上面那条 `[SerializeReference] List<AttributeSet> GrantedAttributeSets` 在 loadout **存成资产或烘进 prefab 时被 Unity 静默丢弃**——内存里的 API 正常，但真正的策划工作流（Inspector 配 → 保存 → 实例化）会丢掉全部属性集。给 `AttributeSet` / `AS_Health` / `AS_Stamina` / `AS_Poise` / `AS_Mana` / `AS_Combat` 加 `[Serializable]` 后所选类型正常序列化；`GrantLoadout` 再按类型给每个 ASC 新建实例。新增一个 EditMode 测试守这条。
 - **攻击类型标签现在真正到达伤害效果（修死配置）**。`AttackDefinition.AttackTags`（近战/远程、劈砍/打击等）文档写着"作为动态资产标签加进效果 spec"，但实际从未注入，导致目标无法按"被什么类型攻击"做反应。新增 `GameplayEffectSpec.DynamicAssetTags`（+ `AddDynamicAssetTags` / `GetAllAssetTags`）；两条施加路（`AttackApplication` 与 `MeleeAttackTrace`，含效果容器）现在都把 `AttackTags` 注入 spec，攻击类型并入 `AttackResult.AggregatedSourceTags`（让受击处理器能查攻击类型，如重击→硬直），`RemoveEffectsWithTags` 也改为认动态资产标签。
 
 - **`AbilityInteractionRules.AbilityTagsToBlock` 现已强制生效**。此前该字段被收集却从未被读取，"激活期间阻挡其它技能激活"实际不生效（只有 `AbilityTagsToCancel` 有效）。现在激活中的技能会把它的 block 标签贡献到 ASC 上一个**引用计数**的集合；任何 `AbilityTags` 命中的技能在所有阻挡来源结束前都被拒绝激活。新增 API：`AbilitySystemComponent.AreAbilityTagsBlocked(...)`，以及 `AbilityInteractionRules.AddBaseRule(...)` / `AddConditionalRules(...)`（便于用代码构造规则）。由 6 个新增 PlayMode 测试覆盖（`AbilityBlockTagsPlayTests`）。测试总数：**EditMode 21 + PlayMode 95 = 116**。
@@ -36,6 +37,7 @@
 ### 变更
 
 - **可玩 Demo 升级为功能展示场**。示例从"只演示近战"升级为多条战斗线同场展示（近战 / 远程子弹 / 3 敌人锁定切换 / 削韧破防 / buff 叠层）+ 自解释 HUD（全靠订阅可观测性事件渲染）。框架零改动，仅把已实现并测试过的功能调用出来。新增 demo 脚本 `DemoRanged` / `DemoRangedAbility` / `DemoHUD`。
+- **可玩 Demo 改为 prefab + 场景交付**（策划工作流），不再纯运行时 `AddComponent`。编辑器生成器（`DemoPrefabBuilder`，菜单 *Likeon ▸ GAS ▸ Demo ▸ Build All*）烘出 `DemoPlayer` / `DemoEnemy` prefab（放 `Resources/`）和接好线的 `GASDemo.unity` 场景；玩家/敌人的属性集 + 技能由 `PlayerLoadout` / `EnemyLoadout` 资产经 `AbilitySystemComponent.initialLoadouts` 提供（无需代码 `AddAttributeSet` / `GiveAbility`）。玩家/敌人的结构构建由 `DemoActorBuilder` 在 prefab 生成器与运行时回退之间共用。`GASDemo` 现在是薄编排：prefab 模式下只接 prefab 接不了的跨边界引用（相机 `ViewSource` / 第三人称相机 / HUD）+ 动态事件订阅；场景没摆实例时回退到运行时现场构建（所以 demo 挂到空物体上仍"挂上就跑"，headless 冒烟测试照常）。`DemoPlayerController` / `DemoRanged` 的引用字段现在在 Inspector 可见。新增冒烟测试 `M` / `N` / `O` 覆盖 prefab 实例化与 adopt 路径。
 - **Demo 进一步演示输入/技能接线**：输入分发（键 → `InputTag` → `InputProcessor_ActivateAbilityByTag` → 技能，不直接 `TryActivate`）、上下文切换（`Push/PopInputSetup` 切载具键位，近战键改鸣笛）、用 `AbilityInteractionRules` 资产做技能 block/cancel（持续型专注挡近战、远程取消专注）、武器 → 不同技能（`WeaponComponent` 注入 `Weapon.Sword`/`Weapon.Axe`，近战键多态成轻击/重击）。新增 demo 脚本 `DemoFocusAbility`。仍无框架改动。
 - **Demo 改为数据驱动**——全部配置（输入控制集、技能交互规则、技能、攻击、子弹、效果）收进一个**策划可在 Inspector 编辑**的 `DemoConfig` 资产（子资产嵌入其中）。`GASDemo` 从 `Config` 字段读取（demo 场景已接好）；留空则回退到代码建同一套默认值（裸 `AddComponent` / headless 冒烟测试仍可跑）。菜单 **Likeon ▸ GAS ▸ Generate Demo Config Assets** 可重新生成资产并接进场景。新增 `DemoConfig`、`DemoConfigBuilder`。
 - demo 冒烟测试从 1 个扩到 **11** 个（近战 / 锁定 / 远程 / 叠层 + 输入分发 / 武器切换 / 专注挡近战 / 远程取消专注 / 载具鸣笛 + 配置完整性 / 指定配置构建）全过；现**随 Sample 发布**（`Samples~/PlayableDemo/Tests/`），导入可玩 Demo 即带可运行测试。测试总数升至 **EditMode 21 + PlayMode 102 = 123**。

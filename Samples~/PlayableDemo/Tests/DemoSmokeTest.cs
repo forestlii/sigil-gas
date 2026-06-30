@@ -305,5 +305,129 @@ namespace Likeon.GAS.PlayTests
             foreach (var a in cfg.EnumerateSubAssets()) if (a != null) Object.Destroy(a);
             Object.Destroy(cfg);
         }
+
+        // ============ L) 数据驱动 Loadout：玩家/敌人装载产出正确的属性集 + 技能 ============
+        // 验证 prefab 化路径的数据地基——ASC.initialLoadouts 用的就是这两个装载（Config 定义、Loadout 装载引用）。
+        [UnityTest]
+        public IEnumerator L_Loadouts_GrantCorrectAttributeSetsAndAbilities()
+        {
+            var cfg = GASDemo.DemoConfig.CreateDefault();
+
+            // 玩家装载：AS_Health + AS_Stamina + 4 技能（近战/重击/远程/专注）
+            var playerGo = new GameObject("LoadoutPlayer");
+            var pasc = playerGo.AddComponent<AbilitySystemComponent>();
+            yield return null;
+            pasc.GrantLoadout(cfg.BuildPlayerLoadout());
+            Assert.IsNotNull(pasc.GetAttributeSet<AS_Health>(), "玩家装载应含 AS_Health");
+            Assert.IsNotNull(pasc.GetAttributeSet<AS_Stamina>(), "玩家装载应含 AS_Stamina");
+            Assert.AreEqual(4, pasc.GetGrantedAbilities().Count, "玩家装载应授予 4 个技能");
+
+            // 敌人装载：AS_Health + AS_Poise（削韧），无技能
+            var enemyGo = new GameObject("LoadoutEnemy");
+            var easc = enemyGo.AddComponent<AbilitySystemComponent>();
+            yield return null;
+            easc.GrantLoadout(cfg.BuildEnemyLoadout());
+            Assert.IsNotNull(easc.GetAttributeSet<AS_Health>(), "敌人装载应含 AS_Health");
+            Assert.IsNotNull(easc.GetAttributeSet<AS_Poise>(), "敌人装载应含 AS_Poise");
+            Assert.AreEqual(0, easc.GetGrantedAbilities().Count, "敌人装载不授予技能");
+
+            Object.Destroy(playerGo);
+            Object.Destroy(enemyGo);
+            yield return null;
+            foreach (var a in cfg.EnumerateSubAssets()) if (a != null) Object.Destroy(a);
+            Object.Destroy(cfg);
+        }
+
+        // ============ M) prefab 模式：实例化烘出的玩家 prefab → initialLoadouts 自动授予属性集+技能 ============
+        // 验证 #7 prefab 化产物：Resources 里的 DemoPlayer.prefab 实例化后，靠 ASC.initialLoadouts 在 Awake 自动
+        // 授予属性集/技能（无需代码 AddAttributeSet/GiveAbility），组件 + 输入控制集随 prefab 自带。
+        [UnityTest]
+        public IEnumerator M_PlayerPrefab_Instantiates_WithLoadoutGranted()
+        {
+            var prefab = Resources.Load<GameObject>("DemoPlayer");
+            Assert.IsNotNull(prefab, "应能从 Resources 加载 DemoPlayer prefab（先运行 Likeon ▸ GAS ▸ Demo ▸ Build Prefabs 生成）");
+
+            var player = Object.Instantiate(prefab);
+            yield return null; // 等 Awake：ASC.initialLoadouts 授予
+
+            var asc = player.GetComponent<AbilitySystemComponent>();
+            Assert.IsNotNull(asc, "prefab 应含 ASC");
+            Assert.IsNotNull(asc.GetAttributeSet<AS_Health>(), "initialLoadouts 应在 Awake 授予 AS_Health");
+            Assert.IsNotNull(asc.GetAttributeSet<AS_Stamina>(), "initialLoadouts 应在 Awake 授予 AS_Stamina");
+            Assert.AreEqual(4, asc.GetGrantedAbilities().Count, "initialLoadouts 应授予 4 个技能");
+            Assert.IsNotNull(player.GetComponent<GASDemo.DemoPlayerController>(), "prefab 应含控制器");
+            Assert.IsNotNull(player.GetComponent<GASDemo.DemoRanged>(), "prefab 应含远程组件");
+            Assert.IsNotNull(player.GetComponent<MeleeAttackTrace>(), "prefab 应含近战判定");
+            var inputSys = player.GetComponent<InputSystemComponent>();
+            Assert.IsNotNull(inputSys, "prefab 应含输入分发组件");
+            Assert.IsNotNull(inputSys.GetCurrentInputSetup(), "prefab 应随带战斗输入控制集（PushInputSetup 已序列化进 prefab）");
+
+            Object.Destroy(player);
+            yield return null;
+        }
+
+        // ============ N) prefab 模式：敌人 prefab 实例化 → initialLoadouts 授予 AS_Health/AS_Poise ============
+        [UnityTest]
+        public IEnumerator N_EnemyPrefab_Instantiates_WithLoadoutGranted()
+        {
+            var prefab = Resources.Load<GameObject>("DemoEnemy");
+            Assert.IsNotNull(prefab, "应能从 Resources 加载 DemoEnemy prefab");
+
+            var enemy = Object.Instantiate(prefab);
+            yield return null;
+
+            var asc = enemy.GetComponent<AbilitySystemComponent>();
+            Assert.IsNotNull(asc, "敌人 prefab 应含 ASC");
+            Assert.IsNotNull(asc.GetAttributeSet<AS_Health>(), "initialLoadouts 应授予 AS_Health");
+            Assert.IsNotNull(asc.GetAttributeSet<AS_Poise>(), "initialLoadouts 应授予 AS_Poise（削韧）");
+            Assert.IsNotNull(enemy.GetComponent<PoiseComponent>(), "敌人 prefab 应含削韧组件");
+
+            Object.Destroy(enemy);
+            yield return null;
+        }
+
+        // ============ O) adopt 模式：场景已摆 prefab 实例 → GASDemo 薄编排接管（不重复构建）+ 近战仍生效 ============
+        // 验证 #7 阶段②c：BuildScene 摆好的 prefab 实例 + GASDemo.ScenePlayer/SceneEnemies → Awake 走 adopt 路径
+        // （只接相机/动态订阅，结构/技能来自 prefab），demo 各战斗线照常。
+        [UnityTest]
+        public IEnumerator O_AdoptMode_WiresScenePrefabs_AndMeleeWorks()
+        {
+            var playerPrefab = Resources.Load<GameObject>("DemoPlayer");
+            var enemyPrefab = Resources.Load<GameObject>("DemoEnemy");
+            Assert.IsNotNull(playerPrefab, "应能加载 DemoPlayer prefab");
+            Assert.IsNotNull(enemyPrefab, "应能加载 DemoEnemy prefab");
+
+            var host = new GameObject("DemoHost");
+            host.SetActive(false); // 先停用，赶在 Awake 前接好场景实例引用
+            var demo = host.AddComponent<GASDemo.GASDemo>();
+
+            var player = Object.Instantiate(playerPrefab);
+            player.transform.position = new Vector3(0, 1, 0);
+            demo.ScenePlayer = player.GetComponent<GASDemo.DemoPlayerController>();
+
+            var enemy = Object.Instantiate(enemyPrefab);
+            enemy.transform.position = new Vector3(0, 1, 1.2f); // 武器判定点附近
+            demo.SceneEnemies = new System.Collections.Generic.List<AbilitySystemComponent> { enemy.GetComponent<AbilitySystemComponent>() };
+
+            host.SetActive(true); // Awake → adopt 路径
+            yield return null;
+            yield return new WaitForFixedUpdate();
+
+            Assert.AreSame(demo.ScenePlayer.ASC, demo.PlayerASC, "adopt 模式应采用场景玩家实例的 ASC（非现场新建）");
+            Assert.AreEqual(1, demo.Enemies.Count, "adopt 模式应采用场景敌人实例");
+            Assert.AreSame(enemy.GetComponent<AbilitySystemComponent>(), demo.Enemies[0], "敌人应是场景实例");
+
+            var hp = enemy.GetComponent<AbilitySystemComponent>().GetAttributeSet<AS_Health>();
+            Assert.IsNotNull(hp, "敌人 prefab 的 initialLoadouts 应已授予 AS_Health");
+            float before = hp.Health.CurrentValue;
+            demo.Controller.TryAttack(); // 经输入分发激活近战
+            yield return new WaitForSeconds(0.4f);
+            Assert.Less(hp.Health.CurrentValue, before, "adopt 模式下近战应对敌人造成伤害");
+
+            Object.Destroy(host);
+            Object.Destroy(player);
+            Object.Destroy(enemy);
+            yield return null;
+        }
     }
 }

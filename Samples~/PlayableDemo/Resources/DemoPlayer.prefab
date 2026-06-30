@@ -1,0 +1,511 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &563482316947719846
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8093865259333138835}
+  m_Layer: 0
+  m_Name: Muzzle
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8093865259333138835
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 563482316947719846}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.2, z: 0.6}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2308990685160410939}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1711607186408037168
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4072315592439253719}
+  - component: {fileID: 2106804329699607852}
+  m_Layer: 0
+  m_Name: Weapon_Axe
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4072315592439253719
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1711607186408037168}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2308990685160410939}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2106804329699607852
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1711607186408037168}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 55493ec5990a5774e9858dde693f2f49, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Likeon.GAS.Runtime::Likeon.GAS.WeaponComponent
+  weaponTags:
+    tags:
+    - tagName: Weapon.Axe
+  applyWeaponTagsToOwner: 1
+  muzzle: {fileID: 0}
+  meleeTrace: {fileID: 0}
+  meleeTraceIndex: 0
+--- !u!1 &6956972606404377790
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7481520321767509156}
+  m_Layer: 0
+  m_Name: WeaponSocket
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7481520321767509156
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6956972606404377790}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 1.2}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2308990685160410939}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &8256578490876870054
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 80564013295741082}
+  - component: {fileID: 5400606338456387500}
+  m_Layer: 0
+  m_Name: Weapon_Sword
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &80564013295741082
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8256578490876870054}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2308990685160410939}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5400606338456387500
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8256578490876870054}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 55493ec5990a5774e9858dde693f2f49, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Likeon.GAS.Runtime::Likeon.GAS.WeaponComponent
+  weaponTags:
+    tags:
+    - tagName: Weapon.Sword
+  applyWeaponTagsToOwner: 1
+  muzzle: {fileID: 0}
+  meleeTrace: {fileID: 0}
+  meleeTraceIndex: 0
+--- !u!1 &9075236341747255189
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2308990685160410939}
+  - component: {fileID: 1879987274320085391}
+  - component: {fileID: 6709957387161274366}
+  - component: {fileID: 8468842934834413057}
+  - component: {fileID: 3216629077306134279}
+  - component: {fileID: 4048840826508902390}
+  - component: {fileID: 189364467184425182}
+  - component: {fileID: 9073465779131153289}
+  - component: {fileID: 211059752861016081}
+  - component: {fileID: 4398932084113214327}
+  - component: {fileID: 7246115726953595508}
+  - component: {fileID: 7929631763756998678}
+  m_Layer: 0
+  m_Name: DemoPlayer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2308990685160410939
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9075236341747255189}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 1, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 7481520321767509156}
+  - {fileID: 8093865259333138835}
+  - {fileID: 80564013295741082}
+  - {fileID: 4072315592439253719}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!33 &1879987274320085391
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9075236341747255189}
+  m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &6709957387161274366
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9075236341747255189}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 1
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!143 &8468842934834413057
+CharacterController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9075236341747255189}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Height: 2
+  m_Radius: 0.5
+  m_SlopeLimit: 45
+  m_StepOffset: 0.3
+  m_SkinWidth: 0.08
+  m_MinMoveDistance: 0.001
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &3216629077306134279
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9075236341747255189}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6bbdaee68c4bc3e4397ad36f97d67b63, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Likeon.GAS.Runtime::Likeon.GAS.AbilitySystemComponent
+  initialLoadouts:
+  - {fileID: 11400000, guid: dce470a72becc154390990b68034b07b, type: 2}
+  attributeInitializeLevel: 1
+  InteractionRules: {fileID: 1277224329872931178, guid: bb1f29c14532fa8418b9b39032593710, type: 2}
+--- !u!114 &4048840826508902390
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9075236341747255189}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 92dbc33c0b338b445b5aaeb3d53e9d42, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Likeon.GAS.Runtime::Likeon.GAS.CombatTeamAgent
+  teamId: 0
+--- !u!114 &189364467184425182
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9075236341747255189}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 13fd47002d3c5184ba64a82677acd463, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Likeon.GAS.Runtime::Likeon.GAS.CombatSystemComponent
+  animator: {fileID: 0}
+  abilitySystem: {fileID: 0}
+  actionLibrary: {fileID: 0}
+--- !u!114 &9073465779131153289
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9075236341747255189}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b9ea776693969ea468b798e757f57651, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Likeon.GAS.Runtime::Likeon.GAS.MeleeAttackTrace
+  entries:
+  - Attack: {fileID: 2738618127638270829, guid: bb1f29c14532fa8418b9b39032593710, type: 2}
+    Trace:
+      TraceTag:
+        tagName: 
+      SocketTransforms:
+      - {fileID: 7481520321767509156}
+      TraceRadius: 1
+      HitLayers:
+        serializedVersion: 2
+        m_Bits: 0
+  - Attack: {fileID: 5613650348228280999, guid: bb1f29c14532fa8418b9b39032593710, type: 2}
+    Trace:
+      TraceTag:
+        tagName: 
+      SocketTransforms:
+      - {fileID: 7481520321767509156}
+      TraceRadius: 1.1
+      HitLayers:
+        serializedVersion: 2
+        m_Bits: 0
+  sourceAbilitySystem: {fileID: 0}
+  sourceCombat: {fileID: 0}
+  damageDataTag:
+    tagName: 
+--- !u!114 &211059752861016081
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9075236341747255189}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 938c7be8a85ba2140a13bc229a052759, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Likeon.GAS.Runtime::Likeon.GAS.TargetingSystemComponent
+  searchRadius: 15
+  candidateLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  viewSource: {fileID: 0}
+  maxViewAngle: 60
+  onlyHostile: 1
+  filterDead: 1
+  requireLineOfSight: 0
+  obstacleLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  requiredTags:
+    tags: []
+  blockedTags:
+    tags: []
+  autoDropInvalidTarget: 1
+--- !u!114 &4398932084113214327
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9075236341747255189}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: afb4479aa922c6e43aaf440ab0d70035, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Likeon.GAS.Sample.PlayableDemo::GASDemo.DemoRanged
+  ASC: {fileID: 3216629077306134279}
+  Muzzle: {fileID: 8093865259333138835}
+  Bullet: {fileID: 4453096448324117217, guid: bb1f29c14532fa8418b9b39032593710, type: 2}
+  Targeting: {fileID: 211059752861016081}
+  BulletColor: {r: 1, g: 0.85, b: 0.2, a: 1}
+  BulletVisualScale: 0.25
+--- !u!114 &7246115726953595508
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9075236341747255189}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a50093a8dcae09e42b60d00563ce90c9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Likeon.GAS.Runtime::Likeon.GAS.InputSystemComponent
+  abilitySystem: {fileID: 0}
+  inputConfig: {fileID: 0}
+  processingInputExternally: 0
+  maxInputEntriesNum: 5
+  inputControlSetups:
+  - {fileID: 430763744720719801, guid: bb1f29c14532fa8418b9b39032593710, type: 2}
+--- !u!114 &7929631763756998678
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9075236341747255189}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1f95dbf5eaecfb2fccba7a3ec4754c5b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Likeon.GAS.Sample.PlayableDemo::GASDemo.DemoPlayerController
+  ASC: {fileID: 3216629077306134279}
+  Controller: {fileID: 8468842934834413057}
+  Melee: {fileID: 9073465779131153289}
+  Targeting: {fileID: 211059752861016081}
+  PowerBuff: {fileID: 6083700718367585815, guid: bb1f29c14532fa8418b9b39032593710, type: 2}
+  InputSystem: {fileID: 7246115726953595508}
+  VehicleSetup: {fileID: -4058035968058550574, guid: bb1f29c14532fa8418b9b39032593710, type: 2}
+  Sword: {fileID: 5400606338456387500}
+  Axe: {fileID: 2106804329699607852}
+  ThirdPersonCamera:
+    CameraTag:
+      tagName: 
+    FieldOfView: 60
+    BlendInDuration: 0.5
+    BlendCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    PivotOffset: {x: 0, y: 1.6, z: 0}
+    ArmLength: 4
+    PitchClampDegrees: {x: -60, y: 70}
+    CollisionMask:
+      serializedVersion: 2
+      m_Bits: 4294967295
+    CollisionProbeRadius: 0.2
+  MeleeInputTag:
+    tagName: InputTag.Melee
+  RangedInputTag:
+    tagName: InputTag.Ranged
+  FocusInputTag:
+    tagName: InputTag.Focus
+  MouseSensitivity: 0.12
+  WalkSpeed: 5
+  SprintSpeed: 8
+  RotationSpeed: 12
+  Gravity: -20
+  AttackCooldown: 0.5
+  RangedCooldown: 0.35
+  StaminaRegenPerSecond: 15

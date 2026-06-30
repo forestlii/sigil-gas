@@ -120,6 +120,40 @@ namespace GASDemo
             return cfg;
         }
 
+        /// <summary>
+        /// 用本配置的技能 + 属性集组一个"玩家装载"（对齐 §6.1：Config 定义、Loadout 装载引用）。
+        /// 属性集 AS_Health/AS_Stamina；技能=近战/重击/远程/专注。供 ASC.initialLoadouts 在 prefab 上配，
+        /// 替代代码 AddAttributeSet/GiveAbility。引用本配置已有的技能资产，不重复造。
+        /// </summary>
+        public AbilityLoadout BuildPlayerLoadout()
+        {
+            var lo = CreateInstance<AbilityLoadout>();
+            lo.name = "PlayerLoadout";
+            lo.GrantedAttributeSets.Add(new AS_Health());
+            lo.GrantedAttributeSets.Add(new AS_Stamina());
+            AddGranted(lo, MeleeAbility);
+            AddGranted(lo, HeavyAbility);
+            AddGranted(lo, RangedAbility);
+            AddGranted(lo, FocusAbility);
+            return lo;
+        }
+
+        /// <summary>敌人装载：AS_Health + AS_Poise（削韧），无技能（敌人是受击靶/锁定候选）。</summary>
+        public AbilityLoadout BuildEnemyLoadout()
+        {
+            var lo = CreateInstance<AbilityLoadout>();
+            lo.name = "EnemyLoadout";
+            lo.GrantedAttributeSets.Add(new AS_Health());
+            lo.GrantedAttributeSets.Add(new AS_Poise());
+            return lo;
+        }
+
+        private static void AddGranted(AbilityLoadout lo, GameplayAbility ability)
+        {
+            if (ability != null)
+                lo.GrantedAbilities.Add(new AbilityLoadout.GrantedAbility { Ability = ability, Level = 1 });
+        }
+
         /// <summary>枚举本配置引用到的全部子 ScriptableObject（含间接的 cost/damage GE），供回退路径清理或生成器落盘。</summary>
         public IEnumerable<Object> EnumerateSubAssets()
         {

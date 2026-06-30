@@ -13,16 +13,18 @@ namespace GASDemo
 {
     public class DemoPlayerController : MonoBehaviour
     {
-        [HideInInspector] public AbilitySystemComponent ASC;
-        [HideInInspector] public CharacterController Controller;
-        [HideInInspector] public MeleeAttackTrace Melee;
+        // prefab 内部引用 / 资产引用 —— 可见，策划在 prefab 上看得到接线（生成器/运行时也照常代码赋值）
+        public AbilitySystemComponent ASC;
+        public CharacterController Controller;
+        public MeleeAttackTrace Melee;
+        public TargetingSystemComponent Targeting;
+        public GameplayEffect PowerBuff;       // R 键叠加的 stacking buff
+        public InputSystemComponent InputSystem; // 输入分发中枢
+        public InputControlSetup VehicleSetup;   // V 键压入的载具控制集
+        public WeaponComponent Sword;
+        public WeaponComponent Axe;
+        // 跨边界：运行时相机模式（纯 C# 对象、不可序列化进 prefab），由 GASDemo 运行时接
         [HideInInspector] public ThirdPersonCameraBehavior ThirdPersonCamera;
-        [HideInInspector] public TargetingSystemComponent Targeting;
-        [HideInInspector] public GameplayEffect PowerBuff;       // R 键叠加的 stacking buff
-        [HideInInspector] public InputSystemComponent InputSystem; // 输入分发中枢
-        [HideInInspector] public InputControlSetup VehicleSetup;   // V 键压入的载具控制集
-        [HideInInspector] public WeaponComponent Sword;
-        [HideInInspector] public WeaponComponent Axe;
 
         // 这些 InputTag 与控制集处理器里配的一致（GASDemo 注入）
         public GameplayTag MeleeInputTag = GameplayTag.RequestTag("InputTag.Melee");

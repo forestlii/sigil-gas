@@ -1,12 +1,16 @@
-// GASDemo：运行时构建一个可玩的"功能展示场"，演示框架已实现的多条战斗线——
+// GASDemo：可玩的"功能展示场"引导组件，演示框架已实现的多条战斗线——
 //   近战命中→扣血→Cue   远程子弹   锁定切换   削韧破防   buff 叠层   第三人称相机 + 血条 + HUD，
 //   以及 输入分发(键→tag→技能) / 载具切换 / 技能 block-cancel / 武器换技能。
-// 把本组件挂到空场景的一个 GameObject 上，按 Play 即可游玩。
 //
-// 数据驱动：所有可配置数据（输入控制集 / 技能互斥规则 / 技能 / 攻击 / 子弹 / 效果）来自 Config(DemoConfig 资产)——
-//   · 场景里把 DemoConfig.asset 拖到下面的 Config 字段 → 策划在 Inspector 改这些 .asset 即可（真实工作流）；
-//   · Config 留空 → 用 DemoConfig.CreateDefault() 在内存里建同一套默认值（裸 AddComponent / headless 测试的回退）。
-// 注：本 demo 只是把核心包里"已经实现并测试过"的功能调用出来给人看，不含任何战斗逻辑本身。
+// 两种运行形态：
+//  · prefab 模式（推荐，策划工作流）：场景里摆好 Player/Enemy prefab 实例（ASC.initialLoadouts 配技能/属性集），
+//    GASDemo 只做"薄编排"——接 prefab 接不了的跨边界引用（相机 ViewSource / ThirdPersonCamera / HUD）和动态订阅
+//    （敌人受击变色 / 命中 Cue 火花）。用菜单 Likeon ▸ GAS ▸ Demo ▸ Build All 生成 prefab+场景。
+//  · 运行时回退（headless / 裸挂）：场景里没摆 prefab 实例时，GASDemo 用 DemoActorBuilder 在 Awake 现场构建一套
+//    （供"挂上就跑"和冒烟测试）。结构构建与 prefab 共用 DemoActorBuilder，避免两处漂移。
+//
+// 数据驱动：可配数据（输入控制集 / 技能互斥 / 技能 / 攻击 / 子弹 / 效果）来自 Config(DemoConfig 资产)；留空则 CreateDefault() 内存建默认。
+// 注：本 demo 只把核心包里"已实现并测试过"的功能调用出来给人看，不含战斗逻辑本身。
 using System.Collections;
 using System.Collections.Generic;
 using Likeon.GAS;
@@ -20,7 +24,13 @@ namespace GASDemo
         [Tooltip("策划在此资产里配输入分发/技能互斥/技能/攻击/效果。用菜单 Likeon ▸ GAS ▸ Generate Demo Config Assets 可一键生成一套并接好。")]
         public DemoConfig Config;
 
-        // 敌人摆位（前方扇形，便于演示锁定左右切换）
+        [Header("prefab 模式：场景里已摆好的 prefab 实例（留空=运行时回退现场构建）")]
+        [Tooltip("把场景里的玩家 prefab 实例（DemoPlayer）拖到这里；留空则 GASDemo 用 DemoActorBuilder 现场构建（headless/裸挂）。")]
+        public DemoPlayerController ScenePlayer;
+        [Tooltip("把场景里的敌人 prefab 实例（DemoEnemy 的 ASC）拖到这里；留空则现场构建。")]
+        public List<AbilitySystemComponent> SceneEnemies = new List<AbilitySystemComponent>();
+
+        // 敌人摆位（运行时回退构建时用；前方扇形便于演示锁定左右切换）
         public Vector3[] EnemySpawns =
         {
             new Vector3(-3.5f, 1, 5),
@@ -37,7 +47,6 @@ namespace GASDemo
         public DemoConfig ActiveConfig => _config;
         public readonly List<AbilitySystemComponent> Enemies = new List<AbilitySystemComponent>();
 
-        private static readonly Color EnemyColor = new Color(0.85f, 0.3f, 0.28f);
         private static readonly Color StaggerColor = new Color(0.95f, 0.85f, 0.35f);
 
         private DemoConfig _config;
@@ -50,8 +59,16 @@ namespace GASDemo
 
             BuildGround();
             var cam = EnsureCamera();
-            var player = BuildPlayer(cam);
-            foreach (var pos in EnemySpawns) BuildEnemy(pos);
+
+            // 玩家：场景已摆 prefab 实例则薄编排接管，否则运行时回退现场构建
+            GameObject player = ScenePlayer != null ? AdoptScenePlayer(cam) : BuildPlayer(cam);
+
+            // 敌人：同上
+            if (SceneEnemies != null && SceneEnemies.Count > 0)
+                foreach (var e in SceneEnemies) { if (e != null) AdoptSceneEnemy(e); }
+            else
+                foreach (var pos in EnemySpawns) BuildEnemy(pos);
+
             WireCamera(cam, player);
             BuildHUD();
             RegisterHitCue();
@@ -74,7 +91,7 @@ namespace GASDemo
             g.name = "Ground";
             g.transform.SetParent(transform, true);
             g.transform.localScale = new Vector3(5, 1, 5);
-            SetColor(g, new Color(0.24f, 0.26f, 0.30f));
+            DemoActorBuilder.SetColor(g, new Color(0.24f, 0.26f, 0.30f));
             g.AddComponent<SurfaceType>().Surface = GameplayTag.RequestTag("SurfaceType.Stone");
         }
 
@@ -91,117 +108,86 @@ namespace GASDemo
             return cam;
         }
 
+        // ---------- 玩家 ----------
+        // 运行时回退：用共享构造器现场建玩家结构，再接跨边界引用 + 授予 loadout。
         private GameObject BuildPlayer(Camera cam)
         {
-            var p = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            p.name = "Player";
-            p.transform.position = new Vector3(0, 1, 0);
-            p.transform.SetParent(transform, true);
-            SetColor(p, new Color(0.22f, 0.5f, 0.9f));
-            Destroy(p.GetComponent<Collider>()); // 用 CharacterController 作碰撞
+            var refs = DemoActorBuilder.BuildPlayer(_config);
+            refs.Root.transform.SetParent(transform, true); // 挂到 host 下，便于测试销毁清理
 
-            var cc = p.AddComponent<CharacterController>();
-            cc.height = 2f; cc.radius = 0.5f; cc.center = Vector3.zero;
+            // 授予技能/属性集（回退路径显式 GrantLoadout；prefab 模式由 initialLoadouts 在实例化 Awake 授予）
+            refs.ASC.GrantLoadout(_config.BuildPlayerLoadout());
 
-            var asc = p.AddComponent<AbilitySystemComponent>();
-            asc.AddAttributeSet(new AS_Health());
-            asc.AddAttributeSet(new AS_Stamina());
+            // 跨边界引用：锁定视角来源 = 相机
+            refs.Targeting.ViewSource = cam.transform;
+            // 默认装备剑（注入 Weapon.Sword → 近战键映射到轻击）
+            refs.PlayerController.EquipSword();
 
-            p.AddComponent<CombatTeamAgent>().SetTeamId(0);
-            p.AddComponent<CombatSystemComponent>();
-            var melee = p.AddComponent<MeleeAttackTrace>();
-
-            // 武器判定点（角色前方）
-            var socket = new GameObject("WeaponSocket").transform;
-            socket.SetParent(p.transform);
-            socket.localPosition = new Vector3(0, 0, 1.2f);
-
-            // ── 近战：两条判定（轻击 entry0 / 重击 entry1），攻击定义来自配置 ──
-            melee.Entries.Add(new MeleeAttackTrace.AttackTraceEntry
-            {
-                Attack = _config.LightAttack,
-                Trace = new CollisionTraceDefinition { SocketTransforms = new List<Transform> { socket }, TraceRadius = 1.0f }
-            });
-            melee.Entries.Add(new MeleeAttackTrace.AttackTraceEntry
-            {
-                Attack = _config.HeavyAttack,
-                Trace = new CollisionTraceDefinition { SocketTransforms = new List<Transform> { socket }, TraceRadius = 1.1f }
-            });
-
-            // 技能（剑轻击 / 斧重击 / 远程 / 专注）—— GiveAbility 内部 Instantiate，不污染配置资产
-            asc.GiveAbility(_config.MeleeAbility);
-            asc.GiveAbility(_config.HeavyAbility);
-
-            // 锁定系统（视角来源=相机）
-            var targeting = p.AddComponent<TargetingSystemComponent>();
-            targeting.ViewSource = cam.transform;
-
-            // 远程：枪口 + 射击组件（子弹定义来自配置）
-            var muzzle = new GameObject("Muzzle").transform;
-            muzzle.SetParent(p.transform);
-            muzzle.localPosition = new Vector3(0, 0.2f, 0.6f);
-
-            var shooter = p.AddComponent<DemoRanged>();
-            shooter.ASC = asc; shooter.Muzzle = muzzle; shooter.Bullet = _config.Bullet; shooter.Targeting = targeting;
-
-            asc.GiveAbility(_config.RangedAbility);
-            asc.GiveAbility(_config.FocusAbility);
-
-            // 技能互斥规则（数据驱动）：专注 block 近战、远程 cancel 专注
-            asc.SetInteractionRules(_config.InteractionRules);
-
-            // ── 输入分发：InputSystemComponent + 控制集（来自配置）──
-            var inputSys = p.AddComponent<InputSystemComponent>(); // Awake 自动找同物体 ASC
-            inputSys.PushInputSetup(_config.CombatInput);
-
-            // ── 两把武器（WeaponComponent 装备时注入武器标签）──
-            var sword = MakeWeapon(p.transform, "Sword", DemoConfig.SwordTag);
-            var axe = MakeWeapon(p.transform, "Axe", DemoConfig.AxeTag);
-
-            var ctrl = p.AddComponent<DemoPlayerController>();
-            ctrl.ASC = asc; ctrl.Controller = cc; ctrl.Melee = melee; ctrl.Targeting = targeting;
-            ctrl.PowerBuff = _config.PowerBuff;
-            ctrl.InputSystem = inputSys; ctrl.VehicleSetup = _config.VehicleInput;
-            ctrl.Sword = sword; ctrl.Axe = axe;
-            ctrl.MeleeInputTag = DemoConfig.InputMelee; ctrl.RangedInputTag = DemoConfig.InputRanged; ctrl.FocusInputTag = DemoConfig.InputFocus;
-            ctrl.EquipSword(); // 默认装备剑（注入 Weapon.Sword → 近战键映射到轻击）
-
-            PlayerASC = asc; Melee = melee; Controller = ctrl; Targeting = targeting; InputSystem = inputSys;
-            return p;
+            CapturePlayer(refs.ASC, refs.Melee, refs.PlayerController, refs.Targeting, refs.InputSystem);
+            return refs.Root;
         }
 
+        // prefab 模式：场景里已摆好玩家实例（结构/技能由 prefab+initialLoadouts 提供），GASDemo 只接跨边界引用（相机）+ 运行时上色。
+        private GameObject AdoptScenePlayer(Camera cam)
+        {
+            var ctrl = ScenePlayer;
+            DemoActorBuilder.SetColor(ctrl.gameObject, DemoActorBuilder.PlayerColor); // prefab 未烘色，运行时上
+            ctrl.Targeting.ViewSource = cam.transform;
+            ctrl.EquipSword();
+            CapturePlayer(ctrl.ASC, ctrl.Melee, ctrl, ctrl.Targeting, ctrl.InputSystem);
+            return ctrl.gameObject;
+        }
+
+        private void CapturePlayer(AbilitySystemComponent asc, MeleeAttackTrace melee, DemoPlayerController ctrl,
+            TargetingSystemComponent targeting, InputSystemComponent inputSys)
+        {
+            PlayerASC = asc; Melee = melee; Controller = ctrl; Targeting = targeting; InputSystem = inputSys;
+        }
+
+        // ---------- 敌人 ----------
+        // 运行时回退：现场建敌人结构 + 授予 loadout + 接动态订阅。
         private void BuildEnemy(Vector3 pos)
         {
-            var e = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            e.name = "Enemy";
+            var e = DemoActorBuilder.BuildEnemy(_config);
             e.transform.position = pos;
             e.transform.SetParent(transform, true);
-            SetColor(e, EnemyColor); // 保留 CapsuleCollider 供命中 + 锁定候选
 
-            var asc = e.AddComponent<AbilitySystemComponent>();
-            var health = new AS_Health();
-            asc.AddAttributeSet(health);
-            asc.AddAttributeSet(new AS_Poise());   // 削韧属性
-            e.AddComponent<CombatSystemComponent>();
-            e.AddComponent<CombatTeamAgent>().SetTeamId(1);
+            var asc = e.GetComponent<AbilitySystemComponent>();
+            asc.GrantLoadout(_config.BuildEnemyLoadout());
+            WireEnemyFeedback(asc);
+            Enemies.Add(asc);
+        }
 
-            // 削韧机制（破防→硬直→恢复）
-            var poiseComp = e.AddComponent<PoiseComponent>();
+        // prefab 模式：场景里已摆好敌人实例（属性集由 initialLoadouts 提供），只接动态订阅 + 运行时上色。
+        private void AdoptSceneEnemy(AbilitySystemComponent asc)
+        {
+            DemoActorBuilder.SetColor(asc.gameObject, DemoActorBuilder.EnemyColor); // prefab 未烘色，运行时上
+            WireEnemyFeedback(asc);
+            Enemies.Add(asc);
+        }
+
+        // 敌人受击/破防的动态视觉反馈（事件订阅 + 血条）——跨边界/动态，prefab 接不了，运行时接。
+        // 惰性取属性集：在回调里再 GetAttributeSet，不依赖 ASC.Awake 与 GASDemo.Awake 的先后（adopt 模式顺序不定）。
+        private void WireEnemyFeedback(AbilitySystemComponent asc)
+        {
+            var poiseComp = asc.GetComponent<PoiseComponent>();
+            var rend = asc.GetComponent<Renderer>();
 
             var bar = new GameObject("EnemyHealthBar").AddComponent<DemoHealthBar>();
             bar.Init(asc);
 
-            // 受击闪红 + 破防变色
-            var rend = e.GetComponent<Renderer>();
             asc.OnAttributeChanged += data =>
             {
-                if (data.Attribute == health.HealthAttribute && data.NewValue < data.OldValue && !poiseComp.IsStaggered)
+                var health = asc.GetAttributeSet<AS_Health>();
+                if (health != null && data.Attribute == health.HealthAttribute && data.NewValue < data.OldValue
+                    && (poiseComp == null || !poiseComp.IsStaggered))
                     StartCoroutine(FlashRed(rend));
             };
-            poiseComp.OnPoiseBroken += () => SetColor(rend, StaggerColor);
-            poiseComp.OnPoiseRecovered += () => SetColor(rend, EnemyColor);
-
-            Enemies.Add(asc);
+            if (poiseComp != null)
+            {
+                poiseComp.OnPoiseBroken += () => DemoActorBuilder.SetColor(rend, StaggerColor);
+                poiseComp.OnPoiseRecovered += () => DemoActorBuilder.SetColor(rend, DemoActorBuilder.EnemyColor);
+            }
         }
 
         private void WireCamera(Camera cam, GameObject player)
@@ -235,7 +221,7 @@ namespace GASDemo
             var s = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             Destroy(s.GetComponent<Collider>());
             s.transform.position = loc;
-            SetColor(s, new Color(1f, 0.85f, 0.2f));
+            DemoActorBuilder.SetColor(s, new Color(1f, 0.85f, 0.2f));
             float t = 0;
             while (t < 0.2f)
             {
@@ -248,29 +234,9 @@ namespace GASDemo
 
         private IEnumerator FlashRed(Renderer rend)
         {
-            SetColor(rend, Color.red);
+            DemoActorBuilder.SetColor(rend, Color.red);
             yield return new WaitForSeconds(0.1f);
-            if (rend != null) SetColor(rend, EnemyColor);
-        }
-
-        // 造一把武器：子物体挂 WeaponComponent + 武器标签（装备时注入 owner ASC）
-        private WeaponComponent MakeWeapon(Transform parent, string label, GameplayTag weaponTag)
-        {
-            var go = new GameObject("Weapon_" + label);
-            go.transform.SetParent(parent, false);
-            var w = go.AddComponent<WeaponComponent>();
-            w.WeaponTags.AddTag(weaponTag);
-            return w;
-        }
-
-        // URP/标准 通用着色
-        private static void SetColor(GameObject go, Color c) => SetColor(go.GetComponent<Renderer>(), c);
-        private static void SetColor(Renderer rend, Color c)
-        {
-            if (rend == null) return;
-            var m = rend.material;
-            if (m.HasProperty("_BaseColor")) m.SetColor("_BaseColor", c);
-            if (m.HasProperty("_Color")) m.color = c;
+            if (rend != null) DemoActorBuilder.SetColor(rend, DemoActorBuilder.EnemyColor);
         }
     }
 }

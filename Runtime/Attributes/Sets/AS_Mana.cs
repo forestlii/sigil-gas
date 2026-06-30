@@ -5,6 +5,7 @@ using UnityEngine;
 namespace Likeon.GAS
 {
     /// <summary>法力属性集。</summary>
+    [System.Serializable] // 见 AttributeSet：SerializeReference 落盘需要
     public sealed class AS_Mana : AttributeSet
     {
         public static readonly GameplayTag TagMana = GameplayTag.RequestTag("Attribute.ManaSet.Mana");

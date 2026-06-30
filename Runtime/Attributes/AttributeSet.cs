@@ -32,6 +32,7 @@ namespace Likeon.GAS
     /// 在 <see cref="RegisterAttributes"/> 里登记名字，并可重写 GameplayEffect 结算钩子。
     /// 由 <see cref="AbilitySystemComponent"/> 持有（一个 ASC 可有多个集）。
     /// </summary>
+    [System.Serializable] // SerializeReference 落盘需要：AbilityLoadout.GrantedAttributeSets 才能把所选属性集类型持久化进资产（否则保存丢失）
     public abstract class AttributeSet
     {
         /// <summary>拥有此属性集的 ASC。由 ASC 在添加时回填。</summary>

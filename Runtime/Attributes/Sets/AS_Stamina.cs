@@ -5,6 +5,7 @@ using UnityEngine;
 namespace Likeon.GAS
 {
     /// <summary>耐力属性集。Stamina/MaxStamina + Incoming（Meta）。</summary>
+    [System.Serializable] // 见 AttributeSet：SerializeReference 落盘需要
     public sealed class AS_Stamina : AttributeSet
     {
         public static readonly GameplayTag TagStamina = GameplayTag.RequestTag("Attribute.StaminaSet.Stamina");
