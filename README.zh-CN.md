@@ -91,7 +91,7 @@ Tab 锁定 · Q/E 切目标 · R 叠 buff。
 
 Sigil 是**数据驱动**的：行为靠在 Inspector 里编辑 **ScriptableObject 资产**来配——不写代码，策划即可调。主要配置资产（都在 *Create → Likeon → GAS → …*）：
 
-- **输入分发 & 互斥** — `InputControlSetup`：一组 `InputProcessor` 把 `InputTag` 映射到技能，`ExecutionType = FirstOnly` 实现"一键一技能"多态（第一个 `StateQuery` 通过的处理器胜出）。用 `UnityInputBinder` 把物理键 → `InputTag`。push/pop 控制集可整套切换键位（载具 / UI）。
+- **输入分发 & 互斥** — `InputControlSetup`：一组 `InputProcessor` 把 `InputTag` 映射到技能，`ExecutionType = FirstOnly` 实现"一键一技能"多态（第一个 `StateQuery` 通过的处理器胜出）。在 `InputConfig` 资产（`InputActionMappings`）里把物理键 → `InputTag`，`InputSystemComponent` 自动绑定。push/pop 控制集可整套切换键位（载具 / UI）。
 - **技能互斥** — `AbilityInteractionRules`：数据驱动的技能间 block / cancel / 激活准入（按标签查询、状态感知）。另外每个 `GameplayAbility` 自身有 `ActivationGroup` / `ActivationRequiredTags` / `ActivationBlockedTags`。
 - **技能 / 效果 / 攻击** — `GameplayAbility`、`GameplayEffect`（含叠层）、`AttackDefinition`、`BulletDefinition`、`AbilityLoadout`。
 

@@ -74,7 +74,7 @@ namespace Likeon.GAS
     [Serializable]
     public struct GameplayModifierMagnitude
     {
-        public enum MagnitudeType { ScalableFloat, SetByCaller }
+        public enum MagnitudeType { ScalableFloat, SetByCaller, CurveTableBased }
 
         [SerializeField] private MagnitudeType type;
         [Tooltip("ScalableFloat 模式：基础值")]
@@ -83,20 +83,28 @@ namespace Likeon.GAS
         [SerializeField] private float perLevel;
         [Tooltip("SetByCaller 模式：运行时按此标签取值")]
         [SerializeField] private GameplayTag setByCallerTag;
+        [Tooltip("CurveTableBased 模式：曲线表资产（按等级查值）")]
+        [SerializeField] private CurveTable curveTable;
+        [Tooltip("CurveTableBased 模式：曲线表里的行名")]
+        [SerializeField] private string curveRowName;
+        [Tooltip("CurveTableBased 模式：系数。最终 = 系数 × 曲线在该 level 的值（系数通常填 1）")]
+        [SerializeField] private float coefficient;
 
         public MagnitudeType Type => type;
         public GameplayTag SetByCallerTag => setByCallerTag;
 
-        /// <summary>计算最终修改量。SetByCaller 模式从 spec 里取。</summary>
+        /// <summary>计算最终修改量。SetByCaller 从 spec 取；CurveTableBased 按 spec.Level 查曲线表。</summary>
         public float Evaluate(GameplayEffectSpec spec)
         {
+            int level = spec?.Level ?? 1;
             switch (type)
             {
                 case MagnitudeType.SetByCaller:
                     return spec != null ? spec.GetSetByCallerMagnitude(setByCallerTag, 0f) : 0f;
+                case MagnitudeType.CurveTableBased:
+                    return curveTable != null ? coefficient * curveTable.Evaluate(curveRowName, level) : 0f;
                 case MagnitudeType.ScalableFloat:
                 default:
-                    int level = spec?.Level ?? 1;
                     return baseValue + perLevel * (level - 1);
             }
         }
@@ -106,6 +114,9 @@ namespace Likeon.GAS
 
         public static GameplayModifierMagnitude SetByCaller(GameplayTag tag)
             => new GameplayModifierMagnitude { type = MagnitudeType.SetByCaller, setByCallerTag = tag };
+
+        public static GameplayModifierMagnitude CurveTableBased(CurveTable table, string rowName, float coefficient = 1f)
+            => new GameplayModifierMagnitude { type = MagnitudeType.CurveTableBased, curveTable = table, curveRowName = rowName, coefficient = coefficient };
     }
 
     /// <summary>单条属性修改。</summary>

@@ -41,11 +41,11 @@
 **方式 B：Git URL**
 Package Manager → `+` → *Add package from git URL* → 填仓库地址。
 
-**依赖**：包声明依赖 **Input System**（`com.unity.inputsystem`），安装 Sigil 时会自动一起装上（供 Playable Demo 与可选的 `UnityInputBinder` 使用）。
-> 架构上**核心仍与输入解耦**：`Likeon.GAS.Runtime` 程序集不引用 Input System，核心 API（`ReceiveInput` / 技能 / 效果 / 移动）不依赖它；`UnityInputBinder`（`Likeon.GAS.UnityInput`）与 Demo 的程序集带 `ENABLE_INPUT_SYSTEM` 约束，未启用 Input System 时静默不编译，不影响核心。
+**依赖**：包声明依赖 **Input System**（`com.unity.inputsystem`），安装 Sigil 时自动一起装上。核心用它做输入绑定（见 §9.1）；Playable Demo 用它读键鼠。
+> `Likeon.GAS.Runtime` 程序集引用 Input System：`InputConfig` 把每个 `InputTag` 映射到一个 `InputActionReference`，`InputSystemComponent` 启用时自动绑定这些动作（派发到 `ReceiveInput`）。若不用 Input System，也可从任意来源手动调 `ReceiveInput(tag, event, data)`。
 > ⚠️ 跑 Demo 还需把 **Project Settings ▸ Player ▸ Active Input Handling** 设为 *Input System Package*（或 *Both*），否则新输入系统读不到键鼠。
 
-**程序集**：`Likeon.GAS.Runtime`（核心）、`Likeon.GAS.UnityInput`（可选输入适配器）、`Likeon.GAS.Editor`（编辑器工具）。
+**程序集**：`Likeon.GAS.Runtime`（核心）、`Likeon.GAS.Editor`（编辑器工具）。
 
 **配套包（可选）**：移动与运动动画在独立包 `com.likeon.gas.movement`（[sigil-movement](https://github.com/forestlii/sigil-movement)），依赖核心、命名空间不变。需要移动就和核心一起装（见 §11）。
 
@@ -374,17 +374,17 @@ inputSys.ReceiveInput(
     InputActionData.Empty);
 ```
 
-用 Unity Input System 时，挂 `UnityInputBinder`（把 `InputActionReference` 绑到 InputTag，自动调 ReceiveInput）。
+用 Unity Input System 时，在 `InputConfig` 资产的 `InputActionMappings` 配映射（每条：`InputTag` → 一个 `InputActionReference`），把该 `InputConfig` 赋给 `InputSystemComponent`。启用时它自动订阅每个动作的 started/performed/canceled 并派发 `ReceiveInput`——无需额外组件。
 
 #### 端到端：从一个键到一个技能
 
 "按键 → tag → 技能"是**两段映射**，分两处配（中间用 InputTag 解耦）：
 
-1. **按键 → InputTag**：在角色上挂 `UnityInputBinder`，它的 `bindings` 列表每条 = 一个 `InputActionReference`（你 Input Action 资产里的某个键，如 *Crouch*）→ 一个 `InputTag`（如 `InputTag.Crouch`）。
+1. **按键 → InputTag**：在 `InputConfig` 资产的 `InputActionMappings` 加一条 = 一个 `InputActionReference`（你 `.inputactions` 资产里的某个动作，如 *Crouch*）→ 一个 `InputTag`（如 `InputTag.Crouch`）。把该 `InputConfig` 赋给角色的 `InputSystemComponent`，启用时自动绑定。
 2. **InputTag → 技能**：在 `InputControlSetup` 的 `inputProcessors` 里加一个 `InputProcessor_ActivateAbilityByTag`，设 `InputTags = InputTag.Crouch`、`AbilityTag = Ability.Crouch`（按技能资产的 `AbilityTags` 匹配，内部走 `TryActivateAbilitiesByTag`）。
 3. **挂上去**：把该 `InputControlSetup` 放进 `InputSystemComponent` 的 `inputControlSetups`。
 
-运行时：按下键 → UnityInputBinder 派发 `InputTag.Crouch` → 当前控制集筛出监听它的处理器 → 激活 `Ability.Crouch`。要"同键多态"，见下方 9.2 的滑铲/下蹲表。
+运行时：按下键 → `InputSystemComponent` 派发 `InputTag.Crouch` → 当前控制集筛出监听它的处理器 → 激活 `Ability.Crouch`。要"同键多态"，见下方 9.2 的滑铲/下蹲表。
 
 ### 9.2 控制集与多态
 

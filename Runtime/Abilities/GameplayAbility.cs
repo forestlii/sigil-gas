@@ -7,6 +7,13 @@ using UnityEngine;
 
 namespace Likeon.GAS
 {
+    /// <summary>技能激活失败原因（对齐 UE 激活失败 FailureTags 的枚举化）。</summary>
+    public enum EAbilityActivationFailReason
+    {
+        None, NoAbilitySystem, ActivationRequiredTagsMissing, ActivationBlockedTags,
+        BlockedByOtherAbility, ActivationGroupBlocked, CostNotMet, OnCooldown, AlreadyActive
+    }
+
     /// <summary>
     /// 技能基类（ScriptableObject 模板）。授予时被 ASC 克隆成每角色一个实例（InstancedPerActor）。
     /// 子类重写 <see cref="OnActivateAbility"/> 写技能逻辑（播动画、等待事件、施加效果……）。
@@ -62,35 +69,39 @@ namespace Likeon.GAS
         /// <summary>
         /// 能否激活：检查准入标签 + TagRelationship 状态准入 + Cost + Cooldown。
         /// </summary>
-        public virtual bool CanActivate()
+        public virtual bool CanActivate() => CanActivate(out _);
+
+        /// <summary>能否激活，并输出失败原因（供激活失败通知）。</summary>
+        public virtual bool CanActivate(out EAbilityActivationFailReason failReason)
         {
-            if (ASC == null) return false;
+            failReason = EAbilityActivationFailReason.None;
+            if (ASC == null) { failReason = EAbilityActivationFailReason.NoAbilitySystem; return false; }
 
             // 1) 本技能自身的准入/阻挡标签
             foreach (var t in ActivationRequiredTags)
-                if (!ASC.HasMatchingGameplayTag(t)) return false;
+                if (!ASC.HasMatchingGameplayTag(t)) { failReason = EAbilityActivationFailReason.ActivationRequiredTagsMissing; return false; }
             foreach (var t in ActivationBlockedTags)
-                if (ASC.HasMatchingGameplayTag(t)) return false;
+                if (ASC.HasMatchingGameplayTag(t)) { failReason = EAbilityActivationFailReason.ActivationBlockedTags; return false; }
 
-            // 2) 状态感知的 TagRelationship 准入（V2，按角色当前 tag 动态注入所需/禁止）
+            // 2) 状态感知的 TagRelationship 准入（按角色当前 tag 动态注入所需/禁止）
             if (ASC.InteractionRules != null)
             {
                 var required = new GameplayTagContainer();
                 var blocked = new GameplayTagContainer();
                 ASC.GatherActivationRequirements(GetAbilityTags(), required, blocked);
-                foreach (var t in required) if (!ASC.HasMatchingGameplayTag(t)) return false;
-                foreach (var t in blocked) if (ASC.HasMatchingGameplayTag(t)) return false;
+                foreach (var t in required) if (!ASC.HasMatchingGameplayTag(t)) { failReason = EAbilityActivationFailReason.ActivationRequiredTagsMissing; return false; }
+                foreach (var t in blocked) if (ASC.HasMatchingGameplayTag(t)) { failReason = EAbilityActivationFailReason.ActivationBlockedTags; return false; }
             }
 
             // 3) 被其它激活中技能的 AbilityTagsToBlock 阻挡
-            if (ASC.AreAbilityTagsBlocked(GetAbilityTags())) return false;
+            if (ASC.AreAbilityTagsBlocked(GetAbilityTags())) { failReason = EAbilityActivationFailReason.BlockedByOtherAbility; return false; }
 
             // 4) 激活组互斥
-            if (ASC.IsActivationPolicyBlocked(ActivationPolicy)) return false;
+            if (ASC.IsActivationPolicyBlocked(ActivationPolicy)) { failReason = EAbilityActivationFailReason.ActivationGroupBlocked; return false; }
 
             // 5) 消耗与冷却
-            if (!CheckCost()) return false;
-            if (!CheckCooldown()) return false;
+            if (!CheckCost()) { failReason = EAbilityActivationFailReason.CostNotMet; return false; }
+            if (!CheckCooldown()) { failReason = EAbilityActivationFailReason.OnCooldown; return false; }
 
             return true;
         }

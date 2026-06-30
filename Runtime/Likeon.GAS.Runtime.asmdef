@@ -1,7 +1,9 @@
 {
   "name": "Likeon.GAS.Runtime",
   "rootNamespace": "Likeon.GAS",
-  "references": [],
+  "references": [
+    "Unity.InputSystem"
+  ],
   "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": false,

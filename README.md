@@ -99,7 +99,7 @@ Tab lock-on · Q/E switch target · R stack a buff.
 
 Sigil is **data-driven**: you configure behaviour by authoring **ScriptableObject assets** in the Inspector — no code — so designers can tune it. The main config assets (all under *Create → Likeon → GAS → …*):
 
-- **Input dispatch & mutual exclusion** — `InputControlSetup`: a list of `InputProcessor`s mapping an `InputTag` to an ability, with `ExecutionType = FirstOnly` for "one key, one ability" polymorphism (the first processor whose `StateQuery` passes wins). Bind physical keys → `InputTag`s with a `UnityInputBinder`. Push/pop setups to swap whole schemes (vehicle / UI).
+- **Input dispatch & mutual exclusion** — `InputControlSetup`: a list of `InputProcessor`s mapping an `InputTag` to an ability, with `ExecutionType = FirstOnly` for "one key, one ability" polymorphism (the first processor whose `StateQuery` passes wins). Bind physical keys → `InputTag`s in the `InputConfig` asset (`InputActionMappings`); `InputSystemComponent` auto-binds them. Push/pop setups to swap whole schemes (vehicle / UI).
 - **Ability mutual exclusion** — `AbilityInteractionRules`: data-driven block / cancel / activation-gating between abilities (state-aware via tag queries). Plus each `GameplayAbility` has its own `ActivationGroup` / `ActivationRequiredTags` / `ActivationBlockedTags`.
 - **Abilities / effects / attacks** — `GameplayAbility`, `GameplayEffect` (incl. stacking), `AttackDefinition`, `BulletDefinition`, `AbilityLoadout`.
 

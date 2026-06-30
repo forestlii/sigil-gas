@@ -13,6 +13,33 @@ namespace Likeon.GAS
     [AddComponentMenu("Likeon/GAS/Ability System Component")]
     public class AbilitySystemComponent : MonoBehaviour
     {
+        // ===================== 默认技能装载 Default Loadouts =====================
+        // 对应 UE GGA_AbilitySystem.DefaultAbilitySet（一组 AbilitySet）：每个 AbilityLoadout = 一组 属性集 + 技能 + 初始化效果。
+        [Header("默认技能装载 Initial Loadouts")]
+        [Tooltip("Inspector 配一组 AbilityLoadout（对齐 UE DefaultAbilitySet 复数）：每个装载一组 属性集 + 技能 + 初始化效果。Awake 时按序全部 GrantLoadout —— 角色的初始属性/技能在 prefab 即可配，无需代码 AddAttributeSet/GiveAbility。")]
+        [SerializeField] private List<AbilityLoadout> initialLoadouts = new List<AbilityLoadout>();
+
+        [Tooltip("初始装载里‘初始化效果’施加时用的等级（对齐 UE AttributeSetInitializeLevel）：属性按等级初始化时，曲线表 magnitude 据此 level 查值。")]
+        [SerializeField, Min(1)] private int attributeInitializeLevel = 1;
+
+        /// <summary>Inspector 配的初始装载列表（对应 UE DefaultAbilitySet）。生成器/代码可填充后由 Awake 授予。</summary>
+        public List<AbilityLoadout> InitialLoadouts => initialLoadouts;
+
+        /// <summary>属性初始化等级（GrantLoadout 的初始化效果按此 level 施加）。</summary>
+        public int AttributeInitializeLevel { get => attributeInitializeLevel; set => attributeInitializeLevel = value; }
+
+        // 已授予的初始装载句柄（对应 UE DefaultAbilitySet_GrantedHandles）：供反初始化整批回收。
+        private readonly List<GrantedAbilityHandles> _grantedLoadoutHandles = new List<GrantedAbilityHandles>();
+        /// <summary>已授予的初始装载句柄（只读，供整批回收）。</summary>
+        public IReadOnlyList<GrantedAbilityHandles> GrantedLoadoutHandles => _grantedLoadoutHandles;
+
+        /// <summary>按序授予所有初始装载，记录句柄供回收。Awake 自动调用；列表为空则不做事（零回归）。可重写扩展初始化时机。</summary>
+        protected virtual void Awake()
+        {
+            for (int i = 0; i < initialLoadouts.Count; i++)
+                if (initialLoadouts[i] != null) _grantedLoadoutHandles.Add(GrantLoadout(initialLoadouts[i]));
+        }
+
         // ===================== 拥有标签 Owned Tags =====================
         private readonly GameplayTagCountContainer _ownedTags = new GameplayTagCountContainer();
 
@@ -94,6 +121,9 @@ namespace Likeon.GAS
         public event Action<GameplayAbility> OnAbilityActivated;
         public event Action<GameplayAbility, bool> OnAbilityEnded;
 
+        /// <summary>技能激活失败时触发（带失败原因）。供 UI 反馈"为何放不出技能"（对齐 UE OnAbilityActivationFailed）。</summary>
+        public event Action<GameplayAbility, EAbilityActivationFailReason> OnAbilityActivationFailed;
+
         /// <summary>一个技能被授予时触发（含 loadout / 全局系统的批量授予）。供 loadout 驱动的技能栏订阅。</summary>
         public event Action<GameplayAbilitySpec> OnAbilityGiven;
 
@@ -159,8 +189,8 @@ namespace Likeon.GAS
         private bool TryActivateSpec(GameplayAbilitySpec spec, GameplayEventData triggerData)
         {
             var ability = spec.Ability;
-            if (ability.IsActive) return false;
-            if (!ability.CanActivate()) return false;
+            if (ability.IsActive) { OnAbilityActivationFailed?.Invoke(ability, EAbilityActivationFailReason.AlreadyActive); return false; }
+            if (!ability.CanActivate(out var failReason)) { OnAbilityActivationFailed?.Invoke(ability, failReason); return false; }
 
             // 独占技能激活：先打断可替换的独占技能
             if (ability.ActivationPolicy != EAbilityActivationPolicy.Parallel)
@@ -227,6 +257,32 @@ namespace Likeon.GAS
             var snapshot = new List<GameplayAbility>(_policyBuckets[(int)group]);
             foreach (var ab in snapshot)
                 if (ab != ignore && ab.IsActive) ab.CancelAbility();
+        }
+
+        /// <summary>能否把技能换到新激活组（排除自身占位后，新组当前不被其它技能阻挡）。对齐 UE CanChangeActivationGroup。</summary>
+        public bool CanChangeActivationGroup(EAbilityActivationPolicy newGroup, GameplayAbility ability)
+        {
+            if (ability == null || newGroup == EAbilityActivationPolicy.MAX) return false;
+            if (ability.ActivationPolicy == newGroup) return true;
+            bool registered = ability.IsActive; // 激活中才在 bucket
+            if (registered) UnregisterAbilityPolicy(ability.ActivationPolicy, ability);
+            bool blocked = IsActivationPolicyBlocked(newGroup);
+            if (registered) RegisterAbilityPolicy(ability.ActivationPolicy, ability);
+            return !blocked;
+        }
+
+        /// <summary>把技能换到新激活组（如蓄力→释放切组）。成功返回 true。对齐 UE ChangeActivationGroup。</summary>
+        public bool ChangeActivationGroup(EAbilityActivationPolicy newGroup, GameplayAbility ability)
+        {
+            if (!CanChangeActivationGroup(newGroup, ability)) return false;
+            if (ability.IsActive)
+            {
+                UnregisterAbilityPolicy(ability.ActivationPolicy, ability);
+                ability.ActivationPolicy = newGroup;
+                RegisterAbilityPolicy(newGroup, ability);
+            }
+            else ability.ActivationPolicy = newGroup;
+            return true;
         }
 
         // ===================== 标签关系映射 TagRelationship =====================
@@ -659,11 +715,11 @@ namespace Likeon.GAS
                 else Debug.LogWarning($"[GAS] 找不到属性集类型: {typeName}");
             }
 
-            // 常驻效果
+            // 常驻效果（含属性初始化 GE）：按 attributeInitializeLevel 施加（曲线表 magnitude 据此查值）
             foreach (var ge in set.GrantedEffects)
             {
                 if (ge == null) continue;
-                var h = ApplyGameplayEffectToSelf(ge);
+                var h = ApplyGameplayEffectToSelf(ge, attributeInitializeLevel);
                 if (h.IsValid) handles.EffectHandles.Add(h);
             }
 

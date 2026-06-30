@@ -42,11 +42,11 @@ Copy the `com.likeon.gas` folder into your project's `Packages/` directory, or P
 **Option B: Git URL**
 Package Manager → `+` → *Add package from git URL* → enter the repository address.
 
-**Dependency**: the package declares a dependency on the **Input System** (`com.unity.inputsystem`), which is installed automatically with Sigil (used by the Playable Demo and the optional `UnityInputBinder`).
-> Architecturally the **core stays input-agnostic**: the `Likeon.GAS.Runtime` assembly does not reference the Input System, and the core APIs (`ReceiveInput` / abilities / effects / movement) don't depend on it. The `UnityInputBinder` (`Likeon.GAS.UnityInput`) and the Demo assemblies carry an `ENABLE_INPUT_SYSTEM` constraint, so they silently don't compile when the Input System is disabled — without affecting the core.
+**Dependency**: the package declares a dependency on the **Input System** (`com.unity.inputsystem`), installed automatically with Sigil. The core uses it for input binding (see §9.1); the Playable Demo uses it for keyboard/mouse.
+> The `Likeon.GAS.Runtime` assembly references the Input System: `InputConfig` maps each `InputTag` to an `InputActionReference`, and `InputSystemComponent` binds those actions automatically when enabled (dispatching to `ReceiveInput`). If you don't use the Input System, you can still drive `ReceiveInput(tag, event, data)` manually from any source.
 > ⚠️ To run the Demo you also need **Project Settings ▸ Player ▸ Active Input Handling** set to *Input System Package* (or *Both*), otherwise the new input system can't read the keyboard/mouse.
 
-**Assemblies**: `Likeon.GAS.Runtime` (core), `Likeon.GAS.UnityInput` (optional input binder), `Likeon.GAS.Editor` (editor tools).
+**Assemblies**: `Likeon.GAS.Runtime` (core), `Likeon.GAS.Editor` (editor tools).
 
 **Companion package (optional)**: movement and locomotion live in the separate package `com.likeon.gas.movement` ([sigil-movement](https://github.com/forestlii/sigil-movement)), which depends on the core and keeps the same namespace. Install it alongside the core if you need movement (see §11).
 
@@ -375,17 +375,17 @@ inputSys.ReceiveInput(
     InputActionData.Empty);
 ```
 
-With Unity's Input System, attach `UnityInputBinder` (binds an `InputActionReference` to an InputTag and calls ReceiveInput automatically).
+With Unity's Input System, configure the `InputConfig` asset's `InputActionMappings` (each row: `InputTag` → an `InputActionReference`) and assign that `InputConfig` to the `InputSystemComponent`. On enable it subscribes each action's started/performed/canceled and dispatches `ReceiveInput` automatically — no extra component needed.
 
 #### End to end: from a key to an ability
 
 "key → tag → ability" is a **two-stage mapping**, configured in two places (decoupled by the InputTag in the middle):
 
-1. **Key → InputTag**: attach `UnityInputBinder` to the character; each entry in its `bindings` list = an `InputActionReference` (a key from your Input Action asset, e.g. *Crouch*) → an `InputTag` (e.g. `InputTag.Crouch`).
+1. **Key → InputTag**: in the `InputConfig` asset's `InputActionMappings`, add a row = an `InputActionReference` (an action from your `.inputactions` asset, e.g. *Crouch*) → an `InputTag` (e.g. `InputTag.Crouch`). Assign that `InputConfig` to the character's `InputSystemComponent`; it auto-binds on enable.
 2. **InputTag → ability**: in the `InputControlSetup`'s `inputProcessors`, add an `InputProcessor_ActivateAbilityByTag` with `InputTags = InputTag.Crouch` and `AbilityTag = Ability.Crouch` (matched against the ability asset's `AbilityTags`, internally via `TryActivateAbilitiesByTag`).
 3. **Hook it up**: put that `InputControlSetup` into the `InputSystemComponent`'s `inputControlSetups`.
 
-At runtime: press the key → UnityInputBinder dispatches `InputTag.Crouch` → the current control setup filters the processors listening for it → activates `Ability.Crouch`. For "one key, many abilities", see the slide/crouch table in 9.2 below.
+At runtime: press the key → `InputSystemComponent` dispatches `InputTag.Crouch` → the current control setup filters the processors listening for it → activates `Ability.Crouch`. For "one key, many abilities", see the slide/crouch table in 9.2 below.
 
 ### 9.2 Control setups and polymorphism
 
