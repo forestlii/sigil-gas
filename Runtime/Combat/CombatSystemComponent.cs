@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Likeon.GAS
@@ -15,9 +16,15 @@ namespace Likeon.GAS
         [SerializeField] private Animator animator;
         [Tooltip("本角色 ASC（留空则自动查找）")]
         [SerializeField] private AbilitySystemComponent abilitySystem;
+        [Tooltip("能力动作库：按能力标签 + 状态选攻击动作（对齐 UE AbilityActionSetSettings）")]
+        [SerializeField] private AbilityActionLibrary actionLibrary;
 
         public Animator Animator => animator;
         public AbilitySystemComponent AbilitySystem => abilitySystem;
+        public AbilityActionLibrary ActionLibrary { get => actionLibrary; set => actionLibrary = value; }
+
+        // QueryAbilityActions 复用缓冲，避免每帧 GC
+        private readonly List<AbilityAction> _actionQueryBuffer = new List<AbilityAction>();
 
         /// <summary>受击时触发（本角色被命中）。</summary>
         public event Action<AttackResult> OnAttackResultReceived;
@@ -85,6 +92,40 @@ namespace Likeon.GAS
             animator.speed = action.PlayRate <= 0f ? 1f : action.PlayRate;
             if (!string.IsNullOrEmpty(action.StateName))
                 animator.CrossFadeInFixedTime(action.StateName, 0.1f, 0, action.StartTimeSeconds);
+        }
+
+        // ===================== 能力动作库查询（对齐 UE CombatInterface.QueryAbilityActions）=====================
+
+        /// <summary>
+        /// 从动作库按能力标签 + 施法者/目标状态选出动作组，写入 <paramref name="outActions"/>。
+        /// 对齐 UE GCS_CombatInterface.QueryAbilityActions。库未配则返回 false。
+        /// </summary>
+        public bool QueryAbilityActions(GameplayTagContainer abilityTags,
+            GameplayTagContainer sourceTags, GameplayTagContainer targetTags, List<AbilityAction> outActions)
+        {
+            if (actionLibrary == null || outActions == null) { outActions?.Clear(); return false; }
+            return actionLibrary.SelectBestAbilityActions(abilityTags, sourceTags, targetTags, outActions);
+        }
+
+        /// <summary>
+        /// 便捷：按单个能力标签从库里选出首个匹配动作并播放（结合 ASC 当前标签作为施法者状态）。
+        /// 返回是否选到并播放了动作。
+        /// </summary>
+        public bool PlayAbilityActionByTag(GameplayTag abilityTag, GameplayTagContainer targetTags = null)
+        {
+            if (actionLibrary == null || !abilityTag.IsValid) return false;
+
+            var abilityTags = new GameplayTagContainer();
+            abilityTags.AddTag(abilityTag);
+
+            GameplayTagContainer sourceTags = null;
+            if (abilitySystem != null) { sourceTags = new GameplayTagContainer(); abilitySystem.GetOwnedGameplayTags(sourceTags); }
+
+            if (!actionLibrary.SelectBestAbilityActions(abilityTags, sourceTags, targetTags, _actionQueryBuffer)) return false;
+            if (_actionQueryBuffer.Count == 0) return false;
+
+            PlayAttackAction(_actionQueryBuffer[0]);
+            return true;
         }
     }
 }

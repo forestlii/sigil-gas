@@ -12,6 +12,7 @@
 - **模块化额外消耗**（`AbilityCost`）。技能现在可在单一的属性消耗 `CostEffect` 之外，挂一组可插拔的**非属性**消耗（弹药、充能、自定义资源）。每个 `AbilityCost` 是 `ScriptableObject`，带 `CheckCost` / `ApplyCost` 与 `OnlyApplyCostOnHit` 开关；激活要求**所有**消耗都买得起，`CommitAbility` 扣"非命中"的那些，命中后由 `GameplayAbility.ApplyOnHitCosts()` 扣"仅命中"的那些。消耗随每个被授予的技能实例克隆（对齐 UE `Instanced`），充能状态不会在角色间串味。
 - **技能级逐帧 Tick**（`GameplayAbility.AbilityTick(float)`，由 `EnableTick` 开关）。ASC 每帧为开启该开关的激活技能驱动 `AbilityTick`——蓄力 / 持续扫描等逐帧逻辑的协程 `AbilityTask` 之外的替代。
 - **授予即激活（被动 / 光环技能）**——`GameplayAbility.ActivateOnGranted`。开启后技能在被授予的瞬间即尝试激活（对齐 UE `TryActivateAbilityOnSpawn`），仍受 `CanActivate` 约束。任意授予路径都生效（`GiveAbility` / `GrantLoadout` / `GlobalAbilitySystem`）。
+- **能力动作库**（`AbilityActionLibrary`）——一个 ScriptableObject，把多个 `AbilityActionSet` 按能力标签汇集，给一个标签 + 施法者/目标状态选出该播的攻击动作（`SelectBestAbilityActions`），对齐 UE `GCS_AbilityActionSetSettings`。经 `CombatSystemComponent` 的 `ActionLibrary` / `QueryAbilityActions(...)` / `PlayAbilityActionByTag(...)` 接入。（此前 `AbilityActionSet` 数据壳已有，但无容器、无消费者。）
 
 ### 变更
 
