@@ -13,6 +13,8 @@
 - **技能级逐帧 Tick**（`GameplayAbility.AbilityTick(float)`，由 `EnableTick` 开关）。ASC 每帧为开启该开关的激活技能驱动 `AbilityTick`——蓄力 / 持续扫描等逐帧逻辑的协程 `AbilityTask` 之外的替代。
 - **授予即激活（被动 / 光环技能）**——`GameplayAbility.ActivateOnGranted`。开启后技能在被授予的瞬间即尝试激活（对齐 UE `TryActivateAbilityOnSpawn`），仍受 `CanActivate` 约束。任意授予路径都生效（`GiveAbility` / `GrantLoadout` / `GlobalAbilitySystem`）。
 - **能力动作库**（`AbilityActionLibrary`）——一个 ScriptableObject，把多个 `AbilityActionSet` 按能力标签汇集，给一个标签 + 施法者/目标状态选出该播的攻击动作（`SelectBestAbilityActions`），对齐 UE `GCS_AbilityActionSetSettings`。经 `CombatSystemComponent` 的 `ActionLibrary` / `QueryAbilityActions(...)` / `PlayAbilityActionByTag(...)` 接入。（此前 `AbilityActionSet` 数据壳已有，但无容器、无消费者。）
+- **战斗设置**（`CombatSettings`）——一个带静态 `Active` 访问器的 ScriptableObject，对齐 UE `GCS_CombatSystemSettings`：`MainMeshLookupTag` 与 `DisableAffiliationCheck`（调试开关，让攻击无视队伍归属；接入 `CombatTeamAgent.IsHostile`，默认关）。
+- **战斗契约接口**（`ICombatInterface`）——战斗角色实现的契约（战斗目标、`QueryAbilityActions`、当前武器、防御输入、旋转/移动集/移动状态标签、死亡生命周期、移动输入方向），对齐 UE `GCS_CombatInterface`、类型适配 Unity。辅助 `CombatInterface.Get(go)` 从 GameObject 层级解析。
 
 ### 变更
 
