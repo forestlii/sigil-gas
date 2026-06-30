@@ -54,7 +54,7 @@
 - **削韧/硬直** — `AS_Poise` + `PoiseComponent`：破防、硬直、恢复、复位。
 - **锁定** — `TargetingSystemComponent`：overlap 搜集 → 阵营/死亡/标签/视角锥/视线 过滤 → 最佳/最近 选择，左右切换，自动解锁，锁定事件。
 - **投射物** — `BulletDefinition` / `BulletInstance` / `BulletLauncher`：自走积分、散射、球扫命中、角色/地图穿透、子弹链；`Tick(dt)` 让飞行与 Unity 时间解耦。
-- **武器** — `IWeapon` + `WeaponComponent`：装备/卸下、注入武器标签供技能门控、激活态切换、远程 `FireProjectile`。
+- **武器** — `IWeapon` + `WeaponComponent`：装备/卸下、注入武器标签供技能门控、激活态切换、`SourceObject`（武器背靠的装备实例 / 数据资产）、武器层瞄准开关（`SetTargeting` / `ToggleTargeting`，区别于锁定）、多套同开同关的碰撞判定段（`AdditionalTraces`）、远程 `FireProjectile`。
 - **受击反应管线** — `CombatFlowComponent` + 一组 `AttackResultProcessor`（死亡、标签过滤的 gameplay 事件、gameplay cue）。
 - **CollisionTrace** — 通用 `OverlapSphere` 命中检测，含单次激活去重、开关状态、过滤——用于陷阱、AOE 区域、环境伤害（与 `MeleeAttackTrace` 分工）。
 - **MovementCancellation** — 动画事件驱动的窗口，玩家移动时切换 `Animator.applyRootMotion`，让攻击位移可被移动取消。
@@ -75,14 +75,16 @@ Sigil **只做逻辑、不绑 UI**：它对外广播变更事件，让*任意* U
 
 - `AbilitySystemComponent`：`OnAttributeChanged`（血/蓝/耐力条）、`OnTagChanged`（状态图标）、`OnAbilityActivated` / `OnAbilityEnded`、**`OnAbilityGiven` / `OnAbilityRemoved`** + 只读 `GetGrantedAbilities()`（供 loadout 驱动的技能栏）、`OnGameplayEvent`、**`OnActiveEffectAdded` / `OnActiveEffectRemoved` / `OnActiveEffectStackChanged`** + 只读 `GetActiveGameplayEffects()` / `GetActiveGameplayEffect(handle)`（buff/debuff 条，带剩余时间与 ×N 层数角标），以及 `GetCooldownRemainingForTags(...)`（冷却填充）。
 - `CombatSystemComponent`：`OnDealtDamage` / `OnAttackResultReceived`（伤害飘字）。
-- `PoiseComponent`：`OnPoiseBroken` / `OnPoiseRecovered`。`TargetingSystemComponent`：`OnTargetLockOn` / `OnTargetLockOff`。`WeaponComponent`：`OnEquipped` / `OnUnequipped` / `OnWeaponActiveStateChanged`。
+- `PoiseComponent`：`OnPoiseBroken` / `OnPoiseRecovered`。`TargetingSystemComponent`：`OnTargetLockOn` / `OnTargetLockOff`。`WeaponComponent`：`OnEquipped` / `OnUnequipped` / `OnWeaponActiveStateChanged` / `OnTargetingChanged`。
 
 ### 编辑器工具
 - GameplayTag 选择器（层级下拉 + 搜索 + 新增）、标签注册表与 `Likeon ▸ GAS ▸ Gameplay Tags` 窗口、`[SerializeReference]` 子类选择器、资产 Inspector、工程标签扫描器——统一收在顶部 **Likeon** 菜单下。
 
 ### 可玩 Demo
 在 **Package Manager → Sigil → Samples → *Playable Demo*** 导入，打开 `GASDemo.unity` 按 Play。
-一个运行时构建的**功能展示场**，把多条战斗线放进同一场景（程序员美术胶囊体）：
+一个**功能展示场**，以 **玩家/敌人 prefab + 接好线的场景** 交付（`Resources/` 下的 `DemoPlayer` / `DemoEnemy`，
+属性集与技能由数据驱动的 `AbilityLoadout` 资产经 `initialLoadouts` 提供）；`GASDemo` 退化为薄编排（相机 / HUD /
+动态反馈），挂到空物体上时回退为运行时现场构建。可用 *Likeon ▸ GAS ▸ Demo ▸ Build All* 重新烘。场景把多条战斗线放进同一场景（程序员美术胶囊体）：
 **近战 → 扣血 → cue、远程子弹、3 敌人间锁定切换、削韧破防、buff 叠层**，并带一个全靠订阅框架可观测性事件
 渲染的自解释 HUD。操作：WASD 移动 · Shift 冲刺 · 鼠标看 · 空格/左键 近战 · 右键/F 远程 ·
 Tab 锁定 · Q/E 切目标 · R 叠 buff。

@@ -58,7 +58,7 @@ package to `"testables"` in your project's `Packages/manifest.json`, then open
 - **Poise / stagger** — `AS_Poise` + `PoiseComponent`: break, stagger, regen, recover.
 - **Lock-on** — `TargetingSystemComponent`: overlap collection → affiliation/dead/tag/view-cone/line-of-sight filtering → best/closest selection, left/right cycling, auto-drop, lock events.
 - **Projectiles** — `BulletDefinition` / `BulletInstance` / `BulletLauncher`: self-integrated motion, spread, swept-sphere hits, character/map penetration, bullet chains; `Tick(dt)` decouples flight from Unity time.
-- **Weapons** — `IWeapon` + `WeaponComponent`: equip/unequip, weapon-tag injection for ability gating, active-state toggling, ranged `FireProjectile`.
+- **Weapons** — `IWeapon` + `WeaponComponent`: equip/unequip, weapon-tag injection for ability gating, active-state toggling, a `SourceObject` (the equipment instance / data asset a weapon is backed by), a weapon-level targeting toggle (`SetTargeting` / `ToggleTargeting`, distinct from lock-on), multiple simultaneous collision-trace segments (`AdditionalTraces`), and ranged `FireProjectile`.
 - **Hit-reaction pipeline** — `CombatFlowComponent` + `AttackResultProcessor`s (death, tag-filtered gameplay events, gameplay cues).
 - **CollisionTrace** — generic `OverlapSphere` hit detection with per-activation dedup, on/off state, and filtering — for traps, AOE zones, environmental hazards (distinct from `MeleeAttackTrace`).
 - **MovementCancellation** — Animation-Event-driven window that toggles `Animator.applyRootMotion` when the player moves, so attack root-motion can be cancelled by movement.
@@ -82,14 +82,18 @@ host project's job — Sigil's job is to expose the data. Key events:
 
 - `AbilitySystemComponent`: `OnAttributeChanged` (health/mana/stamina bars), `OnTagChanged` (status icons), `OnAbilityActivated` / `OnAbilityEnded`, **`OnAbilityGiven` / `OnAbilityRemoved`** + read-only `GetGrantedAbilities()` for a loadout-driven ability bar, `OnGameplayEvent`, **`OnActiveEffectAdded` / `OnActiveEffectRemoved` / `OnActiveEffectStackChanged`** + read-only `GetActiveGameplayEffects()` / `GetActiveGameplayEffect(handle)` for buff/debuff bars with remaining time and ×N stack badges, and `GetCooldownRemainingForTags(...)` for cooldown fills.
 - `CombatSystemComponent`: `OnDealtDamage` / `OnAttackResultReceived` (damage numbers).
-- `PoiseComponent`: `OnPoiseBroken` / `OnPoiseRecovered`. `TargetingSystemComponent`: `OnTargetLockOn` / `OnTargetLockOff`. `WeaponComponent`: `OnEquipped` / `OnUnequipped` / `OnWeaponActiveStateChanged`.
+- `PoiseComponent`: `OnPoiseBroken` / `OnPoiseRecovered`. `TargetingSystemComponent`: `OnTargetLockOn` / `OnTargetLockOff`. `WeaponComponent`: `OnEquipped` / `OnUnequipped` / `OnWeaponActiveStateChanged` / `OnTargetingChanged`.
 
 ### Editor tools
 - GameplayTag picker (hierarchical dropdown + search + add), tag registry & a `Likeon ▸ GAS ▸ Gameplay Tags` window, `[SerializeReference]` subclass pickers, asset inspectors, a project tag scanner — all under one top-level **Likeon** menu.
 
 ### Playable demo
 Import via **Package Manager → Sigil → Samples → *Playable Demo***, open `GASDemo.unity`, press Play.
-A runtime-built **feature showcase** putting several combat lines in one scene (placeholder programmer art):
+A **feature showcase** shipped as **player/enemy prefabs + a wired scene** (`DemoPlayer` / `DemoEnemy`
+under `Resources/`, with attributes & abilities supplied by data-driven `AbilityLoadout` assets via
+`initialLoadouts`); `GASDemo` is thin orchestration (camera / HUD / dynamic feedback) and falls back to
+building everything at runtime if dropped on an empty GameObject. Re-bake it from *Likeon ▸ GAS ▸ Demo ▸
+Build All*. It puts several combat lines in one scene (placeholder programmer art):
 **melee → damage → cue, ranged projectiles, lock-on switching between 3 enemies, poise/stagger, and
 stacking buffs**, with a self-explanatory on-screen HUD that renders purely from the framework's
 observability events. Controls: WASD move · Shift sprint · mouse look · Space/LMB melee · RMB/F ranged ·

@@ -483,6 +483,12 @@ weapon.OnUnequipped += ()    => _handles.RevokeFrom(ownerASC);                  
 
 > Which to pick: use Path A to "gate already-granted abilities by the current weapon"; use Path B to "add/remove abilities dynamically with the weapon (the ability bar changes too)". They can be combined.
 
+**Other `WeaponComponent` / `IWeapon` bits:**
+
+- **`SourceObject`** (`Object`, get/set) — the equipment instance or data asset a weapon is backed by. The weapon itself only injects tags; `SourceObject` is the back-reference for equipment / loot / data-table systems to trace a weapon to its source. Purely yours to read; the framework doesn't interpret it.
+- **Targeting toggle** — `SetTargeting(bool)` / `ToggleTargeting()` / `IsTargeting` + `OnTargetingChanged`, a weapon-level aim/fire flag **distinct from the lock-on system** (`TargetingSystemComponent`). Reset to `false` on unequip. Hook `OnTargetingChanged` to swap a crosshair, FOV, or aim animation.
+- **Multiple trace segments** — besides the primary `MeleeTrace` (+ its entry index), add extra `(MeleeAttackTrace, entryIndex)` pairs to `AdditionalTraces`. `SetWeaponActive(true/false)` opens/closes the primary **and** all additional segments together (dual-blade / main+secondary hitboxes). `RefreshTraceInstances()` re-points every segment's source at the current owner ASC (called automatically on `Equip`).
+
 ---
 
 ## 11. Movement / Locomotion — companion package
@@ -668,7 +674,7 @@ Sigil is **logic-only and ships no UI framework** — it broadcasts "things that
 | Damage numbers | `combat.OnDealtDamage / OnAttackResultReceived` |
 | Poise bar | `poise.OnPoiseBroken / OnPoiseRecovered` |
 | Lock-on marker | `targeting.OnTargetLockOn / OnTargetLockOff` |
-| Weapon icon | `weapon.OnEquipped / OnUnequipped / OnWeaponActiveStateChanged` |
+| Weapon icon | `weapon.OnEquipped / OnUnequipped / OnWeaponActiveStateChanged / OnTargetingChanged` |
 
 Buff icon-bar example (subscribe to add/remove + refresh remaining time each frame):
 
