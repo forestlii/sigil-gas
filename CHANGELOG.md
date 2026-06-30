@@ -24,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Attack type tags now reach the damage effect (dead-config fixed).** `AttackDefinition.AttackTags` (Melee/Ranged, Slash/Strike, etc.) were documented as "added as dynamic asset tags to the gameplay effect spec" but were never actually injected, so a target could not react based on *what kind of attack* hit it. Added `GameplayEffectSpec.DynamicAssetTags` (+ `AddDynamicAssetTags` / `GetAllAssetTags`); both attack-application paths (`AttackApplication` and `MeleeAttackTrace`, plus effect containers) now inject `AttackTags` into the spec, the attack tags are folded into `AttackResult.AggregatedSourceTags` (so hit-reaction processors can query attack type, e.g. heavy → stagger), and `RemoveEffectsWithTags` now honors dynamic asset tags.
+
 - **`AbilityInteractionRules.AbilityTagsToBlock` is now enforced.** Previously the field was collected but never read, so "block other abilities from activating while this one is active" had no effect (only `AbilityTagsToCancel` worked). An active ability now contributes its block tags to a reference-counted set on the ASC; any ability whose `AbilityTags` match is denied activation until every blocking source ends. New API: `AbilitySystemComponent.AreAbilityTagsBlocked(...)` and `AbilityInteractionRules.AddBaseRule(...)` / `AddConditionalRules(...)` for building rules in code. Covered by 6 new PlayMode tests (`AbilityBlockTagsPlayTests`). Test totals: **EditMode 21 + PlayMode 95 = 116**.
 
 ### Changed

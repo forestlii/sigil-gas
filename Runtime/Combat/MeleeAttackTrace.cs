@@ -158,6 +158,7 @@ namespace Likeon.GAS
             {
                 var spec = new GameplayEffectSpec(attack.TargetEffect, context,
                     attack.TargetEffectLevel >= 1 ? attack.TargetEffectLevel : 1);
+                spec.AddDynamicAssetTags(attack.AttackTags); // 攻击类型作动态资产标签注入 spec
                 foreach (var sbc in attack.SetByCallerMagnitudes)
                 {
                     spec.SetSetByCallerMagnitude(sbc.Tag, sbc.Value);
@@ -178,6 +179,8 @@ namespace Likeon.GAS
             };
             if (damageDataTag.IsValid) result.TaggedValues.Add(new TaggedValue(damageDataTag, damageValue));
             sourceAbilitySystem?.GetOwnedGameplayTags(result.AggregatedSourceTags);
+            // 攻击类型标签并入来源聚合标签：让受击处理器能按"被什么类型攻击"做反应（如重击→硬直）
+            foreach (var at in attack.AttackTags) if (at.IsValid) result.AggregatedSourceTags.AddTag(at);
             targetASC.GetOwnedGameplayTags(result.AggregatedTargetTags);
 
             // 登记到目标战斗组件 + 受击反应/顿帧
@@ -209,6 +212,7 @@ namespace Likeon.GAS
             {
                 if (ge == null) continue;
                 var spec = new GameplayEffectSpec(ge, context, attack.TargetEffectLevel >= 1 ? attack.TargetEffectLevel : 1);
+                spec.AddDynamicAssetTags(attack.AttackTags);
                 foreach (var sbc in attack.SetByCallerMagnitudes)
                     spec.SetSetByCallerMagnitude(sbc.Tag, sbc.Value);
                 targetASC.ApplyGameplayEffectSpecToSelf(spec);

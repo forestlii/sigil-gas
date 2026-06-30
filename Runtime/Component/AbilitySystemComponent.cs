@@ -493,11 +493,14 @@ namespace Likeon.GAS
         {
             for (int i = _activeEffects.Count - 1; i >= 0; i--)
             {
-                var def = _activeEffects[i].Def;
                 bool match = false;
-                foreach (var assetTag in def.AssetTags)
+                // 静态 AssetTags + 运行时动态注入（如攻击类型）一并匹配
+                foreach (var assetTag in _activeEffects[i].Spec.GetAllAssetTags())
+                {
                     foreach (var t in tags)
                         if (assetTag.MatchesTag(t)) { match = true; break; }
+                    if (match) break;
+                }
                 if (match) RemoveActiveGameplayEffect(_activeEffects[i].Handle);
             }
         }

@@ -15,6 +15,12 @@ namespace Likeon.GAS
         public int Level { get; set; }
         public GameplayEffectContext Context { get; }
 
+        /// <summary>
+        /// 运行时动态注入的资产标签（对齐 UE FGameplayEffectSpec 的 dynamic AssetTags）。
+        /// 如攻击定义把"近战/远程、劈砍/打击"AttackTags 加到本次伤害 spec，供目标按攻击类型查询。
+        /// </summary>
+        public readonly GameplayTagContainer DynamicAssetTags = new GameplayTagContainer();
+
         // SetByCaller：运行时按标签传入的数值（如把本次攻击的伤害值塞进来）。
         private readonly Dictionary<GameplayTag, float> _setByCaller = new Dictionary<GameplayTag, float>();
 
@@ -34,5 +40,20 @@ namespace Likeon.GAS
 
         public float GetSetByCallerMagnitude(GameplayTag tag, float defaultValue = 0f)
             => _setByCaller.TryGetValue(tag, out float v) ? v : defaultValue;
+
+        /// <summary>把若干标签加进动态资产标签（如攻击类型）。</summary>
+        public void AddDynamicAssetTags(IEnumerable<GameplayTag> tags)
+        {
+            if (tags == null) return;
+            foreach (var t in tags) if (t.IsValid) DynamicAssetTags.AddTag(t);
+        }
+
+        /// <summary>本 spec 的全部资产标签 = 定义静态 AssetTags + 运行时动态注入。</summary>
+        public IEnumerable<GameplayTag> GetAllAssetTags()
+        {
+            if (Def != null)
+                foreach (var t in Def.AssetTags) yield return t;
+            foreach (var t in DynamicAssetTags) yield return t;
+        }
     }
 }

@@ -23,6 +23,8 @@
 
 ### 修复
 
+- **攻击类型标签现在真正到达伤害效果（修死配置）**。`AttackDefinition.AttackTags`（近战/远程、劈砍/打击等）文档写着"作为动态资产标签加进效果 spec"，但实际从未注入，导致目标无法按"被什么类型攻击"做反应。新增 `GameplayEffectSpec.DynamicAssetTags`（+ `AddDynamicAssetTags` / `GetAllAssetTags`）；两条施加路（`AttackApplication` 与 `MeleeAttackTrace`，含效果容器）现在都把 `AttackTags` 注入 spec，攻击类型并入 `AttackResult.AggregatedSourceTags`（让受击处理器能查攻击类型，如重击→硬直），`RemoveEffectsWithTags` 也改为认动态资产标签。
+
 - **`AbilityInteractionRules.AbilityTagsToBlock` 现已强制生效**。此前该字段被收集却从未被读取，"激活期间阻挡其它技能激活"实际不生效（只有 `AbilityTagsToCancel` 有效）。现在激活中的技能会把它的 block 标签贡献到 ASC 上一个**引用计数**的集合；任何 `AbilityTags` 命中的技能在所有阻挡来源结束前都被拒绝激活。新增 API：`AbilitySystemComponent.AreAbilityTagsBlocked(...)`，以及 `AbilityInteractionRules.AddBaseRule(...)` / `AddConditionalRules(...)`（便于用代码构造规则）。由 6 个新增 PlayMode 测试覆盖（`AbilityBlockTagsPlayTests`）。测试总数：**EditMode 21 + PlayMode 95 = 116**。
 
 ### 变更

@@ -30,6 +30,7 @@ namespace Likeon.GAS
             if (attack.TargetEffect != null)
             {
                 var spec = new GameplayEffectSpec(attack.TargetEffect, context, level);
+                spec.AddDynamicAssetTags(attack.AttackTags); // 攻击类型作动态资产标签注入 spec
                 foreach (var sbc in attack.SetByCallerMagnitudes)
                     spec.SetSetByCallerMagnitude(sbc.Tag, sbc.Value);
                 targetASC.ApplyGameplayEffectSpecToSelf(spec);
@@ -42,6 +43,7 @@ namespace Likeon.GAS
                 {
                     if (ge == null) continue;
                     var spec = new GameplayEffectSpec(ge, context, level);
+                    spec.AddDynamicAssetTags(attack.AttackTags);
                     foreach (var sbc in attack.SetByCallerMagnitudes)
                         spec.SetSetByCallerMagnitude(sbc.Tag, sbc.Value);
                     targetASC.ApplyGameplayEffectSpecToSelf(spec);
