@@ -36,9 +36,32 @@ namespace Likeon.GAS
         [SerializeField] private GameplayTagQueryExprType exprType = GameplayTagQueryExprType.AllTagsMatch;
         [SerializeField] private List<GameplayTag> tags = new List<GameplayTag>();
         [SerializeReference] private List<GameplayTagQuery> expressions = new List<GameplayTagQuery>();
-        [SerializeField] private bool isEmpty = true;
 
-        public bool IsEmpty => isEmpty;
+        /// <summary>
+        /// 是否为空查询（无有效条件）。空查询默认匹配为 true。
+        /// 按内容运行时推导：标签类看 tags、表达式类看 expressions。
+        /// 不再用序列化标志位——否则 Inspector 里默认构造的查询会因标志位恒为空而被永久放行，
+        /// 导致面板配置的 tags / expressions 全部失效（见 decisions.md 2026-07-02）。
+        /// </summary>
+        public bool IsEmpty
+        {
+            get
+            {
+                switch (exprType)
+                {
+                    case GameplayTagQueryExprType.AllTagsMatch:
+                    case GameplayTagQueryExprType.AnyTagsMatch:
+                    case GameplayTagQueryExprType.NoTagsMatch:
+                        return tags == null || tags.Count == 0;
+                    case GameplayTagQueryExprType.AllExprMatch:
+                    case GameplayTagQueryExprType.AnyExprMatch:
+                    case GameplayTagQueryExprType.NoExprMatch:
+                        return expressions == null || expressions.Count == 0;
+                    default:
+                        return true;
+                }
+            }
+        }
 
         public GameplayTagQuery() { }
 
@@ -47,13 +70,12 @@ namespace Likeon.GAS
             exprType = type;
             tags = t ?? new List<GameplayTag>();
             expressions = exprs ?? new List<GameplayTagQuery>();
-            isEmpty = false;
         }
 
         /// <summary>对给定标签容器求值。空查询返回 true。::Matches。</summary>
         public bool Matches(GameplayTagContainer container)
         {
-            if (isEmpty) return true;
+            if (IsEmpty) return true;
             if (container == null) container = new GameplayTagContainer();
 
             switch (exprType)
