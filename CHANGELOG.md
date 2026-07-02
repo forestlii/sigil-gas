@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-07-02
+
 ### Fixed
 
 - **`GameplayTagQuery` configured in the Inspector now actually evaluates.** Emptiness was tracked by a serialized `isEmpty` flag that only the code-side factory methods (`MakeQuery_*` / `All` / `Any`) ever cleared. A query authored in the Inspector (default constructor) kept `isEmpty = true` and was silently treated as "no condition → always pass", so its `tags` and nested `expressions` were ignored — affecting any tag query on a data asset, e.g. `InputProcessor.StateQuery` on an `InputControlSetup`. Emptiness is now derived from content at runtime (tag-type queries inspect `tags`, expression-type queries inspect `expressions`). Factory-constructed queries and existing assets are unaffected.

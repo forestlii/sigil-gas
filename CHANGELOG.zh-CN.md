@@ -7,6 +7,8 @@
 
 ## [未发布]
 
+## [0.4.1] - 2026-07-02
+
 ### 修复
 
 - **在 Inspector 里配置的 `GameplayTagQuery` 现在真正生效了。** 此前是否为空由一个序列化标志位 `isEmpty` 记录，而它只有代码侧的工厂方法（`MakeQuery_*` / `All` / `Any`）才会清零；在 Inspector 里配的查询（走默认构造）`isEmpty` 恒为 true，被静默当成"无条件 → 永远放行"，导致其 `tags` 和嵌套 `expressions` 全部被忽略——影响任何配在数据资产上的标签查询，例如 `InputControlSetup` 里 `InputProcessor.StateQuery`。现改为运行时按内容推导是否为空（标签类查询看 `tags`、表达式类查询看 `expressions`）。工厂构造的查询与既有资产不受影响。
