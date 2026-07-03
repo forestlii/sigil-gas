@@ -31,6 +31,9 @@ state-bus architecture. The **GameplayTag state bus** decouples and connects
 15. [FAQ](#15-faq)
 16. [Advanced systems](#16-advanced-systems)
 17. [Binding UI (subscribe to events)](#17-binding-ui-subscribe-to-events)
+18. [Common recipes](#18-common-recipes)
+19. [Design trade-offs & anti-patterns](#19-design-trade-offs--anti-patterns)
+20. [Coming from Unreal GAS?](#20-coming-from-unreal-gas)
 
 ---
 
@@ -193,6 +196,8 @@ GameplayAttribute hpAttr = health.HealthAttribute; // an attribute handle, used 
 
 **The damage Meta pipeline**: don't change `Health` directly. Damage is applied to the intermediate attribute `IncomingDamage`; after the calculation `AS_Health` zeroes it out and maps it to `-Health` (auto-clamped to `[0, MaxHealth]`). Healing works the same way via `IncomingHealing`.
 
+> 📌 **How to initialize attributes / configure equipment bonuses**: simple defaults go in the field constructor (e.g. `new GameplayAttributeData(100f)`); data-driven initialization goes through `AbilityLoadout.GrantedEffects` with a **persistent (Infinite) GE**, leveled by the ASC's `attributeInitializeLevel` (curve-table magnitudes look up that level). **Bonuses that will change later — equipment, talents — must be Infinite GEs, not Instant**; see [§19.1](#19-design-trade-offs--anti-patterns) for why.
+
 **Custom attribute set**: derive from `AttributeSet` and register fields in `RegisterAttributes()`:
 
 ```csharp
@@ -275,6 +280,8 @@ public class GA_Slide : GameplayAbility
     // Overridable: CanActivate / CheckCost / CheckCooldown / OnEndAbility(bool wasCancelled)
 }
 ```
+
+> ⚠️ **`CommitAbility()` is not optional.** Cost and Cooldown are only checked and applied inside `CommitAbility()` — skip it in your ability logic and both are **silently bypassed** (`CanActivate` before activation is a pre-check; it doesn't pay anything). Convention: start `OnActivateAbility` with `if (!CommitAbility()) { EndAbility(true); return; }`, and **check the return value** (a failed commit = insufficient resources / on cooldown; cancel-end immediately).
 
 ### 7.2 Grant / activate / cancel
 
@@ -579,11 +586,13 @@ The current version is **single-player authoritative logic**. Network replicatio
 
 ## 15. FAQ
 
+> 💡 **Open the debugger first**: `Likeon ▸ GAS ▸ GAS Debugger` ([§13.1](#131-runtime-debugger--gas-debugger)) with the misbehaving character selected — it pinpoints most of the issues below at a glance.
+
 **Q: My ability won't activate.**
-Check: ① are the AbilityTags set (needed for activate-by-tag); ② are ActivationRequiredTags/BlockedTags blocked by the current state; ③ can the CostEffect not be paid (insufficient resources); ④ is it blocked by cooldown or activation-group exclusivity.
+**Check the `Failed` line in the debugger's Event Log — the failure reason enum tells you directly** (missing RequiredTags / BlockedTags / cost not met / on cooldown / activation-group blocked / blocked by another ability). Manual checklist: ① are the AbilityTags set (needed for activate-by-tag); ② are ActivationRequiredTags/BlockedTags blocked by the current state (see the Owned Tags panel); ③ can the CostEffect not be paid; ④ is it blocked by cooldown or activation-group exclusivity (see the Abilities panel's cooldown bar / Blocked badge).
 
 **Q: Damage doesn't take effect.**
-Confirm the damage GE changes `AS_Health.IncomingDamage` (not Health directly), the target ASC has `AS_Health`, and the SetByCaller tag matches the one configured in the GE.
+Watch `IncomingDamage`/`Health` in the debugger's Attributes panel (changed rows flash) while landing a hit — you'll see which layer the pipeline breaks at. Confirm the damage GE changes `AS_Health.IncomingDamage` (not Health directly), the target ASC has `AS_Health`, and the SetByCaller tag matches the one configured in the GE.
 
 **Q: "Slide while sprinting" doesn't trigger.**
 Confirm the movement system mirrors `Movement.State.Sprint` onto the ASC (automatic when an ASC is on the same object; otherwise call `move.SetGameplayTagsProvider(asc)`), and that the slide processor is ordered before crouch with ExecutionType=FirstOnly.
@@ -706,6 +715,170 @@ void Update() // refresh countdowns
 ```
 
 > Note: instant effects produce no active instance, so they **don't fire** `OnActiveEffectAdded` and aren't in the enumeration — their impact shows via `OnAttributeChanged` (e.g. health loss).
+
+---
+
+## 18. Common recipes
+
+> Gameplay patterns assembled from parts already introduced above — each recipe shows how to *combine* fields/APIs, not new machinery.
+
+### 18.1 Immunity (block effect application)
+
+Set the damage GE's **ApplicationBlockedTags** = `Status.Immune`. While the target owns that tag, application **fails outright** (it's not applied-then-negated). Grant immunity itself via a Duration GE with `GrantedTags = [Status.Immune]` — the tag is applied for the duration and removed automatically on expiry.
+
+```csharp
+asc.ApplyGameplayEffectToSelf(immunityBuff);   // 5s immunity (Duration GE, GrantedTags=Status.Immune)
+// any GE whose ApplicationBlockedTags contains Status.Immune now fails to apply
+```
+
+### 18.2 Silence / stun (block ability activation)
+
+The mirror image, blocking abilities: set the ability's **ActivationBlockedTags** = `Status.Silenced`. The silence debuff is a Duration GE (`GrantedTags = [Status.Silenced]`). While it lasts, activation is rejected (the debugger's Event Log shows `Failed: ... (ActivationBlockedTags)`); it recovers automatically on expiry. To also *interrupt* an ability mid-cast the moment silence lands, combine with `AbilityTagsToCancel` from §7.5.
+
+### 18.3 Passive / reactive abilities (procs)
+
+"Counter when hit / jump when spooked": a permanently-active ability listening for events —
+
+```csharp
+[CreateAssetMenu(menuName = "Game/Abilities/CounterAttack")]
+public class GA_Counter : GameplayAbility
+{
+    // On the asset, tick ActivateOnGranted = true (activates when granted; stays listening)
+    protected override void OnActivateAbility(GameplayEventData triggerData)
+    {
+        var t = AbilityTask_WaitGameplayEvent.WaitGameplayEvent(
+            this, GameplayTag.RequestTag("Event.Combat.WasHit")); // onlyTriggerOnce defaults to false = keep listening
+        t.OnEventReceived += (tag, data) => { /* data.Instigator = who hit me → counter */ };
+        t.Activate();
+        // no EndAbility — it stays resident
+    }
+}
+```
+
+The event is sent by the attacker (or a hit callback):
+
+```csharp
+victimASC.SendGameplayEvent(GameplayTag.RequestTag("Event.Combat.WasHit"),
+    new GameplayEventData { Instigator = attacker, EventMagnitude = damage });
+```
+
+### 18.4 Charged abilities (hold to charge, release to fire)
+
+Activate the ability on key **press**, then wait for **release** inside it (`InputTriggerEvent.Canceled`) and scale damage by the held time:
+
+```csharp
+protected override void OnActivateAbility(GameplayEventData triggerData)
+{
+    if (!CommitAbility()) { EndAbility(true); return; }
+    var t = AbilityTask_WaitInputPress.WaitInputPress(
+        this, GameplayTag.RequestTag("InputTag.ChargedAttack"),
+        triggerEvent: InputTriggerEvent.Canceled);           // wait for release
+    t.OnPress += heldSeconds =>
+    {
+        float charge = Mathf.Clamp01(heldSeconds / maxChargeSeconds);
+        var spec = ASC.MakeOutgoingSpec(damageEffect)
+            .SetSetByCallerMagnitude(GameplayTag.RequestTag("Data.Damage"), baseDamage * (1f + charge));
+        // …gather targets, then ApplyGameplayEffectSpecToSelf on them…
+        EndAbility();
+    };
+    t.Activate();
+}
+```
+
+For a per-frame charge bar, combine with `EnableTick` + `AbilityTick(dt)` (§7.1).
+
+### 18.5 Multiple damage types (fire/cold resistances)
+
+**Don't** create one Damage attribute per element. Instead (the Fortnite-style pattern): express the damage *type* as a **tag**, and add per-type resistance attributes:
+
+1. Tag the damage GE's **AssetTags** with `Damage.Type.Fire` (or inject at runtime via `spec.AddDynamicAssetTags(...)` — the weapon-enchant case).
+2. Add `FireResistance` / `ColdResistance` to a custom attribute set.
+3. Write an ExecutionCalculation that picks the matching resistance by the spec's type tags:
+
+```csharp
+public override void Execute(GameplayEffectSpec spec, AbilitySystemComponent src,
+    AbilitySystemComponent tgt, List<GameplayExecutionOutput> outputs)
+{
+    float damage = spec.GetSetByCallerMagnitude(DamageTag, 0f);
+    var resist = tgt.GetAttributeSet<AS_Resistances>();
+    foreach (var t in spec.GetAllAssetTags())                       // static AssetTags + dynamic injections
+        if (t.MatchesTag(GameplayTag.RequestTag("Damage.Type.Fire")) && resist != null)
+            damage -= resist.FireResistance.CurrentValue;
+    // …clamp and write into IncomingDamage (see the built-in DamageExecutionCalculation)…
+}
+```
+
+Caveat: "total resistance" is meaningless in this model (30% fire + 30% cold ≠ 60% overall) — display resistances per type in UI.
+
+### 18.6 Floating damage numbers
+
+Two routes (the Playable Demo uses the latter): ① subscribe to `combat.OnDealtDamage / OnAttackResultReceived` (table in §17); ② go through cues — where the `AS_Health` damage pipeline settles, `ExecuteGameplayCue(GameplayCue.Damage, params)` with the damage in `GameplayCueParameters.Magnitude`, and a cue handler/subscriber spawns the floating text at the hit point.
+
+---
+
+## 19. Design trade-offs & anti-patterns
+
+### 19.1 Instant vs Duration vs Infinite — how to choose
+
+The criterion: **does this modification need to be *remembered* — revertible or adjustable later?**
+
+| Scenario | Use | Why |
+|---|---|---|
+| One-shot damage / heal / resource spend | **Instant** | Changes BaseValue, fire-and-forget |
+| Timed buff/debuff (5s speed boost) | **Duration** | Changes CurrentValue, auto-reverts on expiry |
+| Equipment bonus / talent / aura | **Infinite** | Lasts until explicitly removed — **unequips/respecs revert cleanly** |
+| DoT/HoT (damage per second) | Duration/Infinite + **Period** | Each tick settles with Instant semantics onto BaseValue |
+
+**Why equipment/talents must not be Instant — with numbers**: MaxHealth base 100, talent tier 1 = +10%.
+- Instant: BaseValue permanently becomes 110; tier 2 (design intent "+20% total") multiplies again → **121, wrong** — and refunding the talent can't restore precisely.
+- Infinite modifier: BaseValue stays 100; tier 1 applies ×1.1 → Current 110; tier 2 swaps in ×1.2 → **120, correct**; removing the effect cleanly returns to 100.
+
+### 19.2 SetByCaller vs Meta Attribute vs Execution — how to choose
+
+All three "feed runtime-computed numbers into settlement", with different jobs:
+
+| Mechanism | What it is | When to use |
+|---|---|---|
+| **SetByCaller** (§6) | Stuff a float into the spec by tag at apply time | A single simple value (this hit's damage, knockback strength) — lightest, prefer it |
+| **Meta Attribute** (§5) | An intermediate attribute (IncomingDamage) consumed and zeroed by the attribute set after settlement | **Multiple sources funneling into one result** settled in one place (basic attacks, DoTs, thorns all write IncomingDamage; clamping/shield-break logic lives once) |
+| **Execution** (§6) | A custom calculation class with multi-attribute inputs/outputs | The formula must **read several attributes on both sides** (attacker Damage, defender mitigation, blocking state) — heaviest and most powerful |
+
+They compose: an Execution reads the SetByCaller base value + both sides' attributes → writes the result to a Meta Attribute (the built-in `DamageExecutionCalculation` is exactly this chain).
+
+### 19.3 Anti-patterns (don't do these)
+
+- ❌ **Skipping `CommitAbility()` in an ability** → Cost/Cooldown silently bypassed (see the warning in §7.1).
+- ❌ **Multiple `AbilitySystemComponent`s on one GameObject** → `GetComponent` resolution, movement tag mirroring, and debugger target resolution all assume a single ASC; behavior is undefined. One character = one ASC; split *attributes* across multiple AttributeSets, not multiple ASCs.
+- ❌ **Mutating attributes around the pipeline** (`health.Health.CurrentValue = 50`) → skips PreAttributeChange clamping, fires no events, and the next aggregation recalculation overwrites it. The right paths: a GE, or `ApplyModToAttributeBase` from code.
+- ❌ **Driving gameplay logic off tag counts** (triggering a mechanic when `GetOwnedGameplayTagCounts` reads ×3) → counts are **multi-source reference bookkeeping** (for the debugger/UI); source add/remove ordering isn't guaranteed. Gameplay checks ask presence only: `HasMatchingGameplayTag`.
+- ❌ **An ability listening for its own "stop" input to toggle itself** → `ReceiveInput` broadcasts the event *before* processor dispatch, so one key press "ends the ability, then the processor immediately re-activates it". For toggle abilities use the movement package's `InputProcessor_ToggleAbilityByTag` (the toggle decision lives in the processor).
+- ❌ **Importing a Sample before the packages finish compiling** → `[SerializeReference]` assets (loadout attribute sets) get corrupted when their types can't be resolved yet. Wait for package resolve + compilation, then import.
+
+---
+
+## 20. Coming from Unreal GAS?
+
+Most concepts carry over **by name and meaning**; this table lists the mappings and the differences:
+
+| UE GAS | Sigil equivalent | Notes |
+|---|---|---|
+| `UAbilitySystemComponent` | `AbilitySystemComponent` (MonoBehaviour) | Lives on the character GameObject |
+| `IAbilitySystemInterface` | `GetComponent` / `GetComponentInParent<AbilitySystemComponent>()` | Unity idiom; no interface needed |
+| OwnerActor / AvatarActor split | **Unified** (the ASC's GameObject is both) | Single-player simplification; revisit for networking |
+| `AttributeSet` + `ATTRIBUTE_ACCESSORS` | `AttributeSet` subclass + `Register()` | `PreAttributeChange` / `PostGameplayEffectExecute` hooks: same names, same semantics |
+| Meta Attributes (Damage) | Same (`AS_Health.IncomingDamage`) | Identical pipeline |
+| GE Instant / HasDuration / Infinite / Period | Same names, same semantics | — |
+| `ModifierMagnitudeCalculation` (MMC) | **Not provided** | Cover with an Execution or SetByCaller |
+| `ExecutionCalculation` | `GameplayEffectExecutionCalculation` | A ScriptableObject asset |
+| SetByCaller / Stacking / GrantedTags / application tag requirements | Same names, same semantics | Stacking includes AggregateByTarget/BySource |
+| `FGameplayEffectContext` subclass + `AllocGameplayEffectContext` | Subclass `GameplayEffectContext` in C#, pass it when constructing a `GameplayEffectSpec` | No global alloc hook needed; the convenience path `MakeOutgoingSpec` uses the base class |
+| Instancing Policy (3 modes) | Always **InstancedPerActor** (granting clones) | UE itself deprecated NonInstanced as of 5.5 |
+| AbilityTriggers (event-tag-triggered abilities) | `ActivateOnGranted` + `AbilityTask_WaitGameplayEvent` | The resident-listener pattern, see §18.3 |
+| Input ID enum binding | `InputTag` + `InputConfig` + `InputProcessor` polymorphism | Closer to Lyra's Enhanced Input direction (§9) |
+| `CommitAbility` / Cost GE / Cooldown GE | Same names, same semantics | Cooldown remaining: `GetCooldownRemainingForTags` |
+| `GameplayCueNotify_Static` | Same (ScriptableObject) | **The stateful `_Actor` form is not provided** — manage persistent effect instances yourself (Add/Remove event semantics exist) |
+| Gameplay Debugger (Shift+') | `Likeon ▸ GAS ▸ GAS Debugger` (§13.1) | Inspect any selected GameObject |
+| Replication / Prediction / NetExecutionPolicy | **Not implemented** (single-player authoritative) | Planned as a later phase (§14) |
 
 ---
 
