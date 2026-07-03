@@ -1,6 +1,6 @@
 {
   "name": "com.likeon.gas",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "displayName": "Sigil - Action Combat & Ability Framework",
   "description": "Sigil — a GAS-style action-combat & ability framework for Unity. A GameplayTag-driven state bus connects abilities, attributes, effects, input dispatch, melee & ranged combat, movement, and presentation (GameplayCue, camera blend stack, surface effects). Independent Unity implementation; single-player authoritative logic.",
   "unity": "6000.4",

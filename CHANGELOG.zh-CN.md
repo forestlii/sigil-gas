@@ -7,10 +7,16 @@
 
 ## [未发布]
 
+## [0.5.0] - 2026-07-03
+
 ### 新增
 
 - **GAS 调试器窗口**（`Likeon → GAS → GAS Debugger`）。Play Mode 下检视任意存活 `AbilitySystemComponent` 的轻量工具：在 Hierarchy/Scene 里选中任意 GameObject（在其自身与父链上解析 ASC），或从工具栏下拉直接挑一个，即可实时查看它的**属性**（按属性集分组的 Base/Current，最近变更的行闪烁、Current 与 Base 不同时高亮）、**拥有标签**（带多来源计数）、**已授予技能**（激活/被阻挡状态、激活组、冷却进度条）与**激活效果**（剩余时长、层数、周期、抑制状态、授予标签）。窗口开着时滚动记录**事件日志**：技能激活/失败（带原因）/结束、授予/移除、效果增删/叠层、属性变更（带来源）、GameplayEvent 与标签翻转。纯 Editor 工具——只进 Editor 程序集，打包零开销。
 - **`AbilitySystemComponent` 只读调试/UI 访问器**：`GetAttributeSets()`（枚举全部持有的属性集）与 `GetOwnedGameplayTagCounts(list)`（显式拥有标签及引用计数；同时开放 `GameplayTagCountContainer.FillTagCounts`）。零行为变化。
+
+### 修复
+
+- **复合 2D 轴输入（如 WASD）不再坍缩成恒定方向。** `InputSystemComponent` 此前按**触发控件**的值类型决定怎么读输入回调——但复合绑定的触发控件是实际按下的那个键（float 的 `ButtonControl`），不是复合后的 Vector2。对 Vector2 动作按 float 读会内部抛异常、落进兜底值 `(1, 0)`，于是 WASD 四个键读出同一个方向（Movement Demo 里"按什么都往前走"）。判型现改用回调的**动作值类型**（`ctx.valueType`），2D 复合轴读出真实向量；标量/按钮路径不受影响。
 
 ## [0.4.1] - 2026-07-02
 

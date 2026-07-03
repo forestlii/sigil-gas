@@ -8,10 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-07-03
+
 ### Added
 
 - **GAS Debugger window** (`Likeon → GAS → GAS Debugger`). A lightweight Play-Mode inspector for any live `AbilitySystemComponent`: select any GameObject in the Hierarchy/Scene (the ASC is resolved on it or its parents) — or pick one from the toolbar dropdown — and watch its **attributes** (Base/Current per attribute set, recently-changed rows flash, modified Current values highlighted), **owned tags** (with per-source counts), **granted abilities** (active/blocked state, activation group, cooldown progress), and **active gameplay effects** (remaining duration, stacks, period, inhibited state, granted tags) update live. A scrolling **event log** records ability activation/failure (with reason)/end, grants/removals, effect add/remove/stack changes, attribute changes (with source), gameplay events and tag flips while the window is open. Editor-only — ships in the Editor assembly, zero runtime overhead in builds.
 - **Read-only debug/UI accessors on `AbilitySystemComponent`**: `GetAttributeSets()` (enumerate all held attribute sets) and `GetOwnedGameplayTagCounts(list)` (explicit owned tags with their reference counts; also `GameplayTagCountContainer.FillTagCounts`). No behavior changes.
+
+### Fixed
+
+- **Composite 2D axis input (e.g. WASD) no longer collapses to a constant direction.** `InputSystemComponent` decided how to read an input callback by the *triggering control's* value type — but for composite bindings that control is the individual key (a float `ButtonControl`), not the composite. Reading a Vector2 action as float threw internally and fell back to a constant `(1, 0)`, so every WASD key produced the same direction (in the Movement Demo, all four keys "moved forward"). The value type check now uses the callback's action value type (`ctx.valueType`), so 2D composites read the real axis vector. Scalar/button bindings are unaffected.
 
 ## [0.4.1] - 2026-07-02
 
