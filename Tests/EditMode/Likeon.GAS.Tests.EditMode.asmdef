@@ -3,6 +3,7 @@
   "rootNamespace": "Likeon.GAS.Tests",
   "references": [
     "Likeon.GAS.Runtime",
+    "Likeon.GAS.Editor",
     "UnityEngine.TestRunner",
     "UnityEditor.TestRunner"
   ],

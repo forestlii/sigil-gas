@@ -7,6 +7,11 @@
 
 ## [未发布]
 
+### 新增
+
+- **GAS 调试器窗口**（`Likeon → GAS → GAS Debugger`）。Play Mode 下检视任意存活 `AbilitySystemComponent` 的轻量工具：在 Hierarchy/Scene 里选中任意 GameObject（在其自身与父链上解析 ASC），或从工具栏下拉直接挑一个，即可实时查看它的**属性**（按属性集分组的 Base/Current，最近变更的行闪烁、Current 与 Base 不同时高亮）、**拥有标签**（带多来源计数）、**已授予技能**（激活/被阻挡状态、激活组、冷却进度条）与**激活效果**（剩余时长、层数、周期、抑制状态、授予标签）。窗口开着时滚动记录**事件日志**：技能激活/失败（带原因）/结束、授予/移除、效果增删/叠层、属性变更（带来源）、GameplayEvent 与标签翻转。纯 Editor 工具——只进 Editor 程序集，打包零开销。
+- **`AbilitySystemComponent` 只读调试/UI 访问器**：`GetAttributeSets()`（枚举全部持有的属性集）与 `GetOwnedGameplayTagCounts(list)`（显式拥有标签及引用计数；同时开放 `GameplayTagCountContainer.FillTagCounts`）。零行为变化。
+
 ## [0.4.1] - 2026-07-02
 
 ### 修复

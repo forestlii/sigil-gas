@@ -75,6 +75,15 @@ namespace Likeon.GAS
                 if (kv.Value > 0) outContainer.AddTag(kv.Key);
         }
 
+        /// <summary>把当前拥有的（显式）标签及其计数填进列表。供调试/UI 枚举，不含自动展开的父标签。</summary>
+        public void FillTagCounts(List<KeyValuePair<GameplayTag, int>> outList)
+        {
+            if (outList == null) return;
+            outList.Clear();
+            foreach (var kv in _explicitCounts)
+                if (kv.Value > 0) outList.Add(kv);
+        }
+
         public void Reset()
         {
             _explicitCounts.Clear();

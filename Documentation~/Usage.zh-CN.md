@@ -553,6 +553,19 @@ cam.PopCameraMode(aimMode);
 - **增强 Inspector**：GameplayEffect / GameplayAbility / AttackDefinition / AbilityLoadout 带摘要与配置校验提示。
 - **SerializeReference 选择器**：`InputControlSetup` 的检查器/处理器列表按子类型下拉添加。
 
+### 13.1 运行时调试器 GAS Debugger
+
+菜单 **`Likeon ▸ GAS ▸ GAS Debugger`**。Play Mode 下回答"技能为什么放不出来 / 这个 buff 到底挂上没有"这类问题：
+
+- **选目标**：在 Hierarchy/Scene 里选中任意 GameObject 即可——在它自己和父链上找 `AbilitySystemComponent`（选中角色的武器骨骼也能定位到宿主）；或用工具栏下拉直接挑场景里任意一个 ASC（不限于主角）。`Lock` 锁定当前目标后随便点别的不跳，`Ping` 在 Hierarchy 里高亮它。
+- **Attributes**：按属性集分组列出每个属性的 Base / Current。刚变过的行闪黄；Current ≠ Base（有临时修改器在生效）时 Current 高亮。
+- **Owned Tags**：当前拥有的标签及计数（如 `State.Sprinting ×2`——两个来源都挂了它）。
+- **Abilities**：已授予技能的激活状态（Active/Blocked）、激活组、冷却剩余进度条。
+- **Active Effects**：每个存活效果的剩余时长进度条、层数 ×N、周期倒计时、授予标签；被 Ongoing 条件抑制的整行淡显并标 `(inhibited)`。
+- **Event Log**：窗口开着时滚动记录该 ASC 的事件流——技能激活 / **失败（带原因枚举）** / 结束、授予/移除、效果增删/叠层、属性变更（带来源技能/发起者）、GameplayEvent、标签增减。排查"按了没反应"直接看 Failed 行的原因。
+
+纯 Editor 工具（在 `Likeon.GAS.Editor` 程序集），打包产物零开销。
+
 ---
 
 ## 14. 联网

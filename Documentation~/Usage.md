@@ -554,6 +554,19 @@ cam.PopCameraMode(aimMode);
 - **Enhanced Inspectors**: GameplayEffect / GameplayAbility / AttackDefinition / AbilityLoadout carry summaries and configuration-validation hints.
 - **SerializeReference picker**: the checker/processor lists of `InputControlSetup` add entries via a subclass dropdown.
 
+### 13.1 Runtime debugger — GAS Debugger
+
+Menu **`Likeon ▸ GAS ▸ GAS Debugger`**. Answers "why won't this ability activate / did that buff actually land" questions while the game runs in Play Mode:
+
+- **Picking a target**: select any GameObject in the Hierarchy/Scene — the `AbilitySystemComponent` is resolved on it or its parents (selecting a character's weapon bone still finds the host), or pick any ASC in the scene from the toolbar dropdown (not just the player). `Lock` pins the current target while you click around; `Ping` highlights it in the Hierarchy.
+- **Attributes**: Base / Current per attribute, grouped by attribute set. Rows that just changed flash yellow; Current is highlighted when it differs from Base (temporary modifiers in effect).
+- **Owned Tags**: currently owned tags with counts (e.g. `State.Sprinting ×2` — two sources applied it).
+- **Abilities**: granted abilities with Active/Blocked state, activation group, and a cooldown progress bar.
+- **Active Effects**: per live effect — remaining-duration progress bar, stacks ×N, period countdown, granted tags; effects inhibited by their ongoing tag requirements are dimmed and marked `(inhibited)`.
+- **Event Log**: while the window is open it records the ASC's event stream — ability activation / **failure (with the reason enum)** / end, grants/removals, effect add/remove/stack changes, attribute changes (with the source ability/instigator), gameplay events, and tag flips. For "I pressed the button and nothing happened", read the Failed line.
+
+Editor-only (lives in the `Likeon.GAS.Editor` assembly) — zero overhead in builds.
+
 ---
 
 ## 14. Networking

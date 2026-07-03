@@ -63,6 +63,10 @@ namespace Likeon.GAS
             _ownedTags.FillTagContainer(outContainer);
         }
 
+        /// <summary>取出当前拥有的（显式）标签及计数（供调试器/UI 枚举多来源叠加情况）。</summary>
+        public void GetOwnedGameplayTagCounts(List<KeyValuePair<GameplayTag, int>> outList)
+            => _ownedTags.FillTagCounts(outList);
+
         private readonly GameplayTagContainer _ownedTagsCache = new GameplayTagContainer();
         private GameplayTagContainer OwnedTagsSnapshot()
         {
@@ -111,6 +115,9 @@ namespace Likeon.GAS
                 if (_attributeSets[i] is T t) return t;
             return null;
         }
+
+        /// <summary>当前持有的全部属性集（只读，供调试器/UI 枚举）。</summary>
+        public IReadOnlyList<AttributeSet> GetAttributeSets() => _attributeSets;
 
         public float GetAttributeValue(GameplayAttribute attribute) => attribute.GetCurrentValue(this);
         public float GetAttributeBaseValue(GameplayAttribute attribute) => attribute.GetBaseValue(this);
