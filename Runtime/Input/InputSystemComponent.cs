@@ -107,13 +107,15 @@ namespace Likeon.GAS
         public InputActionData GetInputActionValueOfInputTag(GameplayTag inputTag)
             => _tagToAction.TryGetValue(inputTag, out var a) ? ReadValue(a) : InputActionData.Empty;
 
-        // 把 Unity 输入回调读成 InputActionData（兼容 float / Vector2 / button）
-        private static InputActionData ReadData(InputAction.CallbackContext ctx)
+        // 把 Unity 输入回调读成 InputActionData（兼容 float / Vector2 / button）。
+        // ⚠️ 判型必须用 ctx.valueType（本次触发绑定的"动作值类型"）：复合绑定（如 WASD 2DVector）的
+        // ctx.control 是实际按下的那个键（float），按它判型会把 Vector2 轴错读成标量、方向信息全丢。
+        internal static InputActionData ReadData(InputAction.CallbackContext ctx)
         {
             Vector2 value;
             try
             {
-                if (ctx.control?.valueType == typeof(Vector2)) value = ctx.ReadValue<Vector2>();
+                if (ctx.valueType == typeof(Vector2)) value = ctx.ReadValue<Vector2>();
                 else value = new Vector2(ctx.ReadValue<float>(), 0f);
             }
             catch { value = new Vector2(ctx.performed ? 1f : 0f, 0f); }

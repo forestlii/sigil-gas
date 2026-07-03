@@ -3,6 +3,8 @@
   "rootNamespace": "Likeon.GAS.PlayTests",
   "references": [
     "Likeon.GAS.Runtime",
+    "Unity.InputSystem",
+    "Unity.InputSystem.TestFramework",
     "UnityEngine.TestRunner"
   ],
   "includePlatforms": [],
