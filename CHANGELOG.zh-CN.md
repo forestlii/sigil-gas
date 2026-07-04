@@ -7,6 +7,10 @@
 
 ## [未发布]
 
+### 修复
+
+- **`AbilityLoadout` 面板——「Granted Attribute Sets（属性集）」列表现在可编辑。** 该字段是 `[SerializeReference] List<AttributeSet>`，此前靠 Unity 默认的 managed-reference UI 绘制：既没有清晰的"选具体类型"入口，加上属性集子类的字段全是 `readonly`（选了类型也看着空），导致加进去的元素点不动、无法编辑。现在 `AbilityLoadout` 的 Inspector 用显式的 **"+ 添加属性集"** 类型下拉绘制该列表（复用 `InputControlSetup` 处理器/检查器列表早就在用的那套，抽成共享的 `SerializeReferenceListGUI`），并加一行提示说明"按装载自定义起始数值应走初始化效果、而非属性集实例本身"。
+
 ## [0.5.0] - 2026-07-03
 
 ### 新增

@@ -71,9 +71,25 @@ namespace Likeon.GAS.Editor
             int abilities = set.GrantedAbilities != null ? set.GrantedAbilities.Count : 0;
             int effects = set.GrantedEffects != null ? set.GrantedEffects.Count : 0;
             int attrSets = set.GrantedAttributeSets != null ? set.GrantedAttributeSets.Count : 0;
-            EditorGUILayout.HelpBox($"Ability Set — 技能 {abilities} · 效果 {effects} · 属性集 {attrSets}", MessageType.None);
+            EditorGUILayout.HelpBox($"Ability Loadout — 技能 {abilities} · 效果 {effects} · 属性集 {attrSets}", MessageType.None);
 
-            DrawDefaultInspector();
+            serializedObject.Update();
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("GrantedAbilities"), true);
+            EditorGUILayout.Space();
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("GrantedEffects"), true);
+            EditorGUILayout.Space();
+
+            // GrantedAttributeSets 是 [SerializeReference] List<AttributeSet>：用显式的按子类型下拉添加，
+            // 而非 Unity 默认那套（子类字段全 readonly 时看着"点不动无法编辑"）。
+            SerializeReferenceListGUI.Draw(
+                serializedObject,
+                serializedObject.FindProperty("GrantedAttributeSets"),
+                typeof(AttributeSet),
+                "属性集（选具体子类，如 AS_Health）",
+                "+ 添加属性集 (Attribute Set)",
+                "该属性集在此无可配字段——起始数值由类定义决定；要按装载自定义初始值，请用 GrantedEffects 里的初始化效果（Instant/Infinite GE + SetByCaller / 曲线表）。");
+
+            serializedObject.ApplyModifiedProperties();
         }
     }
 }

@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **`AbilityLoadout` inspector — the "Granted Attribute Sets" list is now editable.** This `[SerializeReference] List<AttributeSet>` relied on Unity's default managed-reference UI, which offers no clear way to pick a concrete type (and the attribute-set subclasses expose only `readonly` fields, so a picked element looked empty) — added elements appeared stuck and uneditable. The `AbilityLoadout` editor now draws the list with an explicit **"+ Add Attribute Set"** type dropdown (the same pattern `InputControlSetup` already uses for its processor/checker lists, now extracted into a shared `SerializeReferenceListGUI` helper), plus an inline hint explaining that per-loadout starting values come from init effects rather than the set instance.
+
 ## [0.5.0] - 2026-07-03
 
 ### Added
