@@ -7,6 +7,11 @@
 
 ## [未发布]
 
+### 新增
+
+- **属性集现在可以在编辑器里定义、无需手写 C#（代码生成）。** UE 的 GAS 逼你用 C++ 写属性，Sigil 把这个痛点补上了。新建一个 **`AttributeSetDefinition`** 资产（*Create → Likeon → GAS → Attribute Set Definition*），在面板里声明属性（名字、默认值、可选的下限 / 上限属性钳制、Meta 标记），点 **生成 C#**——`AttributeSetCodeGenerator` 产出一个可编译的 `AttributeSet` 子类（`<类名>.g.cs`：字段、`RegisterAttributes`、强类型 `…Attribute` 句柄、`PreAttributeChange` 里的钳制），外加一个只生成一次、生成器永不覆盖的手写 partial 桩（`<类名>.cs`）。资产是唯一真源，生成是单向的（资产 → C#）；自定义逻辑（用生成的 `OnPreAttributeChange` 钩子加钳制、用 `PostGameplayEffectExecute` 写 Meta 管线）写在手写 partial 里。因为产物是真类型，代码照样能强类型引用属性（`From<AS_X>("Health")`），也能直接丢进 `AbilityLoadout.GrantedAttributeSets`。
+- **GameplayTag 常量生成器。** *Likeon → GAS → Generate Gameplay Tag Constants* 读 `GameplayTagsSettings` 注册表，生成一个嵌套静态类（`Game.GameplayTags.Movement.State.Sprint`，对既是标签又是父级的节点生成 `Self` 字段），让代码用强类型 tag 引用替代弱类型的 `RequestTag("…")`，且从注册表自动同步、不用再手维护。（tag 本来就能在编辑器里创建；这里只补代码端常量。）
+
 ### 修复
 
 - **`AbilityLoadout` 面板——「Granted Attribute Sets（属性集）」列表现在可编辑。** 该字段是 `[SerializeReference] List<AttributeSet>`，此前靠 Unity 默认的 managed-reference UI 绘制：既没有清晰的"选具体类型"入口，加上属性集子类的字段全是 `readonly`（选了类型也看着空），导致加进去的元素点不动、无法编辑。现在 `AbilityLoadout` 的 Inspector 用显式的 **"+ 添加属性集"** 类型下拉绘制该列表（复用 `InputControlSetup` 处理器/检查器列表早就在用的那套，抽成共享的 `SerializeReferenceListGUI`），并加一行提示说明"按装载自定义起始数值应走初始化效果、而非属性集实例本身"。

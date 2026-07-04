@@ -214,6 +214,17 @@ public sealed class AS_Shield : AttributeSet
 }
 ```
 
+### 5.1 在编辑器里定义属性集（不用手写 C#）
+
+UE 的 GAS 逼你用 C++ 写属性；Sigil 让你在编辑器里定义、工具替你生成 C#——策划不用找程序员就能加属性，而代码端拿到的仍是真类型、编译期安全。
+
+1. *Create → Likeon → GAS → **Attribute Set Definition***。在资产上填类名 + 命名空间，列出属性：名字、默认值、可选钳制（下限，和/或"夹到某属性"如 `Health` → `MaxHealth`）、Meta 标记。
+2. 点 **生成 C#**。在资产旁写两个文件：
+   - `<类名>.g.cs` —— 生成的 `AttributeSet` 子类（字段、`RegisterAttributes`、强类型 `…Attribute` 句柄、`PreAttributeChange` 里的钳制）。**别手改它**——改属性去编辑资产后重新生成。
+   - `<类名>.cs` —— 手写 partial，只生成**一次**、之后永不覆盖。自定义逻辑写这里：用生成代码会调用的 `partial void OnPreAttributeChange(…)` 钩子加钳制、override `PostGameplayEffectExecute` 写伤害 Meta 管线。
+
+定义资产是唯一真源，生成是单向的（资产 → C#）。产物是普通类型——代码里 `From<AS_PlayerStats>("Health")` 引用、丢进 `AbilityLoadout.GrantedAttributeSets`，和手写集一模一样。改属性的**数值/钳制范围**随便改；只有**增删属性**才需要重新生成 + 重编译。
+
 ---
 
 ## 6. 效果 Gameplay Effects
@@ -557,8 +568,9 @@ cam.PopCameraMode(aimMode);
 - **GameplayTagContainer 多选**：列出已含标签（可删）+ 下拉去重添加。
 - **标签注册表 `GameplayTagsSettings`** + 顶部菜单窗口 **`Likeon ▸ GAS ▸ Gameplay Tags`**：集中增删标签（下拉候选来源），窗口内也有"扫描工程补标签"按钮。插件编辑器入口统一在 **Likeon** 菜单下，不挂 Project Settings。
 - **标签扫描**：菜单 `Likeon ▸ GAS ▸ Scan Project for Gameplay Tags`，扫工程里 `RequestTag("...")` 字面量一键补进注册表。
-- **增强 Inspector**：GameplayEffect / GameplayAbility / AttackDefinition / AbilityLoadout 带摘要与配置校验提示。
-- **SerializeReference 选择器**：`InputControlSetup` 的检查器/处理器列表按子类型下拉添加。
+- **增强 Inspector**：GameplayEffect / GameplayAbility / AttackDefinition / AbilityLoadout 带摘要与配置校验提示。`AbilityLoadout` 的属性集列表和 `InputControlSetup` 的检查器/处理器列表都按子类型下拉添加 `[SerializeReference]` 项。
+- **属性集代码生成**：`AttributeSetDefinition` 资产 + 其「生成 C#」按钮，不用手写 C# 就能定义属性集——见 [§5.1](#51-在编辑器里定义属性集不用手写-c)。
+- **GameplayTag 常量生成**：菜单 `Likeon ▸ GAS ▸ Generate Gameplay Tag Constants` 把标签注册表变成一个嵌套静态类（`Game.GameplayTags.Movement.State.Sprint`，既是标签又是父级的节点带 `Self`），代码就能强类型引用标签、替代 `RequestTag("…")`——从注册表自动同步，不用手维护常量文件。
 
 ### 13.1 运行时调试器 GAS Debugger
 

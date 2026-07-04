@@ -215,6 +215,17 @@ public sealed class AS_Shield : AttributeSet
 }
 ```
 
+### 5.1 Authoring attribute sets in the editor (no hand-written C#)
+
+Unreal's GAS forces attributes into C++. Sigil lets you define them in the editor and generate the C# for you — so a designer can add attributes without a programmer, while code still gets a real, compile-time-safe type.
+
+1. *Create → Likeon → GAS → **Attribute Set Definition***. On the asset, set the class name + namespace and list your attributes: name, default value, optional clamp (min, and/or "clamp to this attribute" e.g. `Health` → `MaxHealth`), and a Meta flag.
+2. Click **Generate C#**. This writes two files next to the asset:
+   - `<ClassName>.g.cs` — the generated `AttributeSet` subclass (fields, `RegisterAttributes`, typed `…Attribute` handles, clamps in `PreAttributeChange`). **Never edit this** — regenerate from the asset instead.
+   - `<ClassName>.cs` — a hand-written partial, generated **once** and never overwritten. Put custom logic here: extra clamps via the `partial void OnPreAttributeChange(…)` hook the generated code calls, and the damage Meta pipeline by overriding `PostGameplayEffectExecute`.
+
+The definition asset is the single source of truth; generation is one-way (asset → C#). The result is a normal type — reference it from code with `From<AS_PlayerStats>("Health")`, add it to `AbilityLoadout.GrantedAttributeSets`, everything works as with a hand-written set. Change an attribute's **values / clamp range** freely; only **adding or removing** attributes needs a regenerate + recompile.
+
 ---
 
 ## 6. Gameplay Effects
@@ -558,8 +569,9 @@ cam.PopCameraMode(aimMode);
 - **GameplayTagContainer multi-select**: lists the contained tags (removable) + a deduplicating dropdown to add.
 - **Tag registry `GameplayTagsSettings`** + the top-level menu window **`Likeon ▸ GAS ▸ Gameplay Tags`**: add/remove tags centrally (the source of the dropdown candidates); the window also has a "scan the project for tags" button. The plugin's editor entry points are all under the **Likeon** menu, not in Project Settings.
 - **Tag scanning**: menu `Likeon ▸ GAS ▸ Scan Project for Gameplay Tags` scans `RequestTag("...")` literals in the project and adds them to the registry in one click.
-- **Enhanced Inspectors**: GameplayEffect / GameplayAbility / AttackDefinition / AbilityLoadout carry summaries and configuration-validation hints.
-- **SerializeReference picker**: the checker/processor lists of `InputControlSetup` add entries via a subclass dropdown.
+- **Enhanced Inspectors**: GameplayEffect / GameplayAbility / AttackDefinition / AbilityLoadout carry summaries and configuration-validation hints. `AbilityLoadout`'s attribute-set list and `InputControlSetup`'s checker/processor lists both add `[SerializeReference]` entries via a subclass dropdown.
+- **Attribute-set codegen**: `AttributeSetDefinition` asset + its **Generate C#** button author attribute sets without hand-writing C# — see [§5.1](#51-authoring-attribute-sets-in-the-editor-no-hand-written-c).
+- **Gameplay tag constants**: menu `Likeon ▸ GAS ▸ Generate Gameplay Tag Constants` turns the tag registry into a nested static class (`Game.GameplayTags.Movement.State.Sprint`, with `Self` for tags that are also parents), so code references tags type-safely instead of via `RequestTag("…")` — auto-synced from the registry rather than a hand-maintained constants file.
 
 ### 13.1 Runtime debugger — GAS Debugger
 
