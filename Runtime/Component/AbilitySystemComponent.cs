@@ -122,6 +122,32 @@ namespace Likeon.GAS
         public float GetAttributeValue(GameplayAttribute attribute) => attribute.GetCurrentValue(this);
         public float GetAttributeBaseValue(GameplayAttribute attribute) => attribute.GetBaseValue(this);
 
+        /// <summary>
+        /// 按属性名在所持有的所有属性集里查该属性数据（找不到返回 null）。
+        /// 让框架系统（削韧/死亡过滤/伤害执行等）无需引用具体属性集类型即可读属性——
+        /// 属性只由属性名标识，配哪个集都能用（含编辑器生成的属性集）。
+        /// </summary>
+        public GameplayAttributeData GetAttributeDataByName(string attributeName)
+        {
+            if (string.IsNullOrEmpty(attributeName)) return null;
+            foreach (var set in _attributeSets)
+            {
+                var d = set.GetAttributeData(attributeName);
+                if (d != null) return d;
+            }
+            return null;
+        }
+
+        /// <summary>按属性名解析出一个 <see cref="GameplayAttribute"/> 句柄（找不到返回默认无效句柄）。</summary>
+        public GameplayAttribute FindAttributeByName(string attributeName)
+        {
+            if (string.IsNullOrEmpty(attributeName)) return default;
+            foreach (var set in _attributeSets)
+                if (set.GetAttributeData(attributeName) != null)
+                    return set.GetAttribute(attributeName);
+            return default;
+        }
+
         // ===================== 技能授予与激活 Abilities =====================
         private readonly Dictionary<int, GameplayAbilitySpec> _abilities = new Dictionary<int, GameplayAbilitySpec>();
         private int _nextAbilityId = 1;

@@ -38,13 +38,15 @@ namespace Likeon.GAS
         public GameplayTag DeadTag;
         [Tooltip("死亡时广播的事件标签（可空，用于触发死亡技能/表现）")]
         public GameplayTag DeathEventTag;
+        [Tooltip("判定死亡读的生命属性名（跨属性集按名解析，默认 Health）")]
+        public string HealthAttributeName = "Health";
 
         public override void Process(AttackResult result, in AttackFlowContext ctx)
         {
             var asc = ctx.OwnerASC;
             if (asc == null) return;
-            var hp = asc.GetAttributeSet<AS_Health>();
-            if (hp == null || hp.Health.CurrentValue > 0f) return;
+            var hp = asc.GetAttributeDataByName(string.IsNullOrEmpty(HealthAttributeName) ? "Health" : HealthAttributeName);
+            if (hp == null || hp.CurrentValue > 0f) return;
 
             var deadTag = DeadTag.IsValid ? DeadTag : GameplayTag.RequestTag("State.Dead");
             if (!asc.HasMatchingGameplayTag(deadTag)) asc.AddLooseGameplayTag(deadTag);

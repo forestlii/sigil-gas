@@ -1,9 +1,9 @@
 // Copyright (c) 2026 Likeon. Licensed under the MIT License.
-// 削韧机制组件（破防 → 硬直 → 恢复）。
-// 本组件把这套常见机制收进框架，作为 AS_Poise 的标准消费者（标注为源码外补充）：
-//   - 监听 Poise 归零 → 破防：挂硬直标签(+可选硬直效果)，触发 OnPoiseBroken；
-//   - 硬直持续 staggerDuration 后 → 复位：解硬直标签、Poise 回满，触发 OnPoiseRecovered；
-//   - 未硬直时，按 AS_Poise.PoiseRecover 的速率（每秒）恢复 Poise（受削后等 recoverDelay 再恢复）。
+// 削韧机制组件（破防 → 硬直 → 恢复）。框架侧标准的削韧消费者，不绑定任何具体属性集：
+//   - 监听削韧属性归零 → 破防：挂硬直标签(+可选硬直效果)，触发 OnPoiseBroken；
+//   - 硬直持续 staggerDuration 后 → 复位：解硬直标签、削韧回满，触发 OnPoiseRecovered；
+//   - 未硬直时，按恢复速率属性（每秒）恢复削韧（受削后等 recoverDelay 再恢复）。
+// 属性按名解析（默认 Poise / MaxPoise / PoiseRecover）：配任何含这些属性名的属性集即可（含编辑器生成的）。
 
 using System;
 using UnityEngine;
@@ -16,21 +16,26 @@ namespace Likeon.GAS
     {
         [SerializeField] private AbilitySystemComponent abilitySystem;
 
+        [Header("削韧属性名（跨属性集按名解析）")]
+        [SerializeField] private string poiseName = "Poise";
+        [SerializeField] private string maxPoiseName = "MaxPoise";
+        [SerializeField] private string poiseRecoverName = "PoiseRecover";
+
         [Header("破防 / 硬直")]
         [Tooltip("破防时挂在身上的硬直状态标签（留空默认 State.Staggered）")]
         [SerializeField] private GameplayTag staggeredTag;
         [Tooltip("破防时施加的效果（可选，如硬直期间减速/禁手）")]
         [SerializeField] private GameplayEffect staggerEffect;
-        [Tooltip("硬直持续秒数，之后解除并把 Poise 回满")]
+        [Tooltip("硬直持续秒数，之后解除并把削韧回满")]
         [SerializeField] private float staggerDuration = 1f;
 
         [Header("恢复")]
-        [Tooltip("受削后多久开始恢复 Poise（秒）")]
+        [Tooltip("受削后多久开始恢复削韧（秒）")]
         [SerializeField] private float recoverDelay = 0.5f;
 
-        /// <summary>破防（Poise 归零）时触发。</summary>
+        /// <summary>破防（削韧归零）时触发。</summary>
         public event Action OnPoiseBroken;
-        /// <summary>硬直结束、Poise 复位时触发。</summary>
+        /// <summary>硬直结束、削韧复位时触发。</summary>
         public event Action OnPoiseRecovered;
 
         /// <summary>当前是否处于硬直。</summary>
@@ -43,7 +48,8 @@ namespace Likeon.GAS
         /// <summary>硬直状态标签。</summary>
         public GameplayTag StaggeredTag => staggeredTag;
 
-        private AS_Poise _poise;
+        private GameplayAttribute _poiseAttr;
+        private bool _poiseResolved;
         private float _staggerTimer;
         private float _recoverDelayTimer;
         private ActiveGameplayEffectHandle _staggerEffectHandle = ActiveGameplayEffectHandle.Invalid;
@@ -64,13 +70,21 @@ namespace Likeon.GAS
             if (abilitySystem != null) abilitySystem.OnAttributeChanged -= HandleAttributeChanged;
         }
 
-        private AS_Poise ResolvePoise()
-            => _poise ??= abilitySystem != null ? abilitySystem.GetAttributeSet<AS_Poise>() : null;
+        // 削韧属性句柄按名解析（属性集在 Awake 授予，故惰性解析并缓存）。
+        private GameplayAttribute PoiseAttr()
+        {
+            if (!_poiseResolved && abilitySystem != null)
+            {
+                _poiseAttr = abilitySystem.FindAttributeByName(poiseName);
+                _poiseResolved = _poiseAttr.IsValid;
+            }
+            return _poiseAttr;
+        }
 
         private void HandleAttributeChanged(AttributeChangeData data)
         {
-            var poise = ResolvePoise();
-            if (poise == null || data.Attribute != poise.PoiseAttribute) return;
+            var poiseAttr = PoiseAttr();
+            if (!poiseAttr.IsValid || data.Attribute != poiseAttr) return;
 
             // 受削 → 重置恢复延迟
             if (data.NewValue < data.OldValue) _recoverDelayTimer = recoverDelay;
@@ -80,8 +94,7 @@ namespace Likeon.GAS
 
         private void Update()
         {
-            var poise = ResolvePoise();
-            if (poise == null) return;
+            if (abilitySystem == null) return;
 
             if (IsStaggered)
             {
@@ -90,16 +103,20 @@ namespace Likeon.GAS
                 return;
             }
 
-            // 未硬直：延迟后按 PoiseRecover 速率恢复
+            var poiseData = abilitySystem.GetAttributeDataByName(poiseName);
+            if (poiseData == null) return; // 没有削韧属性 → 组件不生效
+
+            // 未硬直：延迟后按恢复速率恢复
             if (_recoverDelayTimer > 0f) { _recoverDelayTimer -= Time.deltaTime; return; }
 
-            float cur = poise.Poise.CurrentValue;
-            float max = poise.MaxPoise.CurrentValue;
+            float cur = poiseData.CurrentValue;
+            float max = abilitySystem.GetAttributeDataByName(maxPoiseName)?.CurrentValue ?? cur;
             if (cur < max)
             {
-                float regen = poise.PoiseRecover.CurrentValue * Time.deltaTime;
+                float rate = abilitySystem.GetAttributeDataByName(poiseRecoverName)?.CurrentValue ?? 0f;
+                float regen = rate * Time.deltaTime;
                 if (regen > 0f)
-                    abilitySystem.ApplyModToAttributeBase(poise.PoiseAttribute, EAttributeModifierOp.Add, regen);
+                    abilitySystem.ApplyModToAttributeBase(PoiseAttr(), EAttributeModifierOp.Add, regen);
             }
         }
 
@@ -114,7 +131,7 @@ namespace Likeon.GAS
             OnPoiseBroken?.Invoke();
         }
 
-        /// <summary>硬直结束：解标签/效果，Poise 回满，触发事件。</summary>
+        /// <summary>硬直结束：解标签/效果，削韧回满，触发事件。</summary>
         private void Recover()
         {
             IsStaggered = false;
@@ -124,9 +141,10 @@ namespace Likeon.GAS
                 abilitySystem.RemoveActiveGameplayEffect(_staggerEffectHandle);
                 _staggerEffectHandle = ActiveGameplayEffectHandle.Invalid;
             }
-            var poise = ResolvePoise();
-            if (poise != null)
-                abilitySystem.ApplyModToAttributeBase(poise.PoiseAttribute, EAttributeModifierOp.Override, poise.MaxPoise.CurrentValue);
+            var poiseAttr = PoiseAttr();
+            float max = abilitySystem.GetAttributeDataByName(maxPoiseName)?.CurrentValue ?? 0f;
+            if (poiseAttr.IsValid && max > 0f)
+                abilitySystem.ApplyModToAttributeBase(poiseAttr, EAttributeModifierOp.Override, max);
             OnPoiseRecovered?.Invoke();
         }
     }

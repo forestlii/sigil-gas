@@ -25,8 +25,10 @@ namespace Likeon.GAS
         [SerializeField] private float maxViewAngle = 60f;
         [Tooltip("只锁定敌对阵营（用 CombatTeamAgent）")]
         [SerializeField] private bool onlyHostile = true;
-        [Tooltip("过滤掉已死亡目标（AS_Health.Health<=0）")]
+        [Tooltip("过滤掉已死亡目标（生命属性<=0）")]
         [SerializeField] private bool filterDead = true;
+        [Tooltip("判定死亡读的生命属性名（跨属性集按名解析）")]
+        [SerializeField] private string healthAttributeName = "Health";
         [Tooltip("需要视线无遮挡")]
         [SerializeField] private bool requireLineOfSight = false;
         [Tooltip("视线遮挡层")]
@@ -224,11 +226,11 @@ namespace Likeon.GAS
             return Vector3.Angle(fwd, dir);
         }
 
-        private static bool IsDead(AbilitySystemComponent asc)
+        private bool IsDead(AbilitySystemComponent asc)
         {
             if (asc == null) return false;
-            var hp = asc.GetAttributeSet<AS_Health>();
-            return hp != null && hp.Health.CurrentValue <= 0f;
+            var hp = asc.GetAttributeDataByName(healthAttributeName);
+            return hp != null && hp.CurrentValue <= 0f;
         }
 
         private static Vector3 Flatten(Vector3 v) { v.y = 0f; return v; }
