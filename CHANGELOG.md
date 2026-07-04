@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-07-05
+
 ### Added
 
 - **Attribute sets can now be authored in the editor — no hand-written C# required (codegen).** Unreal's GAS forces attributes to be written in C++; Sigil closes that gap. Create an **`AttributeSetDefinition`** asset (*Create → Likeon → GAS → Attribute Set Definition*), declare attributes (name, default value, optional min / max-attribute clamp, meta flag) in the inspector, and click **Generate C#** — `AttributeSetCodeGenerator` emits a compiling `AttributeSet` subclass (`<Name>.g.cs`: fields, `RegisterAttributes`, typed `…Attribute` handles, clamps in `PreAttributeChange`) plus a one-time hand-written partial stub (`<Name>.cs`) that the generator never overwrites. The asset is the single source of truth; generation is one-way (asset → C#), and custom logic (extra clamps via the generated `OnPreAttributeChange` hook, meta pipelines via `PostGameplayEffectExecute`) lives in the hand-written partial. Because the output is a real type, code still references attributes with full compile-time safety (`From<AS_X>("Health")`) and it drops straight into `AbilityLoadout.GrantedAttributeSets`.

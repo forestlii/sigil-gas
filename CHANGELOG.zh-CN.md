@@ -7,6 +7,8 @@
 
 ## [未发布]
 
+## [0.6.0] - 2026-07-05
+
 ### 新增
 
 - **属性集现在可以在编辑器里定义、无需手写 C#（代码生成）。** UE 的 GAS 逼你用 C++ 写属性，Sigil 把这个痛点补上了。新建一个 **`AttributeSetDefinition`** 资产（*Create → Likeon → GAS → Attribute Set Definition*），在面板里声明属性（名字、默认值、可选的下限 / 上限属性钳制、Meta 标记），点 **生成 C#**——`AttributeSetCodeGenerator` 产出一个可编译的 `AttributeSet` 子类（`<类名>.g.cs`：字段、`RegisterAttributes`、强类型 `…Attribute` 句柄、`PreAttributeChange` 里的钳制），外加一个只生成一次、生成器永不覆盖的手写 partial 桩（`<类名>.cs`）。资产是唯一真源，生成是单向的（资产 → C#）；自定义逻辑（用生成的 `OnPreAttributeChange` 钩子加钳制、用 `PostGameplayEffectExecute` 写 Meta 管线）写在手写 partial 里。因为产物是真类型，代码照样能强类型引用属性（`From<AS_X>("Health")`），也能直接丢进 `AbilityLoadout.GrantedAttributeSets`。
