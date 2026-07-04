@@ -1,4 +1,4 @@
-// PlayMode 冒烟测试：GASDemo 运行时构建整个功能展示场，验证各条战斗线在 demo 里被正确接通：
+// PlayMode 冒烟测试：PlayableDemo 运行时构建整个功能展示场，验证各条战斗线在 demo 里被正确接通：
 //  A) 建场景 → 近战 → 敌人扣血；
 //  B) 锁定系统锁到敌人；
 //  C) 远程子弹命中锁定目标扣血；
@@ -9,6 +9,7 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 using Likeon.GAS;
+using Likeon.GAS.Sample.PlayableDemo;
 
 namespace Likeon.GAS.PlayTests
 {
@@ -19,10 +20,10 @@ namespace Likeon.GAS.PlayTests
         private static readonly GameplayTag FocusingTag = GameplayTag.RequestTag("State.Focusing");
         private static readonly GameplayTag HonkTag = GameplayTag.RequestTag("Event.Honk");
 
-        private GASDemo.GASDemo BuildDemo(out GameObject host)
+        private PlayableDemo BuildDemo(out GameObject host)
         {
             host = new GameObject("DemoHost");
-            return host.AddComponent<GASDemo.GASDemo>(); // Awake 构建整个 demo
+            return host.AddComponent<PlayableDemo>(); // Awake 构建整个 demo
         }
 
         // ============ A) 建场景 + 近战扣血 ============
@@ -253,7 +254,7 @@ namespace Likeon.GAS.PlayTests
         [Test]
         public void J_DemoConfig_CreateDefault_IsComplete()
         {
-            var cfg = GASDemo.DemoConfig.CreateDefault();
+            var cfg = DemoConfig.CreateDefault();
             Assert.IsNotNull(cfg.CombatInput, "CombatInput");
             Assert.IsNotNull(cfg.VehicleInput, "VehicleInput");
             Assert.IsNotNull(cfg.InteractionRules, "InteractionRules");
@@ -280,8 +281,8 @@ namespace Likeon.GAS.PlayTests
         {
             var host = new GameObject("DemoHost");
             host.SetActive(false);                                 // 先停用，赶在 Awake 前赋 Config
-            var demo = host.AddComponent<GASDemo.GASDemo>();
-            demo.Config = GASDemo.DemoConfig.CreateDefault();      // 指定配置 → 走"用资产"路径（非回退）
+            var demo = host.AddComponent<PlayableDemo>();
+            demo.Config = DemoConfig.CreateDefault();      // 指定配置 → 走"用资产"路径（非回退）
             host.SetActive(true);                                  // 此时 Awake 用 assigned config 构建
             yield return null;
             yield return new WaitForFixedUpdate();
@@ -311,7 +312,7 @@ namespace Likeon.GAS.PlayTests
         [UnityTest]
         public IEnumerator L_Loadouts_GrantCorrectAttributeSetsAndAbilities()
         {
-            var cfg = GASDemo.DemoConfig.CreateDefault();
+            var cfg = DemoConfig.CreateDefault();
 
             // 玩家装载：AS_Health + AS_Stamina + 4 技能（近战/重击/远程/专注）
             var playerGo = new GameObject("LoadoutPlayer");
@@ -355,8 +356,8 @@ namespace Likeon.GAS.PlayTests
             Assert.IsNotNull(asc.GetAttributeSet<AS_Health>(), "initialLoadouts 应在 Awake 授予 AS_Health");
             Assert.IsNotNull(asc.GetAttributeSet<AS_Stamina>(), "initialLoadouts 应在 Awake 授予 AS_Stamina");
             Assert.AreEqual(4, asc.GetGrantedAbilities().Count, "initialLoadouts 应授予 4 个技能");
-            Assert.IsNotNull(player.GetComponent<GASDemo.DemoPlayerController>(), "prefab 应含控制器");
-            Assert.IsNotNull(player.GetComponent<GASDemo.DemoRanged>(), "prefab 应含远程组件");
+            Assert.IsNotNull(player.GetComponent<DemoPlayerController>(), "prefab 应含控制器");
+            Assert.IsNotNull(player.GetComponent<DemoRanged>(), "prefab 应含远程组件");
             Assert.IsNotNull(player.GetComponent<MeleeAttackTrace>(), "prefab 应含近战判定");
             var inputSys = player.GetComponent<InputSystemComponent>();
             Assert.IsNotNull(inputSys, "prefab 应含输入分发组件");
@@ -386,8 +387,8 @@ namespace Likeon.GAS.PlayTests
             yield return null;
         }
 
-        // ============ O) adopt 模式：场景已摆 prefab 实例 → GASDemo 薄编排接管（不重复构建）+ 近战仍生效 ============
-        // 验证 #7 阶段②c：BuildScene 摆好的 prefab 实例 + GASDemo.ScenePlayer/SceneEnemies → Awake 走 adopt 路径
+        // ============ O) adopt 模式：场景已摆 prefab 实例 → PlayableDemo 薄编排接管（不重复构建）+ 近战仍生效 ============
+        // 验证 #7 阶段②c：BuildScene 摆好的 prefab 实例 + PlayableDemo.ScenePlayer/SceneEnemies → Awake 走 adopt 路径
         // （只接相机/动态订阅，结构/技能来自 prefab），demo 各战斗线照常。
         [UnityTest]
         public IEnumerator O_AdoptMode_WiresScenePrefabs_AndMeleeWorks()
@@ -399,11 +400,11 @@ namespace Likeon.GAS.PlayTests
 
             var host = new GameObject("DemoHost");
             host.SetActive(false); // 先停用，赶在 Awake 前接好场景实例引用
-            var demo = host.AddComponent<GASDemo.GASDemo>();
+            var demo = host.AddComponent<PlayableDemo>();
 
             var player = Object.Instantiate(playerPrefab);
             player.transform.position = new Vector3(0, 1, 0);
-            demo.ScenePlayer = player.GetComponent<GASDemo.DemoPlayerController>();
+            demo.ScenePlayer = player.GetComponent<DemoPlayerController>();
 
             var enemy = Object.Instantiate(enemyPrefab);
             enemy.transform.position = new Vector3(0, 1, 1.2f); // 武器判定点附近

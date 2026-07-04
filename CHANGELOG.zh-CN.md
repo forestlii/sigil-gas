@@ -15,6 +15,12 @@
 
 - **菜单路径品牌 `Likeon` → `Sigil` 并分类。** 资产创建菜单现归到 **Sigil/GAS**、**Sigil/Combat**（Attack Definition / Bullet Definition / Combat Settings / Damage Execution / Ability Action Library）、**Sigil/Movement**（movement 包）；编辑器工具菜单（GAS Debugger、Gameplay Tags、tag 常量生成器、文档）归到 **Sigil/GAS**。纯外观改动——不影响已有资产。
 
+- **可玩 Demo 示例统一到 `Likeon.GAS.Sample.PlayableDemo` 命名约定** —— 命名空间、`PlayableDemo` 组件类、`PlayableDemo.unity` 场景、asmdef 文件名，与 Combat/Movement 示例对齐。旧的 `GASDemo` 命名空间/类/场景已不复存在。仅示例内部，核心 API 无变化。
+
+### 移除
+
+- **破坏性变更：内置属性集（`AS_Health`、`AS_Combat`、`AS_Mana`、`AS_Poise`、`AS_Stamina`）已从核心包移除。** 具体属性集是游戏*内容*、不是框架机制——核心包现在只提供属性*系统*（`AttributeSet` 基类、`GameplayAttribute`、codegen 工具），不再预设一套 Health/Mana 等固定属性。用 `AttributeSetDefinition` codegen 定义你自己的属性集（见 0.6.0）。框架系统（削韧、死亡过滤、伤害执行）已改为**按名解析**属性，因此对任何生成的属性集都适用。**迁移**：在你自己的命名空间里生成属性集，然后更新 `AbilityLoadout.GrantedAttributeSets` 及每一处 `GameplayEffect` 的属性引用——`[SerializeReference]` 的 `{class, ns, asm}` 和 `attributeSetType` 全名两类都要改。随包 Samples 现在自带各自生成的属性集（`Samples~/*/GenAttributes`）。
+
 ## [0.6.0] - 2026-07-05
 
 ### 新增

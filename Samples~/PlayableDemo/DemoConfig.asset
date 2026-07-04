@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7ea60cad4e5a26b5bf3351e87b922454, type: 3}
   m_Name: GA_Heavy
-  m_EditorClassIdentifier: Likeon.GAS.Sample.PlayableDemo::GASDemo.DemoMeleeAbility
+  m_EditorClassIdentifier: Likeon.GAS.Sample.PlayableDemo::Likeon.GAS.Sample.PlayableDemo.DemoMeleeAbility
   AbilityTags:
   - tagName: Ability.HeavyAttack
   ActivationPolicy: 0
@@ -75,7 +75,7 @@ MonoBehaviour:
   StackExpirationPolicy: 0
   Modifiers:
   - Attribute:
-      attributeSetType: Likeon.GAS.AS_Stamina
+      attributeSetType: Likeon.GAS.Sample.PlayableDemo.AS_Stamina
       attributeName: Stamina
     Operation: 0
     Magnitude:
@@ -133,7 +133,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 209e4901f6de8274db8334eed5ee6fed, type: 3}
   m_Name: DemoConfig
-  m_EditorClassIdentifier: Likeon.GAS.Sample.PlayableDemo::GASDemo.DemoConfig
+  m_EditorClassIdentifier: Likeon.GAS.Sample.PlayableDemo::Likeon.GAS.Sample.PlayableDemo.DemoConfig
   CombatInput: {fileID: 430763744720719801}
   VehicleInput: {fileID: -4058035968058550574}
   InteractionRules: {fileID: 1277224329872931178}
@@ -156,7 +156,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9383de96447cfb04e87d2d4cc2890b6a, type: 3}
   m_Name: GA_Ranged
-  m_EditorClassIdentifier: Likeon.GAS.Sample.PlayableDemo::GASDemo.DemoRangedAbility
+  m_EditorClassIdentifier: Likeon.GAS.Sample.PlayableDemo::Likeon.GAS.Sample.PlayableDemo.DemoRangedAbility
   AbilityTags:
   - tagName: Ability.RangedAttack
   ActivationPolicy: 0
@@ -332,7 +332,7 @@ MonoBehaviour:
   StackExpirationPolicy: 0
   Modifiers:
   - Attribute:
-      attributeSetType: Likeon.GAS.AS_Stamina
+      attributeSetType: Likeon.GAS.Sample.PlayableDemo.AS_Stamina
       attributeName: Stamina
     Operation: 0
     Magnitude:
@@ -428,7 +428,7 @@ MonoBehaviour:
   StackExpirationPolicy: 0
   Modifiers:
   - Attribute:
-      attributeSetType: Likeon.GAS.AS_Health
+      attributeSetType: Likeon.GAS.Sample.PlayableDemo.AS_Health
       attributeName: IncomingDamage
     Operation: 0
     Magnitude:
@@ -438,7 +438,7 @@ MonoBehaviour:
       setByCallerTag:
         tagName: Data.Damage
   - Attribute:
-      attributeSetType: Likeon.GAS.AS_Poise
+      attributeSetType: Likeon.GAS.Sample.PlayableDemo.AS_Poise
       attributeName: IncomingPoiseDamage
     Operation: 0
     Magnitude:
@@ -478,7 +478,7 @@ MonoBehaviour:
   StackExpirationPolicy: 0
   Modifiers:
   - Attribute:
-      attributeSetType: Likeon.GAS.AS_Health
+      attributeSetType: Likeon.GAS.Sample.PlayableDemo.AS_Health
       attributeName: MaxHealth
     Operation: 0
     Magnitude:
@@ -506,7 +506,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5fdd14d2a1f94a268e95dd01caef1880, type: 3}
   m_Name: GA_Focus
-  m_EditorClassIdentifier: Likeon.GAS.Sample.PlayableDemo::GASDemo.DemoFocusAbility
+  m_EditorClassIdentifier: Likeon.GAS.Sample.PlayableDemo::Likeon.GAS.Sample.PlayableDemo.DemoFocusAbility
   AbilityTags:
   - tagName: Ability.Focus
   ActivationPolicy: 0
@@ -543,7 +543,7 @@ MonoBehaviour:
   StackExpirationPolicy: 0
   Modifiers:
   - Attribute:
-      attributeSetType: Likeon.GAS.AS_Stamina
+      attributeSetType: Likeon.GAS.Sample.PlayableDemo.AS_Stamina
       attributeName: Stamina
     Operation: 0
     Magnitude:
@@ -571,7 +571,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7ea60cad4e5a26b5bf3351e87b922454, type: 3}
   m_Name: GA_Melee
-  m_EditorClassIdentifier: Likeon.GAS.Sample.PlayableDemo::GASDemo.DemoMeleeAbility
+  m_EditorClassIdentifier: Likeon.GAS.Sample.PlayableDemo::Likeon.GAS.Sample.PlayableDemo.DemoMeleeAbility
   AbilityTags:
   - tagName: Ability.MeleeAttack
   ActivationPolicy: 0

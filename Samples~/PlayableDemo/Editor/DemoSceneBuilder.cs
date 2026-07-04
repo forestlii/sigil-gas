@@ -1,14 +1,14 @@
 // 编辑器脚本：程序化生成 demo 场景（让 Unity 自己产出正确的 .unity YAML/GUID）。
-// 批处理调用：Unity.exe -batchmode -projectPath ... -executeMethod GASDemo.Editor.DemoSceneBuilder.Build -quit
+// 批处理调用：Unity.exe -batchmode -projectPath ... -executeMethod Likeon.GAS.Sample.PlayableDemo.Editor.DemoSceneBuilder.Build -quit
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
-namespace GASDemo.Editor
+namespace Likeon.GAS.Sample.PlayableDemo.Editor
 {
     public static class DemoSceneBuilder
     {
-        private const string ScenePath = "Assets/Demo/GASDemo.unity";
+        private const string ScenePath = "Assets/Demo/PlayableDemo.unity";
 
         [MenuItem("Sigil/GAS/Build Demo Scene")]
         public static void Build()
@@ -17,11 +17,11 @@ namespace GASDemo.Editor
             var scene = EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);
 
             // 挂上 demo 引导组件，Play 时自动构建整个可玩场景
-            var host = new GameObject("GASDemo");
-            host.AddComponent<GASDemo>();
+            var host = new GameObject("PlayableDemo");
+            host.AddComponent<PlayableDemo>();
 
             bool ok = EditorSceneManager.SaveScene(scene, ScenePath);
-            Debug.Log(ok ? $"[GASDemo] 场景已生成: {ScenePath}" : "[GASDemo] 场景保存失败");
+            Debug.Log(ok ? $"[PlayableDemo] 场景已生成: {ScenePath}" : "[PlayableDemo] 场景保存失败");
         }
     }
 }

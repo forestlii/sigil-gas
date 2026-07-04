@@ -94,7 +94,7 @@ namespace Likeon.GAS.Tests
             var types = new[]
             {
                 typeof(AttributeSet), typeof(AS_Health), typeof(AS_Stamina),
-                typeof(AS_Poise), typeof(AS_Mana), typeof(AS_Combat)
+                typeof(AS_Poise)
             };
             foreach (var t in types)
                 Assert.IsTrue(System.Attribute.IsDefined(t, typeof(System.SerializableAttribute)),

@@ -16,6 +16,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 - **Menu paths rebranded `Likeon` → `Sigil` and categorized.** Asset-create menus now live under **Sigil/GAS**, **Sigil/Combat** (Attack Definition, Bullet Definition, Combat Settings, Damage Execution, Ability Action Library), and **Sigil/Movement** (in the movement package); editor tool menus (GAS Debugger, Gameplay Tags, tag-constants generator, docs) are under **Sigil/GAS**. Purely cosmetic — existing assets are unaffected.
 
+- **Playable Demo sample unified to the `Likeon.GAS.Sample.PlayableDemo` naming convention** — namespace, the `PlayableDemo` component class, the `PlayableDemo.unity` scene, and the asmdef file names, matching the Combat/Movement demos. The old `GASDemo` namespace/class/scene names are gone. Sample-internal; no core API change.
+
+### Removed
+
+- **BREAKING: the built-in attribute sets (`AS_Health`, `AS_Combat`, `AS_Mana`, `AS_Poise`, `AS_Stamina`) were removed from the core package.** Concrete attribute sets are game *content*, not framework mechanism — the core package now ships only the attribute *system* (`AttributeSet` base class, `GameplayAttribute`, and the codegen tooling), not a fixed Health/Mana/etc. set. Define your own with the `AttributeSetDefinition` codegen (see 0.6.0). Framework systems (poise, death filtering, damage execution) already resolve attributes **by name**, so they work with any generated set. **Migration**: generate your attribute sets in your own namespace, then update `AbilityLoadout.GrantedAttributeSets` and every `GameplayEffect` attribute reference — both the `[SerializeReference]` `{class, ns, asm}` and the `attributeSetType` full name. The bundled samples now ship their own generated sets under `Samples~/*/GenAttributes`.
+
 ## [0.6.0] - 2026-07-05
 
 ### Added

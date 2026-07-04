@@ -21,8 +21,8 @@ MonoBehaviour:
     version: 2
     RefIds:
     - rid: 7408843200845053954
-      type: {class: AS_Health, ns: Likeon.GAS, asm: Likeon.GAS.Runtime}
+      type: {class: AS_Health, ns: Likeon.GAS.Sample.PlayableDemo, asm: Likeon.GAS.Sample.PlayableDemo}
       data: 
     - rid: 7408843200845053955
-      type: {class: AS_Poise, ns: Likeon.GAS, asm: Likeon.GAS.Runtime}
+      type: {class: AS_Poise, ns: Likeon.GAS.Sample.PlayableDemo, asm: Likeon.GAS.Sample.PlayableDemo}
       data: 

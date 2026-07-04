@@ -9,7 +9,7 @@ using Likeon.GAS;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace GASDemo
+namespace Likeon.GAS.Sample.PlayableDemo
 {
     public class DemoPlayerController : MonoBehaviour
     {
@@ -23,10 +23,10 @@ namespace GASDemo
         public InputControlSetup VehicleSetup;   // V 键压入的载具控制集
         public WeaponComponent Sword;
         public WeaponComponent Axe;
-        // 跨边界：运行时相机模式（纯 C# 对象、不可序列化进 prefab），由 GASDemo 运行时接
+        // 跨边界：运行时相机模式（纯 C# 对象、不可序列化进 prefab），由 PlayableDemo 运行时接
         [HideInInspector] public ThirdPersonCameraBehavior ThirdPersonCamera;
 
-        // 这些 InputTag 与控制集处理器里配的一致（GASDemo 注入）
+        // 这些 InputTag 与控制集处理器里配的一致（PlayableDemo 注入）
         public GameplayTag MeleeInputTag = GameplayTag.RequestTag("InputTag.Melee");
         public GameplayTag RangedInputTag = GameplayTag.RequestTag("InputTag.Ranged");
         public GameplayTag FocusInputTag = GameplayTag.RequestTag("InputTag.Focus");

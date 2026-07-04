@@ -81,9 +81,9 @@ Sigil **只做逻辑、不绑 UI**：它对外广播变更事件，让*任意* U
 - GameplayTag 选择器（层级下拉 + 搜索 + 新增）、标签注册表与 `Sigil ▸ GAS ▸ Gameplay Tags` 窗口、`[SerializeReference]` 子类选择器、资产 Inspector、工程标签扫描器——统一收在顶部 **Likeon** 菜单下。
 
 ### 可玩 Demo
-在 **Package Manager → Sigil → Samples → *Playable Demo*** 导入，打开 `GASDemo.unity` 按 Play。
+在 **Package Manager → Sigil → Samples → *Playable Demo*** 导入，打开 `PlayableDemo.unity` 按 Play。
 一个**功能展示场**，以 **玩家/敌人 prefab + 接好线的场景** 交付（`Resources/` 下的 `DemoPlayer` / `DemoEnemy`，
-属性集与技能由数据驱动的 `AbilityLoadout` 资产经 `initialLoadouts` 提供）；`GASDemo` 退化为薄编排（相机 / HUD /
+属性集与技能由数据驱动的 `AbilityLoadout` 资产经 `initialLoadouts` 提供）；`PlayableDemo` 退化为薄编排（相机 / HUD /
 动态反馈），挂到空物体上时回退为运行时现场构建。可用 *Sigil ▸ GAS ▸ Demo ▸ Build All* 重新烘。场景把多条战斗线放进同一场景（程序员美术胶囊体）：
 **近战 → 扣血 → cue、远程子弹、3 敌人间锁定切换、削韧破防、buff 叠层**，并带一个全靠订阅框架可观测性事件
 渲染的自解释 HUD。操作：WASD 移动 · Shift 冲刺 · 鼠标看 · 空格/左键 近战 · 右键/F 远程 ·

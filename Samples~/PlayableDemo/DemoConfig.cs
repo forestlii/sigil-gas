@@ -3,15 +3,15 @@
 // (block/cancel)、技能 / 攻击 / 子弹 / 效果，全是资产引用，改它们不用碰代码。
 //
 // 两条路：
-//  · 真实工作流（推荐）：demo 场景里把一个 DemoConfig.asset 拖到 GASDemo.Config 上；策划改这些 .asset 即可。
+//  · 真实工作流（推荐）：demo 场景里把一个 DemoConfig.asset 拖到 PlayableDemo.Config 上；策划改这些 .asset 即可。
 //    用菜单 *Sigil ▸ GAS ▸ Generate Demo Config Assets* 一键烘出一整套默认资产并接进场景。
-//  · 零设置回退：GASDemo.Config 留空时（裸 AddComponent / headless 测试），用下方 CreateDefault() 在内存里
+//  · 零设置回退：PlayableDemo.Config 留空时（裸 AddComponent / headless 测试），用下方 CreateDefault() 在内存里
 //    建同一套默认值——保证 demo 仍能"挂上就跑"、冒烟测试仍能 headless 验证。
 using System.Collections.Generic;
 using Likeon.GAS;
 using UnityEngine;
 
-namespace GASDemo
+namespace Likeon.GAS.Sample.PlayableDemo
 {
     [CreateAssetMenu(fileName = "DemoConfig", menuName = "Sigil/GAS/Demo/Demo Config")]
     public class DemoConfig : ScriptableObject
@@ -56,7 +56,7 @@ namespace GASDemo
 
         /// <summary>
         /// 在内存里建一套默认配置（含全部子资产并接好交叉引用）。
-        /// 给 GASDemo 的"未拖资产"回退用；Editor 生成器也用它来烘 .asset（确保默认值单一来源）。
+        /// 给 PlayableDemo 的"未拖资产"回退用；Editor 生成器也用它来烘 .asset（确保默认值单一来源）。
         /// 返回的 DemoConfig 与其全部子资产都是 CreateInstance 的纯实例（未落盘）。
         /// </summary>
         public static DemoConfig CreateDefault()

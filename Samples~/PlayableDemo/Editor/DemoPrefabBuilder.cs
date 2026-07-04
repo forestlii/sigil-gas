@@ -4,7 +4,7 @@
 //   ② prefab（玩家/敌人，组件齐 + prefab 内部引用接好 + ASC.initialLoadouts）→ 后续
 //   ② 场景（地面/相机/prefab 实例/HUD）→ 后续
 // 菜单：Sigil ▸ GAS ▸ Demo ▸ Build Loadouts / Build Prefabs / Build Scene
-// 批处理：Unity.exe -batchmode -projectPath ... -executeMethod GASDemo.Editor.DemoPrefabBuilder.BuildLoadouts -quit
+// 批处理：Unity.exe -batchmode -projectPath ... -executeMethod Likeon.GAS.Sample.PlayableDemo.Editor.DemoPrefabBuilder.BuildLoadouts -quit
 using System.Collections.Generic;
 using System.IO;
 using Likeon.GAS;
@@ -12,7 +12,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
-namespace GASDemo.Editor
+namespace Likeon.GAS.Sample.PlayableDemo.Editor
 {
     public static class DemoPrefabBuilder
     {
@@ -21,15 +21,15 @@ namespace GASDemo.Editor
         public static void BuildLoadouts()
         {
             string demoFolder = FindDemoFolder();
-            if (demoFolder == null) { Debug.LogError("[GASDemo] 找不到 demo 文件夹（DemoConfig.cs 所在目录）"); return; }
+            if (demoFolder == null) { Debug.LogError("[PlayableDemo] 找不到 demo 文件夹（DemoConfig.cs 所在目录）"); return; }
 
             var cfg = LoadOrBuildConfig(demoFolder);
-            if (cfg == null) { Debug.LogError("[GASDemo] DemoConfig.asset 缺失且无法生成；请先运行 Generate Demo Config Assets"); return; }
+            if (cfg == null) { Debug.LogError("[PlayableDemo] DemoConfig.asset 缺失且无法生成；请先运行 Generate Demo Config Assets"); return; }
 
             BakeLoadout(cfg.BuildPlayerLoadout(), demoFolder + "/PlayerLoadout.asset");
             BakeLoadout(cfg.BuildEnemyLoadout(), demoFolder + "/EnemyLoadout.asset");
             AssetDatabase.SaveAssets();
-            Debug.Log("[GASDemo] Loadout 资产已生成: PlayerLoadout.asset / EnemyLoadout.asset");
+            Debug.Log("[PlayableDemo] Loadout 资产已生成: PlayerLoadout.asset / EnemyLoadout.asset");
         }
 
         private static void BakeLoadout(AbilityLoadout lo, string path)
@@ -50,10 +50,10 @@ namespace GASDemo.Editor
         public static void BuildPrefabs()
         {
             string demoFolder = FindDemoFolder();
-            if (demoFolder == null) { Debug.LogError("[GASDemo] 找不到 demo 文件夹"); return; }
+            if (demoFolder == null) { Debug.LogError("[PlayableDemo] 找不到 demo 文件夹"); return; }
 
             var cfg = LoadOrBuildConfig(demoFolder);
-            if (cfg == null) { Debug.LogError("[GASDemo] DemoConfig.asset 缺失且无法生成"); return; }
+            if (cfg == null) { Debug.LogError("[PlayableDemo] DemoConfig.asset 缺失且无法生成"); return; }
 
             BuildLoadouts(); // 确保 loadout 资产在
             var playerLoadout = AssetDatabase.LoadAssetAtPath<AbilityLoadout>(demoFolder + "/PlayerLoadout.asset");
@@ -75,22 +75,22 @@ namespace GASDemo.Editor
             Object.DestroyImmediate(enemy);
 
             AssetDatabase.SaveAssets();
-            Debug.Log("[GASDemo] prefab 已生成: Resources/DemoPlayer.prefab / DemoEnemy.prefab");
+            Debug.Log("[PlayableDemo] prefab 已生成: Resources/DemoPlayer.prefab / DemoEnemy.prefab");
         }
 
-        // ===================== 阶段②c 场景（玩家+敌人 prefab 实例接 GASDemo）=====================
-        // 把 prefab 实例摆进场景（策划能在场景里看到/移动它们、改 prefab override），GASDemo 退化为薄编排：
+        // ===================== 阶段②c 场景（玩家+敌人 prefab 实例接 PlayableDemo）=====================
+        // 把 prefab 实例摆进场景（策划能在场景里看到/移动它们、改 prefab override），PlayableDemo 退化为薄编排：
         // 运行时只接 prefab 接不了的跨边界引用（相机 ViewSource/ThirdPersonCamera/HUD）+ 动态订阅（敌人变色/命中 Cue）+ 运行时上色。
         [MenuItem("Sigil/GAS/Demo/Build Scene")]
         public static void BuildScene()
         {
             string demoFolder = FindDemoFolder();
-            if (demoFolder == null) { Debug.LogError("[GASDemo] 找不到 demo 文件夹"); return; }
+            if (demoFolder == null) { Debug.LogError("[PlayableDemo] 找不到 demo 文件夹"); return; }
 
             BuildPrefabs(); // 确保 loadout+prefab 在（链式：BuildPrefabs→BuildLoadouts）
             var playerPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(demoFolder + "/Resources/DemoPlayer.prefab");
             var enemyPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(demoFolder + "/Resources/DemoEnemy.prefab");
-            if (playerPrefab == null || enemyPrefab == null) { Debug.LogError("[GASDemo] prefab 缺失，BuildScene 中止"); return; }
+            if (playerPrefab == null || enemyPrefab == null) { Debug.LogError("[PlayableDemo] prefab 缺失，BuildScene 中止"); return; }
 
             var scene = EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);
 
@@ -109,17 +109,17 @@ namespace GASDemo.Editor
                 enemyAscs.Add(en.GetComponent<AbilitySystemComponent>());
             }
 
-            // GASDemo host：接好场景实例引用（adopt 模式）+ 配置资产
-            var host = new GameObject("GASDemo").AddComponent<GASDemo>();
+            // PlayableDemo host：接好场景实例引用（adopt 模式）+ 配置资产
+            var host = new GameObject("PlayableDemo").AddComponent<PlayableDemo>();
             host.Config = AssetDatabase.LoadAssetAtPath<DemoConfig>(demoFolder + "/DemoConfig.asset");
             host.ScenePlayer = ctrl;
             host.SceneEnemies = enemyAscs;
             EditorUtility.SetDirty(host);
 
-            bool ok = EditorSceneManager.SaveScene(scene, demoFolder + "/GASDemo.unity");
+            bool ok = EditorSceneManager.SaveScene(scene, demoFolder + "/PlayableDemo.unity");
             Debug.Log(ok
-                ? "[GASDemo] 场景已生成: GASDemo.unity（玩家+3敌人 prefab 实例已接 GASDemo adopt 模式）"
-                : "[GASDemo] 场景保存失败");
+                ? "[PlayableDemo] 场景已生成: PlayableDemo.unity（玩家+3敌人 prefab 实例已接 PlayableDemo adopt 模式）"
+                : "[PlayableDemo] 场景保存失败");
         }
 
         // 一键：loadout + prefab + 场景全套

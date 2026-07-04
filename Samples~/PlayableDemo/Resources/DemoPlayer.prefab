@@ -413,7 +413,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: afb4479aa922c6e43aaf440ab0d70035, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Likeon.GAS.Sample.PlayableDemo::GASDemo.DemoRanged
+  m_EditorClassIdentifier: Likeon.GAS.Sample.PlayableDemo::Likeon.GAS.Sample.PlayableDemo.DemoRanged
   ASC: {fileID: 3216629077306134279}
   Muzzle: {fileID: 8093865259333138835}
   Bullet: {fileID: 4453096448324117217, guid: bb1f29c14532fa8418b9b39032593710, type: 2}
@@ -449,7 +449,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1f95dbf5eaecfb2fccba7a3ec4754c5b, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Likeon.GAS.Sample.PlayableDemo::GASDemo.DemoPlayerController
+  m_EditorClassIdentifier: Likeon.GAS.Sample.PlayableDemo::Likeon.GAS.Sample.PlayableDemo.DemoPlayerController
   ASC: {fileID: 3216629077306134279}
   Controller: {fileID: 8468842934834413057}
   Melee: {fileID: 9073465779131153289}

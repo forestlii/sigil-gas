@@ -1,5 +1,5 @@
 // 共享构造器：把玩家/敌人的"可 prefab 化结构"（组件 + prefab 内部引用 + 资产引用）一处构建，
-// 供运行时回退（GASDemo，Config==null 时）与 Editor prefab 生成器（DemoPrefabBuilder）共用，避免两处构造漂移。
+// 供运行时回退（PlayableDemo，Config==null 时）与 Editor prefab 生成器（DemoPrefabBuilder）共用，避免两处构造漂移。
 //
 // 边界（关键）：本构造器只接 **prefab 内部引用**（子物体 socket/muzzle/武器、同物体组件）和 **资产引用**（攻击/子弹）。
 //   · 不接 **跨边界引用**（相机 ViewSource、运行时 ThirdPersonCameraBehavior、HUD）——prefab 不能引用场景对象，交调用方运行时接。
@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using Likeon.GAS;
 using UnityEngine;
 
-namespace GASDemo
+namespace Likeon.GAS.Sample.PlayableDemo
 {
     public static class DemoActorBuilder
     {
@@ -129,7 +129,7 @@ namespace GASDemo
         }
 
         // URP/标准 通用着色。编辑器（烘 prefab）下跳过——renderer.material 在 edit 模式会实例化材质污染 prefab；
-        // 颜色在运行时上（fallback 构建走 isPlaying；prefab adopt 模式由 GASDemo 运行时再上色）。
+        // 颜色在运行时上（fallback 构建走 isPlaying；prefab adopt 模式由 PlayableDemo 运行时再上色）。
         public static void SetColor(GameObject go, Color c) => SetColor(go.GetComponent<Renderer>(), c);
         public static void SetColor(Renderer rend, Color c)
         {

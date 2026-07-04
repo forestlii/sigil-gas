@@ -4,7 +4,7 @@
 using Likeon.GAS;
 using UnityEngine;
 
-namespace GASDemo
+namespace Likeon.GAS.Sample.PlayableDemo
 {
     /// <summary>演示用近战技能：走完整 GAS 路径（消耗/冷却由 Cost/Cooldown 效果驱动），并开启 MeleeAttackTrace。</summary>
     public class DemoMeleeAbility : GameplayAbility

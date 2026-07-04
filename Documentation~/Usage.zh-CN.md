@@ -90,7 +90,7 @@ public class Character : MonoBehaviour
     void Awake()
     {
         ASC = gameObject.AddComponent<AbilitySystemComponent>();
-        ASC.AddAttributeSet(new AS_Health());   // 内置：Health / MaxHealth / IncomingDamage / IncomingHealing
+        ASC.AddAttributeSet(new AS_Health());   // 这里的 AS_Health 是你自己 codegen 生成的示例集（§5.1）：Health / MaxHealth / IncomingDamage / IncomingHealing
         ASC.AddAttributeSet(new AS_Stamina());
 
         // 监听血量变化（驱动血条 UI）
@@ -185,7 +185,7 @@ asc.RemoveLooseGameplayTag(GameplayTag.RequestTag("State.Stunned"));
 
 ## 5. 属性 Attributes
 
-内置属性集：`AS_Health`、`AS_Stamina`、`AS_Mana`、`AS_Combat`。每个属性是 `GameplayAttributeData`（区分 `BaseValue` 永久值 / `CurrentValue` 含临时增益的当前值）。
+属性集**不**再内置于框架——你用 `AttributeSetDefinition` codegen 自己生成（见 [§5.1](#51-在编辑器里定义属性集不用手写-c)）。下文以生成的 `AS_Health`（Health / MaxHealth / IncomingDamage / IncomingHealing）为例；`AS_Combat`、`AS_Stamina`、`AS_Mana` 等只是同样方式生成的其它集。每个属性是 `GameplayAttributeData`（区分 `BaseValue` 永久值 / `CurrentValue` 含临时增益的当前值）。
 
 ```csharp
 var health = asc.GetAttributeSet<AS_Health>();

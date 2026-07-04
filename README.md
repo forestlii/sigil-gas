@@ -88,10 +88,10 @@ host project's job — Sigil's job is to expose the data. Key events:
 - GameplayTag picker (hierarchical dropdown + search + add), tag registry & a `Sigil ▸ GAS ▸ Gameplay Tags` window, `[SerializeReference]` subclass pickers, asset inspectors, a project tag scanner — all under one top-level **Likeon** menu.
 
 ### Playable demo
-Import via **Package Manager → Sigil → Samples → *Playable Demo***, open `GASDemo.unity`, press Play.
+Import via **Package Manager → Sigil → Samples → *Playable Demo***, open `PlayableDemo.unity`, press Play.
 A **feature showcase** shipped as **player/enemy prefabs + a wired scene** (`DemoPlayer` / `DemoEnemy`
 under `Resources/`, with attributes & abilities supplied by data-driven `AbilityLoadout` assets via
-`initialLoadouts`); `GASDemo` is thin orchestration (camera / HUD / dynamic feedback) and falls back to
+`initialLoadouts`); `PlayableDemo` is thin orchestration (camera / HUD / dynamic feedback) and falls back to
 building everything at runtime if dropped on an empty GameObject. Re-bake it from *Sigil ▸ GAS ▸ Demo ▸
 Build All*. It puts several combat lines in one scene (placeholder programmer art):
 **melee → damage → cue, ranged projectiles, lock-on switching between 3 enemies, poise/stagger, and

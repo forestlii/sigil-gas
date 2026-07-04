@@ -91,7 +91,7 @@ public class Character : MonoBehaviour
     void Awake()
     {
         ASC = gameObject.AddComponent<AbilitySystemComponent>();
-        ASC.AddAttributeSet(new AS_Health());   // built-in: Health / MaxHealth / IncomingDamage / IncomingHealing
+        ASC.AddAttributeSet(new AS_Health());   // AS_Health here is an example set you codegen (§5.1): Health / MaxHealth / IncomingDamage / IncomingHealing
         ASC.AddAttributeSet(new AS_Stamina());
 
         // Listen for health changes (drives a health-bar UI)
@@ -186,7 +186,7 @@ Loose tags are ref-counted: when multiple sources add the same tag, one source r
 
 ## 5. Attributes
 
-Built-in attribute sets: `AS_Health`, `AS_Stamina`, `AS_Mana`, `AS_Combat`. Each attribute is a `GameplayAttributeData` (distinguishing `BaseValue`, the permanent value, from `CurrentValue`, which includes temporary buffs).
+Attribute sets are **not** built into the framework — you author your own with the `AttributeSetDefinition` codegen (see [§5.1](#51-authoring-attribute-sets-in-the-editor-no-hand-written-c)). The examples below use a generated `AS_Health` (Health / MaxHealth / IncomingDamage / IncomingHealing) as the running example; `AS_Combat`, `AS_Stamina`, `AS_Mana` etc. are just other sets you'd generate the same way. Each attribute is a `GameplayAttributeData` (distinguishing `BaseValue`, the permanent value, from `CurrentValue`, which includes temporary buffs).
 
 ```csharp
 var health = asc.GetAttributeSet<AS_Health>();

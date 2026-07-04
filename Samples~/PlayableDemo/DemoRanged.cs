@@ -4,7 +4,7 @@
 using Likeon.GAS;
 using UnityEngine;
 
-namespace GASDemo
+namespace Likeon.GAS.Sample.PlayableDemo
 {
     public class DemoRanged : MonoBehaviour
     {

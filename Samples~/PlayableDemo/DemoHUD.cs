@@ -7,7 +7,7 @@ using System.Text;
 using Likeon.GAS;
 using UnityEngine;
 
-namespace GASDemo
+namespace Likeon.GAS.Sample.PlayableDemo
 {
     public class DemoHUD : MonoBehaviour
     {
@@ -31,7 +31,7 @@ namespace GASDemo
             {
                 _hp = PlayerASC.GetAttributeSet<AS_Health>();
                 _stamina = PlayerASC.GetAttributeSet<AS_Stamina>();
-                PlayerASC.OnGameplayEvent += OnGameplayEvent; // 在 Start 订阅：此时 PlayerASC 已被 GASDemo 赋值
+                PlayerASC.OnGameplayEvent += OnGameplayEvent; // 在 Start 订阅：此时 PlayerASC 已被 PlayableDemo 赋值
             }
         }
 
