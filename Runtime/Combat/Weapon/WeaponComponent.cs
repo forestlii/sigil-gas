@@ -11,7 +11,7 @@ using UnityEngine;
 
 namespace Likeon.GAS
 {
-    [AddComponentMenu("Likeon/GAS/Weapon Component")]
+    [AddComponentMenu("Sigil/GAS/Weapon Component")]
     public class WeaponComponent : MonoBehaviour, IWeapon
     {
         [Header("武器标签")]

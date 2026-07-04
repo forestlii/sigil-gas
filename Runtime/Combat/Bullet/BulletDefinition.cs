@@ -7,7 +7,7 @@ using UnityEngine;
 namespace Likeon.GAS
 {
     /// <summary>子弹定义资产。</summary>
-    [CreateAssetMenu(fileName = "Bullet_New", menuName = "Likeon/GAS/Bullet Definition")]
+    [CreateAssetMenu(fileName = "Bullet_New", menuName = "Sigil/Combat/Bullet Definition")]
     public class BulletDefinition : ScriptableObject
     {
         [Header("生命")]

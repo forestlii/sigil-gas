@@ -25,7 +25,7 @@ namespace Likeon.GAS
     /// ① InputActionMappings —— InputTag↔InputAction 绑定（InputSystemComponent 启用时据此自动订阅 → ReceiveInput）；
     /// ② InputBufferDefinitions —— 输入缓冲窗口（连招预输入）。
     /// </summary>
-    [CreateAssetMenu(fileName = "InputConfig_New", menuName = "Likeon/GAS/Input Config")]
+    [CreateAssetMenu(fileName = "InputConfig_New", menuName = "Sigil/GAS/Input Config")]
     public class InputConfig : ScriptableObject
     {
         [Header("输入动作映射 InputTag ↔ InputAction")]

@@ -1,6 +1,6 @@
 // 编辑器脚本：一键把 demo 的默认配置烘成一个 DemoConfig.asset（全部子资产嵌为它的 sub-asset），
 // 并把 demo 场景里 GASDemo.Config 指向它 —— 让"数据驱动 / 策划可在 Inspector 配"这条真正落地。
-// 菜单：Likeon ▸ GAS ▸ Generate Demo Config Assets
+// 菜单：Sigil ▸ GAS ▸ Generate Demo Config Assets
 // 批处理：Unity.exe -batchmode -projectPath ... -executeMethod GASDemo.Editor.DemoConfigBuilder.Generate -quit
 using System.IO;
 using UnityEditor;
@@ -11,7 +11,7 @@ namespace GASDemo.Editor
 {
     public static class DemoConfigBuilder
     {
-        [MenuItem("Likeon/GAS/Generate Demo Config Assets")]
+        [MenuItem("Sigil/GAS/Generate Demo Config Assets")]
         public static void Generate()
         {
             string demoFolder = FindDemoFolder();

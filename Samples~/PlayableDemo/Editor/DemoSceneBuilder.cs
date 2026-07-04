@@ -10,7 +10,7 @@ namespace GASDemo.Editor
     {
         private const string ScenePath = "Assets/Demo/GASDemo.unity";
 
-        [MenuItem("Likeon/GAS/Build Demo Scene")]
+        [MenuItem("Sigil/GAS/Build Demo Scene")]
         public static void Build()
         {
             // 新场景（含默认 Main Camera + Directional Light）

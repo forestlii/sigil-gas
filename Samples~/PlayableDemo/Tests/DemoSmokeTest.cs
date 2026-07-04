@@ -345,7 +345,7 @@ namespace Likeon.GAS.PlayTests
         public IEnumerator M_PlayerPrefab_Instantiates_WithLoadoutGranted()
         {
             var prefab = Resources.Load<GameObject>("DemoPlayer");
-            Assert.IsNotNull(prefab, "应能从 Resources 加载 DemoPlayer prefab（先运行 Likeon ▸ GAS ▸ Demo ▸ Build Prefabs 生成）");
+            Assert.IsNotNull(prefab, "应能从 Resources 加载 DemoPlayer prefab（先运行 Sigil ▸ GAS ▸ Demo ▸ Build Prefabs 生成）");
 
             var player = Object.Instantiate(prefab);
             yield return null; // 等 Awake：ASC.initialLoadouts 授予

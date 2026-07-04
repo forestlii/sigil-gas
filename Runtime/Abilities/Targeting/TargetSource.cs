@@ -15,7 +15,7 @@ namespace Likeon.GAS
     }
 
     /// <summary>取施法者自身为目标。</summary>
-    [CreateAssetMenu(menuName = "Likeon/GAS/Target Source/Self", fileName = "TS_Self")]
+    [CreateAssetMenu(menuName = "Sigil/GAS/Target Source/Self", fileName = "TS_Self")]
     public class TargetSource_Self : TargetSource
     {
         public override void GetTargets(AbilitySystemComponent targetingASC, GameplayEventData eventData,
@@ -26,7 +26,7 @@ namespace Likeon.GAS
     }
 
     /// <summary>取事件数据里的目标：优先用命中结果，否则退回 EventData.Target。</summary>
-    [CreateAssetMenu(menuName = "Likeon/GAS/Target Source/Event Data", fileName = "TS_EventData")]
+    [CreateAssetMenu(menuName = "Sigil/GAS/Target Source/Event Data", fileName = "TS_EventData")]
     public class TargetSource_EventData : TargetSource
     {
         public override void GetTargets(AbilitySystemComponent targetingASC, GameplayEventData eventData,

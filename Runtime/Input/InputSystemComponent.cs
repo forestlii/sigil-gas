@@ -10,7 +10,7 @@ using UnityEngine.InputSystem;
 
 namespace Likeon.GAS
 {
-    [AddComponentMenu("Likeon/GAS/Input System Component")]
+    [AddComponentMenu("Sigil/GAS/Input System Component")]
     public class InputSystemComponent : MonoBehaviour
     {
         [Header("依赖")]

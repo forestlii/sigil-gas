@@ -13,7 +13,7 @@ namespace Likeon.GAS.Editor
         // 匹配 RequestTag("某.标签") / RequestTag( "..." )
         private static readonly Regex TagRegex = new Regex("RequestTag\\(\\s*\"([^\"]+)\"", RegexOptions.Compiled);
 
-        [MenuItem("Likeon/GAS/Scan Project for Gameplay Tags")]
+        [MenuItem("Sigil/GAS/Scan Project for Gameplay Tags")]
         public static void Scan()
         {
             var settings = GameplayTagSettingsUtil.GetOrCreate();

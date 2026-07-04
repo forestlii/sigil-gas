@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace Likeon.GAS
 {
-    [AddComponentMenu("Likeon/GAS/Melee Attack Trace")]
+    [AddComponentMenu("Sigil/GAS/Melee Attack Trace")]
     public class MeleeAttackTrace : MonoBehaviour
     {
         /// <summary>一条可由动画事件按下标触发的判定配置（攻击定义 + 判定点）。</summary>

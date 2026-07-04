@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace Likeon.GAS
 {
-    [AddComponentMenu("Likeon/GAS/Combat System Component")]
+    [AddComponentMenu("Sigil/GAS/Combat System Component")]
     public class CombatSystemComponent : MonoBehaviour
     {
         [Tooltip("驱动动画的 Animator（留空则自动查找）")]

@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace Likeon.GAS
 {
-    [AddComponentMenu("Likeon/GAS/Ability System Component")]
+    [AddComponentMenu("Sigil/GAS/Ability System Component")]
     public class AbilitySystemComponent : MonoBehaviour
     {
         // ===================== 默认技能装载 Default Loadouts =====================

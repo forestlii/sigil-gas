@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace Likeon.GAS
 {
-    [CreateAssetMenu(menuName = "Likeon/GAS/Game Phase Ability")]
+    [CreateAssetMenu(menuName = "Sigil/GAS/Game Phase Ability")]
     public class GamePhaseAbility : GameplayAbility
     {
         [Tooltip("本阶段的层级标签，如 Game.Playing / Game.Playing.WarmUp（父子可共存、兄弟互斥）")]

@@ -12,7 +12,7 @@ namespace Likeon.GAS
     /// 供 <see cref="GameplayModifierMagnitude"/> 的曲线模式按等级查值，
     /// 实现属性初始化 / 数值随等级成长的数据驱动配置（策划集中配、跨效果复用）。
     /// </summary>
-    [CreateAssetMenu(fileName = "CurveTable_New", menuName = "Likeon/GAS/Curve Table")]
+    [CreateAssetMenu(fileName = "CurveTable_New", menuName = "Sigil/GAS/Curve Table")]
     public class CurveTable : ScriptableObject
     {
         /// <summary>一行命名曲线。</summary>

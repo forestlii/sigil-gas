@@ -22,7 +22,7 @@ namespace Likeon.GAS
     /// <summary>
     /// 阵营组件。挂在角色上标明队伍，用于命中过滤（只打敌人）。
     /// </summary>
-    [AddComponentMenu("Likeon/GAS/Combat Team Agent")]
+    [AddComponentMenu("Sigil/GAS/Combat Team Agent")]
     public class CombatTeamAgent : MonoBehaviour, ITeamAgent
     {
         [Tooltip("队伍编号。相同=友方，不同=敌方，-1=中立")]

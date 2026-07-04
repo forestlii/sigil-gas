@@ -10,7 +10,7 @@ namespace Likeon.GAS
     /// 把宿主的 <see cref="AbilitySystemComponent"/> 在 OnEnable 注册进 <see cref="GlobalAbilitySystem"/>、OnDisable 注销。
     /// 故意做成可选组件而非改 ASC 核心——避免在 ASC 半初始化态被授全局技能/效果。
     /// </summary>
-    [AddComponentMenu("Likeon/GAS/Global Ability System Registrant")]
+    [AddComponentMenu("Sigil/GAS/Global Ability System Registrant")]
     [RequireComponent(typeof(AbilitySystemComponent))]
     public sealed class GlobalAbilitySystemRegistrant : MonoBehaviour
     {

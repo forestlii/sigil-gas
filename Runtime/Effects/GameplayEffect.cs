@@ -11,7 +11,7 @@ namespace Likeon.GAS
     /// 游戏效果资产。GAS 中改属性、挂标签的唯一正规手段。
     /// 通过 <see cref="AbilitySystemComponent.ApplyGameplayEffectToSelf"/> 等施加。
     /// </summary>
-    [CreateAssetMenu(fileName = "GE_New", menuName = "Likeon/GAS/Gameplay Effect")]
+    [CreateAssetMenu(fileName = "GE_New", menuName = "Sigil/GAS/Gameplay Effect")]
     public class GameplayEffect : ScriptableObject
     {
         [Header("持续策略 Duration")]

@@ -9,7 +9,7 @@ using UnityEngine;
 namespace Likeon.GAS
 {
     /// <summary>世界物体上的表面标记。用此组件标注物体表面类型（如 SurfaceType.Grass）。</summary>
-    [AddComponentMenu("Likeon/GAS/Surface Type")]
+    [AddComponentMenu("Sigil/GAS/Surface Type")]
     public class SurfaceType : MonoBehaviour
     {
         [Tooltip("表面类型标签，如 SurfaceType.Grass / Stone")]
@@ -29,7 +29,7 @@ namespace Likeon.GAS
     }
 
     /// <summary>表面效果库资产。</summary>
-    [CreateAssetMenu(fileName = "SurfaceEffects_New", menuName = "Likeon/GAS/Surface Effect Library")]
+    [CreateAssetMenu(fileName = "SurfaceEffects_New", menuName = "Sigil/GAS/Surface Effect Library")]
     public class SurfaceEffectLibrary : ScriptableObject
     {
         public List<SurfaceEffectEntry> Entries = new List<SurfaceEffectEntry>();

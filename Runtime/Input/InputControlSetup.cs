@@ -10,7 +10,7 @@ namespace Likeon.GAS
     /// 输入控制集（ScriptableObject 资产）。持有门控检查器与分发处理器。
     /// 可被 InputSystemComponent 压栈/弹栈，按上下文（战斗/载具/UI）整套切换。
     /// </summary>
-    [CreateAssetMenu(fileName = "InputControlSetup_New", menuName = "Likeon/GAS/Input Control Setup")]
+    [CreateAssetMenu(fileName = "InputControlSetup_New", menuName = "Sigil/GAS/Input Control Setup")]
     public class InputControlSetup : ScriptableObject
     {
         [Header("门控检查器（全部通过才放行）")]

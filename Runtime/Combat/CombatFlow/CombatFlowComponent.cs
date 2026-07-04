@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace Likeon.GAS
 {
-    [AddComponentMenu("Likeon/GAS/Combat Flow")]
+    [AddComponentMenu("Sigil/GAS/Combat Flow")]
     [RequireComponent(typeof(CombatSystemComponent))]
     public class CombatFlowComponent : MonoBehaviour
     {

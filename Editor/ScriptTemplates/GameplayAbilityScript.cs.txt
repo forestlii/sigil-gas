@@ -1,0 +1,16 @@
+using Likeon.GAS;
+using UnityEngine;
+
+[CreateAssetMenu(fileName = "#SCRIPTNAME#", menuName = "Sigil/GAS/Abilities/#SCRIPTNAME#")]
+public class #SCRIPTNAME# : GameplayAbility
+{
+    protected override void OnActivateAbility(GameplayEventData triggerData)
+    {
+        // Pay cost + start cooldown; bail if it can't be committed.
+        if (!CommitAbility()) { EndAbility(true); return; }
+
+        // TODO: your ability logic here (spawn tasks, apply effects, etc.)
+
+        EndAbility();
+    }
+}

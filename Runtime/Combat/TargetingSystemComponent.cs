@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace Likeon.GAS
 {
-    [AddComponentMenu("Likeon/GAS/Targeting System Component")]
+    [AddComponentMenu("Sigil/GAS/Targeting System Component")]
     public class TargetingSystemComponent : MonoBehaviour
     {
         [Header("搜索")]

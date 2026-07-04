@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Likeon.GAS
 {
-    [AddComponentMenu("Likeon/GAS/Camera System Component")]
+    [AddComponentMenu("Sigil/GAS/Camera System Component")]
     public class CameraSystemComponent : MonoBehaviour
     {
         [Tooltip("要驱动的 Unity 相机（留空则用 Camera.main）")]

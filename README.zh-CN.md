@@ -78,20 +78,20 @@ Sigil **只做逻辑、不绑 UI**：它对外广播变更事件，让*任意* U
 - `PoiseComponent`：`OnPoiseBroken` / `OnPoiseRecovered`。`TargetingSystemComponent`：`OnTargetLockOn` / `OnTargetLockOff`。`WeaponComponent`：`OnEquipped` / `OnUnequipped` / `OnWeaponActiveStateChanged` / `OnTargetingChanged`。
 
 ### 编辑器工具
-- GameplayTag 选择器（层级下拉 + 搜索 + 新增）、标签注册表与 `Likeon ▸ GAS ▸ Gameplay Tags` 窗口、`[SerializeReference]` 子类选择器、资产 Inspector、工程标签扫描器——统一收在顶部 **Likeon** 菜单下。
+- GameplayTag 选择器（层级下拉 + 搜索 + 新增）、标签注册表与 `Sigil ▸ GAS ▸ Gameplay Tags` 窗口、`[SerializeReference]` 子类选择器、资产 Inspector、工程标签扫描器——统一收在顶部 **Likeon** 菜单下。
 
 ### 可玩 Demo
 在 **Package Manager → Sigil → Samples → *Playable Demo*** 导入，打开 `GASDemo.unity` 按 Play。
 一个**功能展示场**，以 **玩家/敌人 prefab + 接好线的场景** 交付（`Resources/` 下的 `DemoPlayer` / `DemoEnemy`，
 属性集与技能由数据驱动的 `AbilityLoadout` 资产经 `initialLoadouts` 提供）；`GASDemo` 退化为薄编排（相机 / HUD /
-动态反馈），挂到空物体上时回退为运行时现场构建。可用 *Likeon ▸ GAS ▸ Demo ▸ Build All* 重新烘。场景把多条战斗线放进同一场景（程序员美术胶囊体）：
+动态反馈），挂到空物体上时回退为运行时现场构建。可用 *Sigil ▸ GAS ▸ Demo ▸ Build All* 重新烘。场景把多条战斗线放进同一场景（程序员美术胶囊体）：
 **近战 → 扣血 → cue、远程子弹、3 敌人间锁定切换、削韧破防、buff 叠层**，并带一个全靠订阅框架可观测性事件
 渲染的自解释 HUD。操作：WASD 移动 · Shift 冲刺 · 鼠标看 · 空格/左键 近战 · 右键/F 远程 ·
 Tab 锁定 · Q/E 切目标 · R 叠 buff。
 
 ## 配置（数据驱动）
 
-Sigil 是**数据驱动**的：行为靠在 Inspector 里编辑 **ScriptableObject 资产**来配——不写代码，策划即可调。主要配置资产（都在 *Create → Likeon → GAS → …*）：
+Sigil 是**数据驱动**的：行为靠在 Inspector 里编辑 **ScriptableObject 资产**来配——不写代码，策划即可调。主要配置资产（都在 *Create → Sigil → GAS → …*）：
 
 - **输入分发 & 互斥** — `InputControlSetup`：一组 `InputProcessor` 把 `InputTag` 映射到技能，`ExecutionType = FirstOnly` 实现"一键一技能"多态（第一个 `StateQuery` 通过的处理器胜出）。在 `InputConfig` 资产（`InputActionMappings`）里把物理键 → `InputTag`，`InputSystemComponent` 自动绑定。push/pop 控制集可整套切换键位（载具 / UI）。
 - **技能互斥** — `AbilityInteractionRules`：数据驱动的技能间 block / cancel / 激活准入（按标签查询、状态感知）。另外每个 `GameplayAbility` 自身有 `ActivationGroup` / `ActivationRequiredTags` / `ActivationBlockedTags`。

@@ -5,7 +5,7 @@
 // 两种运行形态：
 //  · prefab 模式（推荐，策划工作流）：场景里摆好 Player/Enemy prefab 实例（ASC.initialLoadouts 配技能/属性集），
 //    GASDemo 只做"薄编排"——接 prefab 接不了的跨边界引用（相机 ViewSource / ThirdPersonCamera / HUD）和动态订阅
-//    （敌人受击变色 / 命中 Cue 火花）。用菜单 Likeon ▸ GAS ▸ Demo ▸ Build All 生成 prefab+场景。
+//    （敌人受击变色 / 命中 Cue 火花）。用菜单 Sigil ▸ GAS ▸ Demo ▸ Build All 生成 prefab+场景。
 //  · 运行时回退（headless / 裸挂）：场景里没摆 prefab 实例时，GASDemo 用 DemoActorBuilder 在 Awake 现场构建一套
 //    （供"挂上就跑"和冒烟测试）。结构构建与 prefab 共用 DemoActorBuilder，避免两处漂移。
 //
@@ -21,7 +21,7 @@ namespace GASDemo
     public class GASDemo : MonoBehaviour
     {
         [Header("数据驱动配置（拖一个 DemoConfig.asset；留空=用代码默认）")]
-        [Tooltip("策划在此资产里配输入分发/技能互斥/技能/攻击/效果。用菜单 Likeon ▸ GAS ▸ Generate Demo Config Assets 可一键生成一套并接好。")]
+        [Tooltip("策划在此资产里配输入分发/技能互斥/技能/攻击/效果。用菜单 Sigil ▸ GAS ▸ Generate Demo Config Assets 可一键生成一套并接好。")]
         public DemoConfig Config;
 
         [Header("prefab 模式：场景里已摆好的 prefab 实例（留空=运行时回退现场构建）")]

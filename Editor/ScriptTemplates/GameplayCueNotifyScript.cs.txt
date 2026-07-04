@@ -1,0 +1,12 @@
+using Likeon.GAS;
+using UnityEngine;
+
+[CreateAssetMenu(fileName = "#SCRIPTNAME#", menuName = "Sigil/GAS/Cues/#SCRIPTNAME#")]
+public class #SCRIPTNAME# : GameplayCueNotify
+{
+    public override void HandleCue(GameObject target, EGameplayCueEvent cueEvent, GameplayCueParameters parameters)
+    {
+        // TODO: react to the cue — spawn VFX, play SFX, screen shake, etc.
+        // cueEvent is OnActive / WhileActive / Executed / Removed.
+    }
+}

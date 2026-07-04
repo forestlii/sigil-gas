@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace Likeon.GAS
 {
-    [AddComponentMenu("Likeon/GAS/Poise Component")]
+    [AddComponentMenu("Sigil/GAS/Poise Component")]
     [RequireComponent(typeof(AbilitySystemComponent))]
     public class PoiseComponent : MonoBehaviour
     {

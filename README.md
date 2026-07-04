@@ -85,14 +85,14 @@ host project's job — Sigil's job is to expose the data. Key events:
 - `PoiseComponent`: `OnPoiseBroken` / `OnPoiseRecovered`. `TargetingSystemComponent`: `OnTargetLockOn` / `OnTargetLockOff`. `WeaponComponent`: `OnEquipped` / `OnUnequipped` / `OnWeaponActiveStateChanged` / `OnTargetingChanged`.
 
 ### Editor tools
-- GameplayTag picker (hierarchical dropdown + search + add), tag registry & a `Likeon ▸ GAS ▸ Gameplay Tags` window, `[SerializeReference]` subclass pickers, asset inspectors, a project tag scanner — all under one top-level **Likeon** menu.
+- GameplayTag picker (hierarchical dropdown + search + add), tag registry & a `Sigil ▸ GAS ▸ Gameplay Tags` window, `[SerializeReference]` subclass pickers, asset inspectors, a project tag scanner — all under one top-level **Likeon** menu.
 
 ### Playable demo
 Import via **Package Manager → Sigil → Samples → *Playable Demo***, open `GASDemo.unity`, press Play.
 A **feature showcase** shipped as **player/enemy prefabs + a wired scene** (`DemoPlayer` / `DemoEnemy`
 under `Resources/`, with attributes & abilities supplied by data-driven `AbilityLoadout` assets via
 `initialLoadouts`); `GASDemo` is thin orchestration (camera / HUD / dynamic feedback) and falls back to
-building everything at runtime if dropped on an empty GameObject. Re-bake it from *Likeon ▸ GAS ▸ Demo ▸
+building everything at runtime if dropped on an empty GameObject. Re-bake it from *Sigil ▸ GAS ▸ Demo ▸
 Build All*. It puts several combat lines in one scene (placeholder programmer art):
 **melee → damage → cue, ranged projectiles, lock-on switching between 3 enemies, poise/stagger, and
 stacking buffs**, with a self-explanatory on-screen HUD that renders purely from the framework's
@@ -101,7 +101,7 @@ Tab lock-on · Q/E switch target · R stack a buff.
 
 ## Configuration (data-driven)
 
-Sigil is **data-driven**: you configure behaviour by authoring **ScriptableObject assets** in the Inspector — no code — so designers can tune it. The main config assets (all under *Create → Likeon → GAS → …*):
+Sigil is **data-driven**: you configure behaviour by authoring **ScriptableObject assets** in the Inspector — no code — so designers can tune it. The main config assets (all under *Create → Sigil → GAS → …*):
 
 - **Input dispatch & mutual exclusion** — `InputControlSetup`: a list of `InputProcessor`s mapping an `InputTag` to an ability, with `ExecutionType = FirstOnly` for "one key, one ability" polymorphism (the first processor whose `StateQuery` passes wins). Bind physical keys → `InputTag`s in the `InputConfig` asset (`InputActionMappings`); `InputSystemComponent` auto-binds them. Push/pop setups to swap whole schemes (vehicle / UI).
 - **Ability mutual exclusion** — `AbilityInteractionRules`: data-driven block / cancel / activation-gating between abilities (state-aware via tag queries). Plus each `GameplayAbility` has its own `ActivationGroup` / `ActivationRequiredTags` / `ActivationBlockedTags`.

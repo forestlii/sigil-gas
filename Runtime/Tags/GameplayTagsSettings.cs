@@ -11,7 +11,7 @@ namespace Likeon.GAS
     /// 已注册的 GameplayTag 主表。编辑器的标签选择器/管理页从这里读写。
     /// 运行时 RequestTag 仍可用任意字符串，本表只为编辑期提供下拉候选与集中管理。
     /// </summary>
-    [CreateAssetMenu(fileName = "GameplayTagsSettings", menuName = "Likeon/GAS/Gameplay Tags Settings")]
+    [CreateAssetMenu(fileName = "GameplayTagsSettings", menuName = "Sigil/GAS/Gameplay Tags Settings")]
     public class GameplayTagsSettings : ScriptableObject
     {
         [SerializeField] private List<string> tags = new List<string>();

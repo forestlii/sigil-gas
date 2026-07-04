@@ -18,7 +18,7 @@ namespace Likeon.GAS
     /// <summary>
     /// 通用静态 Cue：在事件点生成粒子 + 播音效。
     /// </summary>
-    [CreateAssetMenu(fileName = "Cue_New", menuName = "Likeon/GAS/Gameplay Cue Notify (Static)")]
+    [CreateAssetMenu(fileName = "Cue_New", menuName = "Sigil/GAS/Gameplay Cue Notify (Static)")]
     public class GameplayCueNotify_Static : GameplayCueNotify
     {
         [Header("表现")]

@@ -37,7 +37,7 @@ namespace Likeon.GAS
     /// 技能交互规则资产。ASC 在激活技能时用它动态决定 block / cancel 与激活准入。
     /// 含状态感知的条件规则（按角色当前标签叠加）。
     /// </summary>
-    [CreateAssetMenu(fileName = "AbilityInteractionRules_New", menuName = "Likeon/GAS/Ability Interaction Rules")]
+    [CreateAssetMenu(fileName = "AbilityInteractionRules_New", menuName = "Sigil/GAS/Ability Interaction Rules")]
     public class AbilityInteractionRules : ScriptableObject
     {
         [Header("基础规则（始终生效）")]

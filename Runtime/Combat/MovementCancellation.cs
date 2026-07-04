@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace Likeon.GAS
 {
-    [AddComponentMenu("Likeon/GAS/Movement Cancellation")]
+    [AddComponentMenu("Sigil/GAS/Movement Cancellation")]
     public class MovementCancellation : MonoBehaviour
     {
         [Tooltip("root motion 目标 Animator（留空在子物体查找）")]

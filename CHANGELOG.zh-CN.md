@@ -7,12 +7,20 @@
 
 ## [未发布]
 
+### 新增
+
+- **样板脚本模板。** *Create → Sigil → GAS → Ability (C# Script)* / *Cue Notify (C# Script)* 和 *Create → Sigil → Combat → Execution Calculation (C# Script)* 一键生成空的 `GameplayAbility` / `GameplayCueNotify` / `GameplayEffectExecutionCalculation` 子类（带好基类、override 桩、`[CreateAssetMenu]`），这些"要写代码的类型"不用从空文件起手。
+
+### 变更
+
+- **菜单路径品牌 `Likeon` → `Sigil` 并分类。** 资产创建菜单现归到 **Sigil/GAS**、**Sigil/Combat**（Attack Definition / Bullet Definition / Combat Settings / Damage Execution / Ability Action Library）、**Sigil/Movement**（movement 包）；编辑器工具菜单（GAS Debugger、Gameplay Tags、tag 常量生成器、文档）归到 **Sigil/GAS**。纯外观改动——不影响已有资产。
+
 ## [0.6.0] - 2026-07-05
 
 ### 新增
 
-- **属性集现在可以在编辑器里定义、无需手写 C#（代码生成）。** UE 的 GAS 逼你用 C++ 写属性，Sigil 把这个痛点补上了。新建一个 **`AttributeSetDefinition`** 资产（*Create → Likeon → GAS → Attribute Set Definition*），在面板里声明属性（名字、默认值、可选的下限 / 上限属性钳制、Meta 标记），点 **生成 C#**——`AttributeSetCodeGenerator` 产出一个可编译的 `AttributeSet` 子类（`<类名>.g.cs`：字段、`RegisterAttributes`、强类型 `…Attribute` 句柄、`PreAttributeChange` 里的钳制），外加一个只生成一次、生成器永不覆盖的手写 partial 桩（`<类名>.cs`）。资产是唯一真源，生成是单向的（资产 → C#）；自定义逻辑（用生成的 `OnPreAttributeChange` 钩子加钳制、用 `PostGameplayEffectExecute` 写 Meta 管线）写在手写 partial 里。因为产物是真类型，代码照样能强类型引用属性（`From<AS_X>("Health")`），也能直接丢进 `AbilityLoadout.GrantedAttributeSets`。
-- **GameplayTag 常量生成器。** *Likeon → GAS → Generate Gameplay Tag Constants* 读 `GameplayTagsSettings` 注册表，生成一个嵌套静态类（`Game.GameplayTags.Movement.State.Sprint`，对既是标签又是父级的节点生成 `Self` 字段），让代码用强类型 tag 引用替代弱类型的 `RequestTag("…")`，且从注册表自动同步、不用再手维护。（tag 本来就能在编辑器里创建；这里只补代码端常量。）
+- **属性集现在可以在编辑器里定义、无需手写 C#（代码生成）。** UE 的 GAS 逼你用 C++ 写属性，Sigil 把这个痛点补上了。新建一个 **`AttributeSetDefinition`** 资产（*Create → Sigil → GAS → Attribute Set Definition*），在面板里声明属性（名字、默认值、可选的下限 / 上限属性钳制、Meta 标记），点 **生成 C#**——`AttributeSetCodeGenerator` 产出一个可编译的 `AttributeSet` 子类（`<类名>.g.cs`：字段、`RegisterAttributes`、强类型 `…Attribute` 句柄、`PreAttributeChange` 里的钳制），外加一个只生成一次、生成器永不覆盖的手写 partial 桩（`<类名>.cs`）。资产是唯一真源，生成是单向的（资产 → C#）；自定义逻辑（用生成的 `OnPreAttributeChange` 钩子加钳制、用 `PostGameplayEffectExecute` 写 Meta 管线）写在手写 partial 里。因为产物是真类型，代码照样能强类型引用属性（`From<AS_X>("Health")`），也能直接丢进 `AbilityLoadout.GrantedAttributeSets`。
+- **GameplayTag 常量生成器。** *Sigil → GAS → Generate Gameplay Tag Constants* 读 `GameplayTagsSettings` 注册表，生成一个嵌套静态类（`Game.GameplayTags.Movement.State.Sprint`，对既是标签又是父级的节点生成 `Self` 字段），让代码用强类型 tag 引用替代弱类型的 `RequestTag("…")`，且从注册表自动同步、不用再手维护。（tag 本来就能在编辑器里创建；这里只补代码端常量。）
 
 ### 修复
 
@@ -22,7 +30,7 @@
 
 ### 新增
 
-- **GAS 调试器窗口**（`Likeon → GAS → GAS Debugger`）。Play Mode 下检视任意存活 `AbilitySystemComponent` 的轻量工具：在 Hierarchy/Scene 里选中任意 GameObject（在其自身与父链上解析 ASC），或从工具栏下拉直接挑一个，即可实时查看它的**属性**（按属性集分组的 Base/Current，最近变更的行闪烁、Current 与 Base 不同时高亮）、**拥有标签**（带多来源计数）、**已授予技能**（激活/被阻挡状态、激活组、冷却进度条）与**激活效果**（剩余时长、层数、周期、抑制状态、授予标签）。窗口开着时滚动记录**事件日志**：技能激活/失败（带原因）/结束、授予/移除、效果增删/叠层、属性变更（带来源）、GameplayEvent 与标签翻转。纯 Editor 工具——只进 Editor 程序集，打包零开销。
+- **GAS 调试器窗口**（`Sigil → GAS → GAS Debugger`）。Play Mode 下检视任意存活 `AbilitySystemComponent` 的轻量工具：在 Hierarchy/Scene 里选中任意 GameObject（在其自身与父链上解析 ASC），或从工具栏下拉直接挑一个，即可实时查看它的**属性**（按属性集分组的 Base/Current，最近变更的行闪烁、Current 与 Base 不同时高亮）、**拥有标签**（带多来源计数）、**已授予技能**（激活/被阻挡状态、激活组、冷却进度条）与**激活效果**（剩余时长、层数、周期、抑制状态、授予标签）。窗口开着时滚动记录**事件日志**：技能激活/失败（带原因）/结束、授予/移除、效果增删/叠层、属性变更（带来源）、GameplayEvent 与标签翻转。纯 Editor 工具——只进 Editor 程序集，打包零开销。
 - **`AbilitySystemComponent` 只读调试/UI 访问器**：`GetAttributeSets()`（枚举全部持有的属性集）与 `GetOwnedGameplayTagCounts(list)`（显式拥有标签及引用计数；同时开放 `GameplayTagCountContainer.FillTagCounts`）。零行为变化。
 
 ### 修复
@@ -68,9 +76,9 @@
 ### 变更
 
 - **可玩 Demo 升级为功能展示场**。示例从"只演示近战"升级为多条战斗线同场展示（近战 / 远程子弹 / 3 敌人锁定切换 / 削韧破防 / buff 叠层）+ 自解释 HUD（全靠订阅可观测性事件渲染）。框架零改动，仅把已实现并测试过的功能调用出来。新增 demo 脚本 `DemoRanged` / `DemoRangedAbility` / `DemoHUD`。
-- **可玩 Demo 改为 prefab + 场景交付**（策划工作流），不再纯运行时 `AddComponent`。编辑器生成器（`DemoPrefabBuilder`，菜单 *Likeon ▸ GAS ▸ Demo ▸ Build All*）烘出 `DemoPlayer` / `DemoEnemy` prefab（放 `Resources/`）和接好线的 `GASDemo.unity` 场景；玩家/敌人的属性集 + 技能由 `PlayerLoadout` / `EnemyLoadout` 资产经 `AbilitySystemComponent.initialLoadouts` 提供（无需代码 `AddAttributeSet` / `GiveAbility`）。玩家/敌人的结构构建由 `DemoActorBuilder` 在 prefab 生成器与运行时回退之间共用。`GASDemo` 现在是薄编排：prefab 模式下只接 prefab 接不了的跨边界引用（相机 `ViewSource` / 第三人称相机 / HUD）+ 动态事件订阅；场景没摆实例时回退到运行时现场构建（所以 demo 挂到空物体上仍"挂上就跑"，headless 冒烟测试照常）。`DemoPlayerController` / `DemoRanged` 的引用字段现在在 Inspector 可见。新增冒烟测试 `M` / `N` / `O` 覆盖 prefab 实例化与 adopt 路径。
+- **可玩 Demo 改为 prefab + 场景交付**（策划工作流），不再纯运行时 `AddComponent`。编辑器生成器（`DemoPrefabBuilder`，菜单 *Sigil ▸ GAS ▸ Demo ▸ Build All*）烘出 `DemoPlayer` / `DemoEnemy` prefab（放 `Resources/`）和接好线的 `GASDemo.unity` 场景；玩家/敌人的属性集 + 技能由 `PlayerLoadout` / `EnemyLoadout` 资产经 `AbilitySystemComponent.initialLoadouts` 提供（无需代码 `AddAttributeSet` / `GiveAbility`）。玩家/敌人的结构构建由 `DemoActorBuilder` 在 prefab 生成器与运行时回退之间共用。`GASDemo` 现在是薄编排：prefab 模式下只接 prefab 接不了的跨边界引用（相机 `ViewSource` / 第三人称相机 / HUD）+ 动态事件订阅；场景没摆实例时回退到运行时现场构建（所以 demo 挂到空物体上仍"挂上就跑"，headless 冒烟测试照常）。`DemoPlayerController` / `DemoRanged` 的引用字段现在在 Inspector 可见。新增冒烟测试 `M` / `N` / `O` 覆盖 prefab 实例化与 adopt 路径。
 - **Demo 进一步演示输入/技能接线**：输入分发（键 → `InputTag` → `InputProcessor_ActivateAbilityByTag` → 技能，不直接 `TryActivate`）、上下文切换（`Push/PopInputSetup` 切载具键位，近战键改鸣笛）、用 `AbilityInteractionRules` 资产做技能 block/cancel（持续型专注挡近战、远程取消专注）、武器 → 不同技能（`WeaponComponent` 注入 `Weapon.Sword`/`Weapon.Axe`，近战键多态成轻击/重击）。新增 demo 脚本 `DemoFocusAbility`。仍无框架改动。
-- **Demo 改为数据驱动**——全部配置（输入控制集、技能交互规则、技能、攻击、子弹、效果）收进一个**策划可在 Inspector 编辑**的 `DemoConfig` 资产（子资产嵌入其中）。`GASDemo` 从 `Config` 字段读取（demo 场景已接好）；留空则回退到代码建同一套默认值（裸 `AddComponent` / headless 冒烟测试仍可跑）。菜单 **Likeon ▸ GAS ▸ Generate Demo Config Assets** 可重新生成资产并接进场景。新增 `DemoConfig`、`DemoConfigBuilder`。
+- **Demo 改为数据驱动**——全部配置（输入控制集、技能交互规则、技能、攻击、子弹、效果）收进一个**策划可在 Inspector 编辑**的 `DemoConfig` 资产（子资产嵌入其中）。`GASDemo` 从 `Config` 字段读取（demo 场景已接好）；留空则回退到代码建同一套默认值（裸 `AddComponent` / headless 冒烟测试仍可跑）。菜单 **Sigil ▸ GAS ▸ Generate Demo Config Assets** 可重新生成资产并接进场景。新增 `DemoConfig`、`DemoConfigBuilder`。
 - demo 冒烟测试从 1 个扩到 **11** 个（近战 / 锁定 / 远程 / 叠层 + 输入分发 / 武器切换 / 专注挡近战 / 远程取消专注 / 载具鸣笛 + 配置完整性 / 指定配置构建）全过；现**随 Sample 发布**（`Samples~/PlayableDemo/Tests/`），导入可玩 Demo 即带可运行测试。测试总数升至 **EditMode 21 + PlayMode 102 = 123**。
 - 测试迁入包内 `Tests/` 目录（PlayMode + EditMode），随包发布，用户加 `"testables"` 即可运行。
 
@@ -112,7 +120,7 @@
 - **`GamePhaseSubsystem` + `GamePhaseAbility`** — 嵌套层级 tag 阶段（父子共存、兄弟互斥）+ 开始/结束观察者。
 - **`CollisionTrace`** — 通用 OverlapSphere 命中检测，含去重、状态开关、过滤（陷阱 / AOE / 环境伤害），与 `MeleeAttackTrace` 分工。
 - **`MovementCancellation`** — 动画事件驱动的窗口，玩家移动时切换 `Animator.applyRootMotion`。
-- **移动** — `MovementSystemComponent`、`CharacterMovementSystemComponent`，状态镜像到 ASC；数据驱动运动层（空中状态、视角相对 aim offset、核心状态标签 → Animator）+ 示例分层 Animator Controller 生成器（`Likeon ▸ GAS ▸ Samples`）。
+- **移动** — `MovementSystemComponent`、`CharacterMovementSystemComponent`，状态镜像到 ASC；数据驱动运动层（空中状态、视角相对 aim offset、核心状态标签 → Animator）+ 示例分层 Animator Controller 生成器（`Sigil ▸ GAS ▸ Samples`）。
 - **可观测性** — 供任意 UI/AI/存档消费方订阅的变更事件：`OnAttributeChanged`、`OnTagChanged`、`OnAbilityActivated/Ended`、`OnGameplayEvent`、**`OnActiveEffectAdded`/`OnActiveEffectRemoved`** + 只读 `GetActiveGameplayEffects()` / `GetActiveGameplayEffect(handle)`（buff/debuff 条带剩余时长），以及 战斗/削韧/锁定/武器 事件。
 - **表现** — GameplayCue、表面效果（`SurfaceEffectComponent`/`SurfaceEffectLibrary`）、相机混合栈。
 - **编辑器套件** — GameplayTag 选择器、标签注册表与窗口、`[SerializeReference]` 选择器、资产 Inspector、标签扫描器——统一收在顶部 **Likeon** 菜单下。

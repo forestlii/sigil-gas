@@ -11,7 +11,7 @@ namespace Likeon.GAS
     /// 技能装载资产：声明要授予的技能、要常驻施加的效果、要添加的属性集类型。
     /// 由 ASC 一次性授予，授予结果用 <see cref="GrantedAbilityHandles"/> 整批回收。
     /// </summary>
-    [CreateAssetMenu(fileName = "AbilityLoadout_New", menuName = "Likeon/GAS/Ability Loadout")]
+    [CreateAssetMenu(fileName = "AbilityLoadout_New", menuName = "Sigil/GAS/Ability Loadout")]
     public class AbilityLoadout : ScriptableObject
     {
         [Serializable]

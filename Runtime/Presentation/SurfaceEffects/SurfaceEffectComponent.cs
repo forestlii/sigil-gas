@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace Likeon.GAS
 {
-    [AddComponentMenu("Likeon/GAS/Surface Effect Component")]
+    [AddComponentMenu("Sigil/GAS/Surface Effect Component")]
     public class SurfaceEffectComponent : MonoBehaviour
     {
         [Header("情景")]

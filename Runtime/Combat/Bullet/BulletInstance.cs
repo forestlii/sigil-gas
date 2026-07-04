@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace Likeon.GAS
 {
-    [AddComponentMenu("Likeon/GAS/Bullet Instance")]
+    [AddComponentMenu("Sigil/GAS/Bullet Instance")]
     public class BulletInstance : MonoBehaviour
     {
         public BulletDefinition Definition { get; private set; }

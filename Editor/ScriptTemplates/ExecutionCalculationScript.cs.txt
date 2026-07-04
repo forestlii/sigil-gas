@@ -1,0 +1,14 @@
+using System.Collections.Generic;
+using Likeon.GAS;
+using UnityEngine;
+
+[CreateAssetMenu(fileName = "#SCRIPTNAME#", menuName = "Sigil/Combat/Executions/#SCRIPTNAME#")]
+public class #SCRIPTNAME# : GameplayEffectExecutionCalculation
+{
+    public override void Execute(GameplayEffectSpec spec, AbilitySystemComponent sourceASC,
+        AbilitySystemComponent targetASC, List<GameplayExecutionOutput> outputs)
+    {
+        // TODO: compute your custom modifier(s) and add them to `outputs`,
+        // e.g. a damage formula that reads attributes off sourceASC / targetASC.
+    }
+}

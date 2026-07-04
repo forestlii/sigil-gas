@@ -11,7 +11,7 @@ using UnityEngine;
 namespace Likeon.GAS
 {
     /// <summary>属性集的编辑器定义（codegen 输入）。</summary>
-    [CreateAssetMenu(fileName = "AttributeSetDefinition", menuName = "Likeon/GAS/Attribute Set Definition")]
+    [CreateAssetMenu(fileName = "AttributeSetDefinition", menuName = "Sigil/GAS/Attribute Set Definition")]
     public class AttributeSetDefinition : ScriptableObject
     {
         [Tooltip("生成的属性集类名（如 AS_PlayerStats）")]

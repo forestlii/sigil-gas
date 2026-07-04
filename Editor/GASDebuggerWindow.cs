@@ -28,7 +28,7 @@ namespace Likeon.GAS.Editor
         private readonly List<KeyValuePair<GameplayTag, int>> _tagCountsBuffer = new List<KeyValuePair<GameplayTag, int>>();
         private readonly StringBuilder _sb = new StringBuilder();
 
-        [MenuItem("Likeon/GAS/GAS Debugger")]
+        [MenuItem("Sigil/GAS/GAS Debugger")]
         public static void Open()
         {
             var window = GetWindow<GASDebuggerWindow>("GAS Debugger");

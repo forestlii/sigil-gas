@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Likeon. Licensed under the MIT License.
-// 编辑器：Likeon ▸ GAS ▸ Documentation —— 打开随包附带的使用文档。
+// 编辑器：Sigil ▸ GAS ▸ Documentation —— 打开随包附带的使用文档。
 
 using System.IO;
 using UnityEditor;
@@ -12,7 +12,7 @@ namespace Likeon.GAS.Editor
     {
         private const string DocRelPath = "Documentation~/Usage.md";
 
-        [MenuItem("Likeon/GAS/Documentation", priority = 1)]
+        [MenuItem("Sigil/GAS/Documentation", priority = 1)]
         public static void OpenDocumentation()
         {
             // 解析本包在磁盘上的真实路径（兼容 Packages/ 嵌入或 file: 引用），拼出文档路径。

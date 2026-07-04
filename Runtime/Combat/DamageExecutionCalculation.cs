@@ -12,7 +12,7 @@ namespace Likeon.GAS
     ///                  （格挡时再减 GuardDamageNegation），结果写入目标 AS_Health.IncomingDamage。
     /// IncomingDamage 再由 AS_Health 的 Meta 管线映射成 -Health。
     /// </summary>
-    [CreateAssetMenu(fileName = "Exec_Damage", menuName = "Likeon/GAS/Damage Execution")]
+    [CreateAssetMenu(fileName = "Exec_Damage", menuName = "Sigil/Combat/Damage Execution")]
     public class DamageExecutionCalculation : GameplayEffectExecutionCalculation
     {
         [Tooltip("SetByCaller 里代表附加伤害的标签（如 Data.Damage）")]

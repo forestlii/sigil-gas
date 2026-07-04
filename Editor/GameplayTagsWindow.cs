@@ -12,7 +12,7 @@ namespace Likeon.GAS.Editor
         private string _newTag = string.Empty;
         private Vector2 _scroll;
 
-        [MenuItem("Likeon/GAS/Gameplay Tags", priority = 0)]
+        [MenuItem("Sigil/GAS/Gameplay Tags", priority = 0)]
         public static void Open()
         {
             var window = GetWindow<GameplayTagsWindow>(false, "Gameplay Tags");
@@ -42,7 +42,7 @@ namespace Likeon.GAS.Editor
                 }
             }
 
-            // 扫描工程补标签（等同 Likeon/GAS/Scan Project for Gameplay Tags）
+            // 扫描工程补标签（等同 Sigil/GAS/Scan Project for Gameplay Tags）
             if (GUILayout.Button("扫描工程补标签 Scan Project for Gameplay Tags"))
                 GameplayTagScanner.Scan();
 

@@ -12,7 +12,7 @@ namespace Likeon.GAS
     /// 能力动作库资产：按能力标签持有多个 <see cref="AbilityActionSet"/>。
     /// <see cref="SelectBestAbilityActions"/> 先按能力标签选中对应 set，再按施法者/目标状态选出动作组。
     /// </summary>
-    [CreateAssetMenu(fileName = "AbilityActionLibrary_New", menuName = "Likeon/GAS/Ability Action Library")]
+    [CreateAssetMenu(fileName = "AbilityActionLibrary_New", menuName = "Sigil/Combat/Ability Action Library")]
     public class AbilityActionLibrary : ScriptableObject
     {
         [Tooltip("按能力标签组织的动作集（每个 AbilityTag 一组，可含 Layered 条件分支）")]

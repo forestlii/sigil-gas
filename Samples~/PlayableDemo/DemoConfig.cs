@@ -4,7 +4,7 @@
 //
 // 两条路：
 //  · 真实工作流（推荐）：demo 场景里把一个 DemoConfig.asset 拖到 GASDemo.Config 上；策划改这些 .asset 即可。
-//    用菜单 *Likeon ▸ GAS ▸ Generate Demo Config Assets* 一键烘出一整套默认资产并接进场景。
+//    用菜单 *Sigil ▸ GAS ▸ Generate Demo Config Assets* 一键烘出一整套默认资产并接进场景。
 //  · 零设置回退：GASDemo.Config 留空时（裸 AddComponent / headless 测试），用下方 CreateDefault() 在内存里
 //    建同一套默认值——保证 demo 仍能"挂上就跑"、冒烟测试仍能 headless 验证。
 using System.Collections.Generic;
@@ -13,7 +13,7 @@ using UnityEngine;
 
 namespace GASDemo
 {
-    [CreateAssetMenu(fileName = "DemoConfig", menuName = "Likeon/GAS/Demo/Demo Config")]
+    [CreateAssetMenu(fileName = "DemoConfig", menuName = "Sigil/GAS/Demo/Demo Config")]
     public class DemoConfig : ScriptableObject
     {
         [Header("输入分发（按键→InputTag→技能；FirstOnly=输入互斥/多态）")]

@@ -12,7 +12,7 @@ using UnityEngine;
 
 namespace Likeon.GAS
 {
-    [AddComponentMenu("Likeon/GAS/Collision Trace")]
+    [AddComponentMenu("Sigil/GAS/Collision Trace")]
     public class CollisionTrace : MonoBehaviour
     {
         [Tooltip("检测点（每个点做一次 OverlapSphere）")]

@@ -3,7 +3,7 @@
 //   ② Loadout 资产（PlayerLoadout/EnemyLoadout，引用 DemoConfig 的技能/属性集）→ 本步
 //   ② prefab（玩家/敌人，组件齐 + prefab 内部引用接好 + ASC.initialLoadouts）→ 后续
 //   ② 场景（地面/相机/prefab 实例/HUD）→ 后续
-// 菜单：Likeon ▸ GAS ▸ Demo ▸ Build Loadouts / Build Prefabs / Build Scene
+// 菜单：Sigil ▸ GAS ▸ Demo ▸ Build Loadouts / Build Prefabs / Build Scene
 // 批处理：Unity.exe -batchmode -projectPath ... -executeMethod GASDemo.Editor.DemoPrefabBuilder.BuildLoadouts -quit
 using System.Collections.Generic;
 using System.IO;
@@ -17,7 +17,7 @@ namespace GASDemo.Editor
     public static class DemoPrefabBuilder
     {
         // ===================== 阶段② Loadout 资产 =====================
-        [MenuItem("Likeon/GAS/Demo/Build Loadouts")]
+        [MenuItem("Sigil/GAS/Demo/Build Loadouts")]
         public static void BuildLoadouts()
         {
             string demoFolder = FindDemoFolder();
@@ -46,7 +46,7 @@ namespace GASDemo.Editor
         // 再 PrefabUtility.SaveAsPrefabAsset —— Unity 自动序列化 prefab 内部引用，避免手工 SerializedProperty 接嵌套 entries。
         // ASC.initialLoadouts 接对应 loadout（实例化时 Awake 授予属性集+技能）。颜色不烘（运行时上，见 DemoActorBuilder.SetColor）。
         // prefab 进 Resources/ 子目录，供冒烟测试 Resources.Load 加载（§6.2）。
-        [MenuItem("Likeon/GAS/Demo/Build Prefabs")]
+        [MenuItem("Sigil/GAS/Demo/Build Prefabs")]
         public static void BuildPrefabs()
         {
             string demoFolder = FindDemoFolder();
@@ -81,7 +81,7 @@ namespace GASDemo.Editor
         // ===================== 阶段②c 场景（玩家+敌人 prefab 实例接 GASDemo）=====================
         // 把 prefab 实例摆进场景（策划能在场景里看到/移动它们、改 prefab override），GASDemo 退化为薄编排：
         // 运行时只接 prefab 接不了的跨边界引用（相机 ViewSource/ThirdPersonCamera/HUD）+ 动态订阅（敌人变色/命中 Cue）+ 运行时上色。
-        [MenuItem("Likeon/GAS/Demo/Build Scene")]
+        [MenuItem("Sigil/GAS/Demo/Build Scene")]
         public static void BuildScene()
         {
             string demoFolder = FindDemoFolder();
@@ -123,7 +123,7 @@ namespace GASDemo.Editor
         }
 
         // 一键：loadout + prefab + 场景全套
-        [MenuItem("Likeon/GAS/Demo/Build All (Loadouts + Prefabs + Scene)")]
+        [MenuItem("Sigil/GAS/Demo/Build All (Loadouts + Prefabs + Scene)")]
         public static void BuildAll() => BuildScene();
 
         // ===================== 共用工具 =====================

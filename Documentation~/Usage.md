@@ -219,7 +219,7 @@ public sealed class AS_Shield : AttributeSet
 
 Unreal's GAS forces attributes into C++. Sigil lets you define them in the editor and generate the C# for you — so a designer can add attributes without a programmer, while code still gets a real, compile-time-safe type.
 
-1. *Create → Likeon → GAS → **Attribute Set Definition***. On the asset, set the class name + namespace and list your attributes: name, default value, optional clamp (min, and/or "clamp to this attribute" e.g. `Health` → `MaxHealth`), and a Meta flag.
+1. *Create → Sigil → GAS → **Attribute Set Definition***. On the asset, set the class name + namespace and list your attributes: name, default value, optional clamp (min, and/or "clamp to this attribute" e.g. `Health` → `MaxHealth`), and a Meta flag.
 2. Click **Generate C#**. This writes two files next to the asset:
    - `<ClassName>.g.cs` — the generated `AttributeSet` subclass (fields, `RegisterAttributes`, typed `…Attribute` handles, clamps in `PreAttributeChange`). **Never edit this** — regenerate from the asset instead.
    - `<ClassName>.cs` — a hand-written partial, generated **once** and never overwritten. Put custom logic here: extra clamps via the `partial void OnPreAttributeChange(…)` hook the generated code calls, and the damage Meta pipeline by overriding `PostGameplayEffectExecute`.
@@ -230,7 +230,7 @@ The definition asset is the single source of truth; generation is one-way (asset
 
 ## 6. Gameplay Effects
 
-`GameplayEffect` is a ScriptableObject: *Create → Likeon → GAS → Gameplay Effect*.
+`GameplayEffect` is a ScriptableObject: *Create → Sigil → GAS → Gameplay Effect*.
 
 **Key fields**:
 - **DurationType**: `Instant` (changes the base value, e.g. one hit of damage) / `HasDuration` (changes the current value for a time) / `Infinite` (lasts until manually removed)
@@ -305,7 +305,7 @@ asc.ClearAbility(h); // remove
 
 ### 7.3 Batch grant with AbilityLoadout
 
-An `AbilityLoadout` asset (*Create → Likeon → GAS → Ability Loadout*) bundles "abilities + persistent effects + attribute sets (typed, pick the concrete subclass in the Inspector)" for a single grant:
+An `AbilityLoadout` asset (*Create → Sigil → GAS → Ability Loadout*) bundles "abilities + persistent effects + attribute sets (typed, pick the concrete subclass in the Inspector)" for a single grant:
 
 ```csharp
 var handles = asc.GrantLoadout(defaultLoadout); // returns GrantedAbilityHandles, revocable as a batch
@@ -321,7 +321,7 @@ A new exclusive ability automatically interrupts the `ExclusiveReplaceable` grou
 
 ### 7.5 State-aware ability relationships
 
-`AbilityInteractionRules` (*Create → Likeon → GAS → Ability Interaction Rules*) data-drives "block/cancel/activation gating between abilities": each `AbilityTagRule` has an `AbilityTag` (which abilities the rule applies to) + `AbilityTagsToBlock` / `AbilityTagsToCancel` (when this ability activates, block/cancel abilities carrying these tags) + `ActivationRequiredTags` / `ActivationBlockedTags` (activation gating). Its **conditional rules** `ConditionalAbilityTagRules` carry an `ActorTagQuery` (`GameplayTagQuery`) so the group only takes effect while the character's current tags match the query (state-aware). Attach it to the ASC:
+`AbilityInteractionRules` (*Create → Sigil → GAS → Ability Interaction Rules*) data-drives "block/cancel/activation gating between abilities": each `AbilityTagRule` has an `AbilityTag` (which abilities the rule applies to) + `AbilityTagsToBlock` / `AbilityTagsToCancel` (when this ability activates, block/cancel abilities carrying these tags) + `ActivationRequiredTags` / `ActivationBlockedTags` (activation gating). Its **conditional rules** `ConditionalAbilityTagRules` carry an `ActorTagQuery` (`GameplayTagQuery`) so the group only takes effect while the character's current tags match the query (state-aware). Attach it to the ASC:
 
 ```csharp
 asc.SetInteractionRules(myRules);   // or set the asc.InteractionRules field directly
@@ -409,7 +409,7 @@ At runtime: press the key → `InputSystemComponent` dispatches `InputTag.Crouch
 
 ### 9.2 Control setups and polymorphism
 
-`InputControlSetup` (*Create → Likeon → GAS → Input Control Setup*) holds:
+`InputControlSetup` (*Create → Sigil → GAS → Input Control Setup*) holds:
 - **Checkers (InputChecker)** (gating; all must pass to proceed; `InputChecker_TagRelationship` passes/blocks by state)
 - **Processors (InputProcessor)** (the polymorphic dispatch targets)
 - **ExecutionType**: `FirstOnly` (only the first one that passes runs — the key to polymorphism) / `MatchAll`
@@ -457,7 +457,7 @@ Define a buffer window in `InputConfig`; an attack animation uses an Animation E
 
 ### 10.1 Attack definition
 
-`AttackDefinition` (*Create → Likeon → GAS → Attack Definition*): what to apply on hit.
+`AttackDefinition` (*Create → Sigil → Combat → Attack Definition*): what to apply on hit.
 - **TargetEffect**: the main effect applied on hit (a damage GE)
 - **SetByCallerMagnitudes**: the values passed to the effect (e.g. `Data.Damage = 20`)
 - **TargetEffectContainer**: extra batch effects
@@ -527,7 +527,7 @@ The companion package provides: `MovementSystemComponent` / `CharacterMovementSy
 
 Cues fire automatically when an effect is applied (the GE's **GameplayCues** field): Instant→`Executed`, Duration/Infinite→`OnActive` on application, `Removed` on removal.
 
-Write a cue handler: `GameplayCueNotify_Static` (*Create → Likeon → GAS → Gameplay Cue Notify (Static)*), configure particles + audio + the CueTag it responds to (hierarchical match). Register it:
+Write a cue handler: `GameplayCueNotify_Static` (*Create → Sigil → GAS → Gameplay Cue Notify (Static)*), configure particles + audio + the CueTag it responds to (hierarchical match). Register it:
 
 ```csharp
 GameplayCueManager.Instance.RegisterCueNotify(myCueNotify);
@@ -567,15 +567,15 @@ cam.PopCameraMode(aimMode);
 
 - **GameplayTag picker**: every `GameplayTag` field becomes a hierarchical dropdown + search, with a `+` beside it to add a tag in one click.
 - **GameplayTagContainer multi-select**: lists the contained tags (removable) + a deduplicating dropdown to add.
-- **Tag registry `GameplayTagsSettings`** + the top-level menu window **`Likeon ▸ GAS ▸ Gameplay Tags`**: add/remove tags centrally (the source of the dropdown candidates); the window also has a "scan the project for tags" button. The plugin's editor entry points are all under the **Likeon** menu, not in Project Settings.
-- **Tag scanning**: menu `Likeon ▸ GAS ▸ Scan Project for Gameplay Tags` scans `RequestTag("...")` literals in the project and adds them to the registry in one click.
+- **Tag registry `GameplayTagsSettings`** + the top-level menu window **`Sigil ▸ GAS ▸ Gameplay Tags`**: add/remove tags centrally (the source of the dropdown candidates); the window also has a "scan the project for tags" button. The plugin's editor entry points are all under the **Likeon** menu, not in Project Settings.
+- **Tag scanning**: menu `Sigil ▸ GAS ▸ Scan Project for Gameplay Tags` scans `RequestTag("...")` literals in the project and adds them to the registry in one click.
 - **Enhanced Inspectors**: GameplayEffect / GameplayAbility / AttackDefinition / AbilityLoadout carry summaries and configuration-validation hints. `AbilityLoadout`'s attribute-set list and `InputControlSetup`'s checker/processor lists both add `[SerializeReference]` entries via a subclass dropdown.
 - **Attribute-set codegen**: `AttributeSetDefinition` asset + its **Generate C#** button author attribute sets without hand-writing C# — see [§5.1](#51-authoring-attribute-sets-in-the-editor-no-hand-written-c).
-- **Gameplay tag constants**: menu `Likeon ▸ GAS ▸ Generate Gameplay Tag Constants` turns the tag registry into a nested static class (`Game.GameplayTags.Movement.State.Sprint`, with `Self` for tags that are also parents), so code references tags type-safely instead of via `RequestTag("…")` — auto-synced from the registry rather than a hand-maintained constants file.
+- **Gameplay tag constants**: menu `Sigil ▸ GAS ▸ Generate Gameplay Tag Constants` turns the tag registry into a nested static class (`Game.GameplayTags.Movement.State.Sprint`, with `Self` for tags that are also parents), so code references tags type-safely instead of via `RequestTag("…")` — auto-synced from the registry rather than a hand-maintained constants file.
 
 ### 13.1 Runtime debugger — GAS Debugger
 
-Menu **`Likeon ▸ GAS ▸ GAS Debugger`**. Answers "why won't this ability activate / did that buff actually land" questions while the game runs in Play Mode:
+Menu **`Sigil ▸ GAS ▸ GAS Debugger`**. Answers "why won't this ability activate / did that buff actually land" questions while the game runs in Play Mode:
 
 - **Picking a target**: select any GameObject in the Hierarchy/Scene — the `AbilitySystemComponent` is resolved on it or its parents (selecting a character's weapon bone still finds the host), or pick any ASC in the scene from the toolbar dropdown (not just the player). `Lock` pins the current target while you click around; `Ping` highlights it in the Hierarchy.
 - **Attributes**: Base / Current per attribute, grouped by attribute set. Rows that just changed flash yellow; Current is highlighted when it differs from Base (temporary modifiers in effect).
@@ -598,7 +598,7 @@ The current version is **single-player authoritative logic**. Network replicatio
 
 ## 15. FAQ
 
-> 💡 **Open the debugger first**: `Likeon ▸ GAS ▸ GAS Debugger` ([§13.1](#131-runtime-debugger--gas-debugger)) with the misbehaving character selected — it pinpoints most of the issues below at a glance.
+> 💡 **Open the debugger first**: `Sigil ▸ GAS ▸ GAS Debugger` ([§13.1](#131-runtime-debugger--gas-debugger)) with the misbehaving character selected — it pinpoints most of the issues below at a glance.
 
 **Q: My ability won't activate.**
 **Check the `Failed` line in the debugger's Event Log — the failure reason enum tells you directly** (missing RequiredTags / BlockedTags / cost not met / on cooldown / activation-group blocked / blocked by another ability). Manual checklist: ① are the AbilityTags set (needed for activate-by-tag); ② are ActivationRequiredTags/BlockedTags blocked by the current state (see the Owned Tags panel); ③ can the CostEffect not be paid; ④ is it blocked by cooldown or activation-group exclusivity (see the Abilities panel's cooldown bar / Blocked badge).
@@ -613,7 +613,7 @@ Confirm the movement system mirrors `Movement.State.Sprint` onto the ASC (automa
 Confirm: ① Animation Events call `BeginAttackTrace`/`EndAttackTrace`; ② the socket Transforms are configured in Entries; ③ the target has a Collider + ASC; ④ both sides' `CombatTeamAgent` are hostile (different TeamId).
 
 **Q: The tag dropdown is empty.**
-Open the *Likeon ▸ GAS ▸ Gameplay Tags* window to add tags, or run *Likeon ▸ GAS ▸ Scan Project for Gameplay Tags* once (the button is also in the window).
+Open the *Sigil ▸ GAS ▸ Gameplay Tags* window to add tags, or run *Sigil ▸ GAS ▸ Scan Project for Gameplay Tags* once (the button is also in the window).
 
 ---
 
@@ -658,7 +658,7 @@ A late-registered ASC automatically receives all globally-applied items; re-appl
 Manage nested game phases with hierarchical GameplayTags — **parent and child phases coexist, sibling phases are exclusive**:
 
 ```csharp
-// A phase is a GamePhaseAbility asset (Create → Likeon → GAS → Game Phase Ability) with a GamePhaseTag
+// A phase is a GamePhaseAbility asset (Create → Sigil → GAS → Game Phase Ability) with a GamePhaseTag
 GamePhaseSubsystem.Instance.StartPhase(gameAsc, playingPhase);    // Game.Playing
 GamePhaseSubsystem.Instance.StartPhase(gameAsc, warmUpPhase);     // Game.Playing.WarmUp (coexists with the parent)
 GamePhaseSubsystem.Instance.StartPhase(gameAsc, postGamePhase);   // ends the sibling WarmUp, keeps the parent Game.Playing
@@ -889,7 +889,7 @@ Most concepts carry over **by name and meaning**; this table lists the mappings 
 | Input ID enum binding | `InputTag` + `InputConfig` + `InputProcessor` polymorphism | Closer to Lyra's Enhanced Input direction (§9) |
 | `CommitAbility` / Cost GE / Cooldown GE | Same names, same semantics | Cooldown remaining: `GetCooldownRemainingForTags` |
 | `GameplayCueNotify_Static` | Same (ScriptableObject) | **The stateful `_Actor` form is not provided** — manage persistent effect instances yourself (Add/Remove event semantics exist) |
-| Gameplay Debugger (Shift+') | `Likeon ▸ GAS ▸ GAS Debugger` (§13.1) | Inspect any selected GameObject |
+| Gameplay Debugger (Shift+') | `Sigil ▸ GAS ▸ GAS Debugger` (§13.1) | Inspect any selected GameObject |
 | Replication / Prediction / NetExecutionPolicy | **Not implemented** (single-player authoritative) | Planned as a later phase (§14) |
 
 ---

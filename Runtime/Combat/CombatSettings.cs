@@ -10,7 +10,7 @@ namespace Likeon.GAS
     /// 战斗系统设置资产。<see cref="Active"/> 是当前生效实例（宿主未设则用默认值实例）。
     /// 对齐 UE 战斗系统设置 的两个字段。
     /// </summary>
-    [CreateAssetMenu(fileName = "CombatSettings", menuName = "Likeon/GAS/Combat Settings")]
+    [CreateAssetMenu(fileName = "CombatSettings", menuName = "Sigil/Combat/Combat Settings")]
     public class CombatSettings : ScriptableObject
     {
         [Tooltip("查询主骨骼网格用的标签名（对齐 UE CharacterMeshLookupTag，默认 'Main'）")]

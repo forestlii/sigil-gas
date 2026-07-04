@@ -17,7 +17,7 @@ namespace Likeon.GAS
     }
 
     /// <summary>攻击定义资产。命中目标时按它施加效果/表现。</summary>
-    [CreateAssetMenu(fileName = "Attack_New", menuName = "Likeon/GAS/Attack Definition")]
+    [CreateAssetMenu(fileName = "Attack_New", menuName = "Sigil/Combat/Attack Definition")]
     public class AttackDefinition : ScriptableObject
     {
         [Header("攻击标签（近战/远程、劈砍/打击……）")]
