@@ -23,7 +23,7 @@ state-bus architecture. The **GameplayTag state bus** decouples and connects
 7. [Abilities](#7-abilities)
 8. [AbilitySystemComponent cheat sheet](#8-abilitysystemcomponent-cheat-sheet)
 9. [Input dispatch (state-driven key polymorphism)](#9-input-dispatch-state-driven-key-polymorphism)
-10. [Melee combat](#10-melee-combat)
+10. [Combat (melee/ranged) — companion package](#10-combat-meleeranged--companion-package)
 11. [Movement / Locomotion (companion package)](#11-movement--locomotion-companion-package)
 12. [Presentation (Cue / context effects / camera)](#12-presentation-cue--context-effects--camera)
 13. [Editor tools](#13-editor-tools)
@@ -260,7 +260,7 @@ var handle = asc.ApplyGameplayEffectSpecToSelf(spec);  // application with data
 asc.RemoveActiveGameplayEffect(handle);                // remove a duration effect
 ```
 
-**Custom damage formula** (execution calculation) — derive from `GameplayEffectExecutionCalculation`. The framework ships a sample `DamageExecutionCalculation` (`AS_Combat.Damage − mitigation → IncomingDamage`). Put it as an asset into the GE's *Executions*.
+**Custom damage formula** (execution calculation) — derive from `GameplayEffectExecutionCalculation`. The **combat companion package** ships a sample `DamageExecutionCalculation` (`Damage − mitigation → IncomingDamage`, attribute-name based). Put it as an asset into the GE's *Executions*.
 
 ---
 
@@ -453,59 +453,15 @@ Define a buffer window in `InputConfig`; an attack animation uses an Animation E
 
 ---
 
-## 10. Melee combat
+## 10. Combat (melee/ranged) — companion package
 
-### 10.1 Attack definition
+> 📦 **Melee & ranged combat have been split into a separate companion package** `com.likeon.gas.combat` (GitHub: [sigil-combat](https://github.com/forestlii/sigil-combat)) and are **not in the core package**.
+>
+> Why: combat is a *domain* built on the ability system, not part of the core mechanics — splitting it out keeps the GAS core a pure ability system. The namespace is unchanged (`Likeon.GAS`); just install it alongside the core. It sits beside the movement companion; the two are independent and don't depend on each other.
 
-`AttackDefinition` (*Create → Sigil → Combat → Attack Definition*): what to apply on hit.
-- **TargetEffect**: the main effect applied on hit (a damage GE)
-- **SetByCallerMagnitudes**: the values passed to the effect (e.g. `Data.Damage = 20`)
-- **TargetEffectContainer**: extra batch effects
-- **TargetGameplayCues**: hit presentation
-- **KnockbackDistance / HitStallingDuration**: knockback / hit-stop
+The companion package provides: `AttackDefinition` / `AttackApplication` (what to apply on hit), `MeleeAttackTrace` / `CollisionTrace` (animation-event-driven hit detection), `CombatSystemComponent` + the `CombatFlow` pipeline (`AttackRequest` → `AttackResult` → `AttackResultProcessor`), `PoiseComponent` (poise / poise-break), `TargetingSystemComponent` (lock-on), `IWeapon` / `WeaponComponent` (weapon-tag injection for "different abilities per weapon"), `BulletDefinition` / `BulletInstance` / `BulletLauncher` (projectiles), `DamageExecutionCalculation` (mitigation + guard), `CombatTeamAgent` (affiliation), and the `ICombatInterface` contract. It resolves attributes **by name**, so it composes with your codegen attribute sets.
 
-### 10.2 The hit-detection component
-
-`MeleeAttackTrace` (on the character): sphere-cast hit detection using bone sockets (Transforms attached to bones). Configure `Entries` (each = one AttackDefinition + a set of detection points).
-
-**The hit window is driven by Animation Events** — call these at the start and end of the hit-frame range in the attack animation:
-
-```csharp
-// Called from Animation Events (int parameter = index into Entries)
-public void BeginAttackTrace(int index);
-public void EndAttackTrace();
-```
-
-The hit flow (automatic): sphere-cast → affiliation filtering (`CombatTeamAgent`, only hostiles) → each target is hit only once per window → apply the AttackDefinition's effects → produce an `AttackResult` registered on the target's `CombatSystemComponent` → trigger cue + hit-stop.
-
-### 10.3 Affiliation
-
-`CombatTeamAgent` (TeamId). Same = ally, different = enemy, -1 = neutral. Decided by `CombatTeamAgent.IsHostile(source, target)`.
-
-### 10.4 Damage formula
-
-By default SetByCaller goes straight to `IncomingDamage`; for mitigation, use `DamageExecutionCalculation` (reads `AS_Combat.Damage` − the target's mitigation → IncomingDamage) and put it into the damage GE's Executions.
-
-### 10.5 Weapons and abilities (different abilities per weapon)
-
-⚠️ **A common misconception first**: `WeaponComponent` **does not hold or grant ability assets** — it has no "ability list" field. On equip it only injects its `weaponTags` (e.g. `Weapon.Sword`) as loose tags onto the owner's ASC (`applyWeaponTagsToOwner`), and removes them on unequip. So "switch weapon → switch abilities" is done **via tags**, in one of two ways:
-
-**Path A (built-in, tag-gating, recommended, no code)**: grant all abilities to the ASC once, and on each weapon's abilities set `ActivationRequiredTags = [Weapon.Sword]` in the ability asset. Equip the sword → `Weapon.Sword` tag present → only the sword's abilities can activate; switch to a saber → the sword tag is removed and the saber tag injected → it automatically switches to the saber's abilities. The same attack key (`InputTag.Attack`) thus activates different abilities under different weapons (combine with the 9.2 polymorphism: give each weapon a higher-priority `InputProcessor_ActivateAbilityByTag` whose `StateQuery` requires that weapon's tag).
-
-**Path B (grant/revoke on equip, write your own glue)**: if you want a weapon to **carry** its own ability assets (granted on equip, revoked on unequip), there's no built-in field — subscribe to `WeaponComponent.OnEquipped` / `OnUnequipped` and call it yourself:
-
-```csharp
-weapon.OnEquipped   += owner => _handles = ownerASC.GrantLoadout(swordLoadout); // an AbilityLoadout asset
-weapon.OnUnequipped += ()    => _handles.RevokeFrom(ownerASC);                  // GrantedAbilityHandles.RevokeFrom
-```
-
-> Which to pick: use Path A to "gate already-granted abilities by the current weapon"; use Path B to "add/remove abilities dynamically with the weapon (the ability bar changes too)". They can be combined.
-
-**Other `WeaponComponent` / `IWeapon` bits:**
-
-- **`SourceObject`** (`Object`, get/set) — the equipment instance or data asset a weapon is backed by. The weapon itself only injects tags; `SourceObject` is the back-reference for equipment / loot / data-table systems to trace a weapon to its source. Purely yours to read; the framework doesn't interpret it.
-- **Targeting toggle** — `SetTargeting(bool)` / `ToggleTargeting()` / `IsTargeting` + `OnTargetingChanged`, a weapon-level aim/fire flag **distinct from the lock-on system** (`TargetingSystemComponent`). Reset to `false` on unequip. Hook `OnTargetingChanged` to swap a crosshair, FOV, or aim animation.
-- **Multiple trace segments** — besides the primary `MeleeTrace` (+ its entry index), add extra `(MeleeAttackTrace, entryIndex)` pairs to `AdditionalTraces`. `SetWeaponActive(true/false)` opens/closes the primary **and** all additional segments together (dual-blade / main+secondary hitboxes). `RefreshTraceInstances()` re-points every segment's source at the current owner ASC (called automatically on `Equip`).
+👉 **See the companion package's usage guide for full details**: `com.likeon.gas.combat/Documentation~/Usage.md`. The flagship **Playable Demo** ships with that package too.
 
 ---
 
@@ -669,7 +625,9 @@ GamePhaseSubsystem.Instance.WhenPhaseStartsOrIsActive(
 bool inPlaying = GamePhaseSubsystem.Instance.IsPhaseActive(GameplayTag.RequestTag("Game.Playing"));
 ```
 
-### 16.4 CollisionTrace (generic collision detection)
+### 16.4 CollisionTrace (generic collision detection) — combat companion
+
+> 📦 `CollisionTrace` (and §16.5 `MovementCancellation`) now live in the **combat companion package** `com.likeon.gas.combat`, not the core.
 
 Generic non-melee collision hits (traps, AOE zones, environmental damage areas). Unlike `MeleeAttackTrace` (which binds an AttackDefinition and deals damage), CollisionTrace only produces hit events — you decide the damage:
 
