@@ -6,6 +6,12 @@ All notable changes to Sigil are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.7.1] - 2026-07-05
+
+### Changed
+
+- **Custom `AbilityTask`s can now be written in any assembly** (combat package, samples, or your own game code), not just the core. `AbilityTask.InitTask` is now `protected internal` instead of `internal`, so a subclass's static factory (in any assembly) can bind the task to its owning ability — matching Unreal's subclassable `UAbilityTask`. No change for existing tasks.
+
 ## [0.7.0] - 2026-07-05
 
 ### Added

@@ -597,6 +597,8 @@ Other tasks: `AbilityTask_WaitDelay` (delay), `WaitDelayOneFrame` (one frame), `
 
 > The `animator` of `PlayMontageAndWaitForEvent` can be left empty — it then drives its 5 callbacks (OnCompleted / OnBlendOut / OnInterrupted / OnCancelled / OnEventReceived) purely by `duration`, which is handy for pure logic/tests.
 
+> **Write your own task** (works in any assembly since 0.7.1): subclass `AbilityTask`, add a static factory that does `new MyTask{…}; task.InitTask(ability); return task;`, start work in `OnActivate()` (use `RunCoroutine(...)` for per-frame loops), and clean up in `OnDestroy(bool)`. The framework auto-cancels the task when the ability ends, so `OnDestroy` is guaranteed to run — ideal for anything whose lifetime should match the ability (a follow cursor, a charge loop, a spawned indicator). The combat companion's `AbilityTask_GroundReticle` (fireball ground reticle) is a worked example.
+
 ### 16.2 GlobalAbilitySystem (global abilities/effects)
 
 Apply an ability/effect to **all registered ASCs** at once (arena-wide buffs/debuffs, environmental effects, phase abilities):

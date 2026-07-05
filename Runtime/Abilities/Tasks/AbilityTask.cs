@@ -29,8 +29,10 @@ namespace Likeon.GAS
         private Coroutine _coroutine;
         private bool _ended;
 
-        /// <summary>由具体任务的工厂调用，把任务挂到技能上。绑定 OwningAbility。</summary>
-        internal void InitTask(GameplayAbility ability)
+        /// <summary>由具体任务的静态工厂调用，把任务挂到技能上、绑定 OwningAbility。
+        /// `protected internal`：核心内的任务用 internal 通道，**其它程序集（combat 包 / 示例 / 宿主工程）
+        /// 的自定义 AbilityTask 子类经 protected 通道调用**——支持在任何程序集写自定义任务（对齐 UE UAbilityTask 可派生）。</summary>
+        protected internal void InitTask(GameplayAbility ability)
         {
             Ability = ability;
             ability?.AddTask(this);

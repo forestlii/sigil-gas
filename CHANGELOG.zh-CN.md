@@ -5,6 +5,12 @@
 本文件记录 Sigil 的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.7.1] - 2026-07-05
+
+### 变更
+
+- **自定义 `AbilityTask` 现在可写在任何程序集**（combat 包 / 示例 / 你自己的游戏代码），不再限核心。`AbilityTask.InitTask` 从 `internal` 改为 `protected internal`，让子类的静态工厂（任何程序集）都能把任务绑定到所属技能——对齐 UE 可派生的 `UAbilityTask`。现有任务不受影响。
+
 ## [0.7.0] - 2026-07-05
 
 ### 新增

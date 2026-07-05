@@ -596,6 +596,8 @@ protected override void OnActivateAbility(GameplayEventData triggerData)
 
 > `PlayMontageAndWaitForEvent` 的 `animator` 可留空——此时只按 `duration` 计时驱动 5 个回调（OnCompleted / OnBlendOut / OnInterrupted / OnCancelled / OnEventReceived），便于纯逻辑/测试。
 
+> **自己写任务**（0.7.1 起任何程序集都能写）：继承 `AbilityTask`，加个静态工厂 `new MyTask{…}; task.InitTask(ability); return task;`，在 `OnActivate()` 里干活（每帧循环用 `RunCoroutine(...)`），在 `OnDestroy(bool)` 里清理。技能结束时框架自动取消任务，所以 `OnDestroy` 一定会跑——凡是"生命周期该跟技能走"的东西都适合（跟随光标、蓄力循环、生成的指示物）。combat 配套包的 `AbilityTask_GroundReticle`（火球地面光标）就是范例。
+
 ### 16.2 全局技能/效果 GlobalAbilitySystem
 
 把一个技能/效果一次性施加到**所有已注册 ASC**（全场 buff/debuff、环境效果、阶段技能）：
