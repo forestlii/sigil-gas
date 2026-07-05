@@ -1,32 +1,23 @@
 {
   "name": "com.likeon.gas",
   "version": "0.6.0",
-  "displayName": "Sigil - Action Combat & Ability Framework",
-  "description": "Sigil — a GAS-style action-combat & ability framework for Unity. A GameplayTag-driven state bus connects abilities, attributes, effects, input dispatch, melee & ranged combat, movement, and presentation (GameplayCue, camera blend stack, surface effects). Independent Unity implementation; single-player authoritative logic.",
+  "displayName": "Sigil - GAS-style Ability System Framework",
+  "description": "Sigil — a GAS-style ability-system framework for Unity. A GameplayTag-driven state bus connects abilities, attributes, effects, input dispatch, and presentation (GameplayCue, camera blend stack, surface effects). Melee/ranged combat and movement live in optional companion packages (com.likeon.gas.combat, com.likeon.gas.movement). Independent Unity implementation; single-player authoritative logic.",
   "unity": "6000.4",
   "keywords": [
     "ability system",
     "gameplay ability",
     "gas",
-    "combat",
-    "action rpg",
     "framework",
     "gameplay tags",
     "abilities",
     "attributes",
-    "melee"
+    "effects"
   ],
   "author": {
     "name": "Likeon"
   },
   "dependencies": {
     "com.unity.inputsystem": "1.4.4"
-  },
-  "samples": [
-    {
-      "displayName": "Playable Demo",
-      "description": "可玩功能展示 demo：玩家/敌人 prefab + PlayableDemo 场景，演示输入→技能→近战/远程命中→扣血→GameplayCue、锁定切换、削韧破防、buff 叠层。属性集+技能由 initialLoadouts 数据驱动。导入后打开 PlayableDemo 场景按 Play 即玩（WASD 移动 / Shift 冲刺 / 鼠标看 / 空格或左键攻击）。A playable feature-showcase demo shipped as prefabs + scene; attributes & abilities come from data-driven loadouts.",
-      "path": "Samples~/PlayableDemo"
-    }
-  ]
+  }
 }

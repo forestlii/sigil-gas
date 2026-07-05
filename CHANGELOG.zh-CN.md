@@ -19,6 +19,8 @@
 
 ### 移除
 
+- **破坏性变更：整个战斗层（`Runtime/Combat/`，22 个文件）从核心移出，拆成独立配套包 [`com.likeon.gas.combat`](https://github.com/forestlii/sigil-combat)。** 这恢复了原战斗框架本就有的模块边界（能力/属性/战斗是三个独立模块），让核心回归纯能力系统。移除的类型：`AttackDefinition` / `AttackApplication` / `AttackResult`、`CombatFlow` 管线（`AttackRequest` / `AttackResultProcessor` / `CombatSystemComponent` / `CombatFlowComponent`）、`AbilityActionLibrary`、`PoiseComponent`、`TargetingSystemComponent`、`MeleeAttackTrace`、`CollisionTrace`、`MovementCancellation`、`DamageExecutionCalculation`、`CombatTeamAgent`、`CombatSettings`、`CombatTypes`、`ICombatInterface`、`IWeapon` / `WeaponComponent`、`BulletDefinition` / `BulletInstance` / `BulletLauncher`。命名空间不变（`Likeon.GAS`），所以**迁移 = 加装 `com.likeon.gas.combat` 包、引用它的 `Likeon.GAS.Combat` 程序集**，无需改 `using`。`Sigil/Combat` 资产创建菜单现随该包交付。战斗按属性名解析，与你的 codegen 属性集组合即可。
+- **Playable Demo 示例迁到 combat 配套包**（它是战斗向的）。核心包不再带示例。
 - **破坏性变更：内置属性集（`AS_Health`、`AS_Combat`、`AS_Mana`、`AS_Poise`、`AS_Stamina`）已从核心包移除。** 具体属性集是游戏*内容*、不是框架机制——核心包现在只提供属性*系统*（`AttributeSet` 基类、`GameplayAttribute`、codegen 工具），不再预设一套 Health/Mana 等固定属性。用 `AttributeSetDefinition` codegen 定义你自己的属性集（见 0.6.0）。框架系统（削韧、死亡过滤、伤害执行）已改为**按名解析**属性，因此对任何生成的属性集都适用。**迁移**：在你自己的命名空间里生成属性集，然后更新 `AbilityLoadout.GrantedAttributeSets` 及每一处 `GameplayEffect` 的属性引用——`[SerializeReference]` 的 `{class, ns, asm}` 和 `attributeSetType` 全名两类都要改。随包 Samples 现在自带各自生成的属性集（`Samples~/*/GenAttributes`）。
 
 ## [0.6.0] - 2026-07-05

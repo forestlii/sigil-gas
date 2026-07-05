@@ -2,13 +2,13 @@
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-A GAS-style **action-combat and ability framework** for Unity. A **GameplayTag-driven
-state bus** ties together abilities, attributes, effects, input dispatch, melee & ranged
-combat, and presentation — so input → ability → effect → attribute → feedback stays
-decoupled and data-driven. (Movement lives in an optional companion package; see below.)
+A GAS-style **ability-system framework** for Unity. A **GameplayTag-driven
+state bus** ties together abilities, attributes, effects, input dispatch and presentation —
+so input → ability → effect → attribute → feedback stays decoupled and data-driven.
+**Melee/ranged combat and movement live in optional companion packages** ([`com.likeon.gas.combat`](https://github.com/forestlii/sigil-combat)
+and [`com.likeon.gas.movement`](https://github.com/forestlii/sigil-movement)); the core stays a pure ability system.
 
 - **Engine:** Unity 6 — developed & verified on 6000.4.10f1
-- **Tests:** EditMode 21 + PlayMode 86 = **107 automated tests, all green**
 - **Scope:** single-player authoritative logic (no networking yet)
 - **Publisher:** Likeon · namespace `Likeon.GAS`
 
@@ -35,7 +35,7 @@ package to `"testables"` in your project's `Packages/manifest.json`, then open
 
 ### Core ability system
 - **GameplayTag** — hierarchical tags, containers, ref-counted loose tags, tag queries.
-- **AttributeSet** — attributes with Pre/Post change hooks; built-in `AS_Health`, `AS_Stamina`, `AS_Mana`, `AS_Combat`, `AS_Poise`.
+- **AttributeSet** — attributes with Pre/Post change hooks. No built-in `AS_*`: define your attribute sets in the Inspector and **generate** the C# with the attribute-set codegen tool (*Sigil ▸ GAS ▸ …*), or hand-write `AttributeSet` subclasses.
 - **GameplayEffect** — Instant / Duration / Infinite, periodic, modifiers, custom execution calculations, granted tags, application conditions, SetByCaller, **stacking** (aggregate by source/target, stack limit, duration-refresh / period-reset / expiration policies, magnitude scales by stack count).
 - **GameplayAbility** — activation group (Independent / ExclusiveReplaceable / ExclusiveBlocking), cost & cooldown (incl. modular `AbilityCost`), optional per-frame `AbilityTick`, activation-owned tags, effect containers.
 - **AbilitySystemComponent** — the hub: owned tags, attribute sets, active effects, ability granting/activation, exclusivity, interaction rules.
@@ -52,16 +52,13 @@ package to `"testables"` in your project's `Packages/manifest.json`, then open
 - **State-driven key polymorphism** — multiple processors on one input tag; `FirstOnly` picks the first whose state query passes (e.g. *sprint → slide, else crouch* on one key).
 - Input buffer windows for combos; optional `Likeon.GAS.UnityInput` binder.
 
-### Combat
-- **Melee** — `AttackDefinition`, `MeleeAttackTrace` (animation-event hit windows + socket sphere-cast), `DamageExecutionCalculation`, `CombatTeamAgent`, `CombatSystemComponent`.
-- **Combo selection** — `AbilityActionSet` picks actions by source/target state (layered tag queries).
-- **Poise / stagger** — `AS_Poise` + `PoiseComponent`: break, stagger, regen, recover.
-- **Lock-on** — `TargetingSystemComponent`: overlap collection → affiliation/dead/tag/view-cone/line-of-sight filtering → best/closest selection, left/right cycling, auto-drop, lock events.
-- **Projectiles** — `BulletDefinition` / `BulletInstance` / `BulletLauncher`: self-integrated motion, spread, swept-sphere hits, character/map penetration, bullet chains; `Tick(dt)` decouples flight from Unity time.
-- **Weapons** — `IWeapon` + `WeaponComponent`: equip/unequip, weapon-tag injection for ability gating, active-state toggling, a `SourceObject` (the equipment instance / data asset a weapon is backed by), a weapon-level targeting toggle (`SetTargeting` / `ToggleTargeting`, distinct from lock-on), multiple simultaneous collision-trace segments (`AdditionalTraces`), and ranged `FireProjectile`.
-- **Hit-reaction pipeline** — `CombatFlowComponent` + `AttackResultProcessor`s (death, tag-filtered gameplay events, gameplay cues).
-- **CollisionTrace** — generic `OverlapSphere` hit detection with per-activation dedup, on/off state, and filtering — for traps, AOE zones, environmental hazards (distinct from `MeleeAttackTrace`).
-- **MovementCancellation** — Animation-Event-driven window that toggles `Animator.applyRootMotion` when the player moves, so attack root-motion can be cancelled by movement.
+### Combat — companion package
+Melee/ranged combat lives in a **separate companion package**, [`com.likeon.gas.combat`](https://github.com/forestlii/sigil-combat)
+(attack definitions, melee/collision hit detection, combat flow pipeline, poise & poise-break,
+lock-on targeting, weapons, bullets, and a damage execution calculation — all attribute-name based).
+Kept out of the core on purpose: combat is a *domain* built on the ability system, not part of the
+core mechanics — so you can pair the GAS core with your own combat, or with this package. It sits
+**beside** the movement companion; the two are independent and don't depend on each other.
 
 ### Movement — companion package
 Movement & locomotion live in a **separate companion package**, [`com.likeon.gas.movement`](https://github.com/forestlii/sigil-movement)
@@ -85,19 +82,12 @@ host project's job — Sigil's job is to expose the data. Key events:
 - `PoiseComponent`: `OnPoiseBroken` / `OnPoiseRecovered`. `TargetingSystemComponent`: `OnTargetLockOn` / `OnTargetLockOff`. `WeaponComponent`: `OnEquipped` / `OnUnequipped` / `OnWeaponActiveStateChanged` / `OnTargetingChanged`.
 
 ### Editor tools
-- GameplayTag picker (hierarchical dropdown + search + add), tag registry & a `Sigil ▸ GAS ▸ Gameplay Tags` window, `[SerializeReference]` subclass pickers, asset inspectors, a project tag scanner — all under one top-level **Likeon** menu.
+- GameplayTag picker (hierarchical dropdown + search + add), tag registry & a `Sigil ▸ GAS ▸ Gameplay Tags` window, `[SerializeReference]` subclass pickers, asset inspectors, a project tag scanner, and the **attribute-set / tag-constants codegen** tools — all under one top-level **Sigil** menu.
 
-### Playable demo
-Import via **Package Manager → Sigil → Samples → *Playable Demo***, open `PlayableDemo.unity`, press Play.
-A **feature showcase** shipped as **player/enemy prefabs + a wired scene** (`DemoPlayer` / `DemoEnemy`
-under `Resources/`, with attributes & abilities supplied by data-driven `AbilityLoadout` assets via
-`initialLoadouts`); `PlayableDemo` is thin orchestration (camera / HUD / dynamic feedback) and falls back to
-building everything at runtime if dropped on an empty GameObject. Re-bake it from *Sigil ▸ GAS ▸ Demo ▸
-Build All*. It puts several combat lines in one scene (placeholder programmer art):
-**melee → damage → cue, ranged projectiles, lock-on switching between 3 enemies, poise/stagger, and
-stacking buffs**, with a self-explanatory on-screen HUD that renders purely from the framework's
-observability events. Controls: WASD move · Shift sprint · mouse look · Space/LMB melee · RMB/F ranged ·
-Tab lock-on · Q/E switch target · R stack a buff.
+### Playable demo — in the combat companion
+The flagship **Playable Demo** (melee → damage → cue, ranged projectiles, lock-on, poise/stagger,
+stacking buffs) is combat-centric, so it now ships with the [`com.likeon.gas.combat`](https://github.com/forestlii/sigil-combat)
+companion package (import it there and open `PlayableDemo.unity`). The core package stays demo-free.
 
 ## Configuration (data-driven)
 
@@ -105,10 +95,10 @@ Sigil is **data-driven**: you configure behaviour by authoring **ScriptableObjec
 
 - **Input dispatch & mutual exclusion** — `InputControlSetup`: a list of `InputProcessor`s mapping an `InputTag` to an ability, with `ExecutionType = FirstOnly` for "one key, one ability" polymorphism (the first processor whose `StateQuery` passes wins). Bind physical keys → `InputTag`s in the `InputConfig` asset (`InputActionMappings`); `InputSystemComponent` auto-binds them. Push/pop setups to swap whole schemes (vehicle / UI).
 - **Ability mutual exclusion** — `AbilityInteractionRules`: data-driven block / cancel / activation-gating between abilities (state-aware via tag queries). Plus each `GameplayAbility` has its own `ActivationGroup` / `ActivationRequiredTags` / `ActivationBlockedTags`.
-- **Abilities / effects / attacks** — `GameplayAbility`, `GameplayEffect` (incl. stacking), `AttackDefinition`, `BulletDefinition`, `AbilityLoadout`.
+- **Abilities / effects** — `GameplayAbility`, `GameplayEffect` (incl. stacking), `AbilityLoadout`. (Combat assets like `AttackDefinition` / `BulletDefinition` live in the combat companion package.)
 
 → Step-by-step configuration (incl. "one key → different ability per weapon") is in the [usage guide](Documentation~/Usage.md) §9 (input) and §7.5 (ability rules).
-→ **A complete worked example ships with the Playable Demo**: import it and open `DemoConfig.asset` to inspect/copy fully-wired input setups, interaction rules, abilities and effects.
+→ **A complete worked example ships with the Playable Demo** (in the [combat companion](https://github.com/forestlii/sigil-combat)): import it and open `DemoConfig.asset` to inspect/copy fully-wired input setups, interaction rules, abilities and effects.
 
 ## Quick start
 
@@ -133,6 +123,8 @@ public class GA_Slide : GameplayAbility
 
 ```csharp
 // Set up an ability system on a character.
+// AS_Health / AS_Stamina here are YOUR attribute sets (generated by the codegen tool or
+// hand-written) — the core ships none built in.
 var asc = gameObject.AddComponent<AbilitySystemComponent>();
 asc.AddAttributeSet(new AS_Health());
 asc.AddAttributeSet(new AS_Stamina());
@@ -177,10 +169,11 @@ inputSystemComponent.ReceiveInput(
 
 ## Status & roadmap
 
-Single-player core is **complete and tested** (107 automated tests, run together with the
-movement companion package) — covering the ability system, input dispatch, melee & ranged
-combat, game phases, global abilities, generic collision tracing, and presentation.
+Single-player core is **complete and tested** (EditMode + PlayMode suites all green, run together
+with the combat & movement companion packages) — covering the ability system, input dispatch,
+game phases, global abilities, and presentation.
 
+- **Combat** — in the companion package [`com.likeon.gas.combat`](https://github.com/forestlii/sigil-combat).
 - **Movement / locomotion** — in the companion package [`com.likeon.gas.movement`](https://github.com/forestlii/sigil-movement).
 - **UI** — **intentionally out of scope.** Sigil is logic-only; subscribe to its change events
   (see *Observability* above) from any UI solution.
