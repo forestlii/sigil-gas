@@ -62,8 +62,8 @@ Package Manager → `+` → *Add package from git URL* → 填仓库地址。
                                                               ▼
 [GameplayAbility] --(改属性靠)--> [GameplayEffect] --> [AttributeSet 属性]
        │                                                      ▲
-       ├-- 命中判定 [MeleeAttackTrace] --> [AttackDefinition] -┘
-       ├-- 驱动 [MovementSystemComponent]（状态写回 ASC 标签 = 状态总线）
+       ├-- （combat 配套包）命中判定 [MeleeAttackTrace] --> [AttackDefinition] -┘
+       ├-- （movement 配套包）驱动 [MovementSystemComponent]（状态写回 ASC 标签 = 状态总线）
        └-- 触发表现 [GameplayCue] / [ContextEffect] / 相机模式栈
 
 贯穿一切：[GameplayTag] —— 角色"当前状态"由 ASC 持有的标签表达
@@ -185,7 +185,7 @@ asc.RemoveLooseGameplayTag(GameplayTag.RequestTag("State.Stunned"));
 
 ## 5. 属性 Attributes
 
-属性集**不**再内置于框架——你用 `AttributeSetDefinition` codegen 自己生成（见 [§5.1](#51-在编辑器里定义属性集不用手写-c)）。下文以生成的 `AS_Health`（Health / MaxHealth / IncomingDamage / IncomingHealing）为例；`AS_Combat`、`AS_Stamina`、`AS_Mana` 等只是同样方式生成的其它集。每个属性是 `GameplayAttributeData`（区分 `BaseValue` 永久值 / `CurrentValue` 含临时增益的当前值）。
+属性集**不**再内置于框架——你用 `AttributeSetDefinition` codegen 自己生成（见 [§5.1](#51-在编辑器里定义属性集不用手写-c)）。下文以生成的 `AS_Health`（Health / MaxHealth / IncomingDamage / IncomingHealing）为例；`AS_Stamina`、`AS_Mana` 等只是同样方式生成的其它集。每个属性是 `GameplayAttributeData`（区分 `BaseValue` 永久值 / `CurrentValue` 含临时增益的当前值）。
 
 ```csharp
 var health = asc.GetAttributeSet<AS_Health>();
@@ -422,7 +422,7 @@ inputSys.ReceiveInput(
 
 冲刺中按键 → [0] 状态条件通过 → 滑铲，`FirstOnly` 返回；非冲刺 → [0] 不通过 → [1] 下蹲。
 
-**同一套路、按武器门控（一个近战键 → 不同武器不同技能）**——`StateQuery` 改查武器标签即可。`WeaponComponent` 装备时把 `Weapon.Sword` / `Weapon.Axe` 注入 ASC，于是：
+**同一套路、按武器门控（一个近战键 → 不同武器不同技能）**——`StateQuery` 改查武器标签即可。`WeaponComponent`（在 combat 配套包里）装备时把 `Weapon.Sword` / `Weapon.Axe` 注入 ASC，于是：
 
 | 顺序 | InputTags | StateQuery | AbilityTag |
 |---|---|---|---|
@@ -524,7 +524,7 @@ cam.PopCameraMode(aimMode);
 - **GameplayTagContainer 多选**：列出已含标签（可删）+ 下拉去重添加。
 - **标签注册表 `GameplayTagsSettings`** + 顶部菜单窗口 **`Sigil ▸ GAS ▸ Gameplay Tags`**：集中增删标签（下拉候选来源），窗口内也有"扫描工程补标签"按钮。插件编辑器入口统一在 **Likeon** 菜单下，不挂 Project Settings。
 - **标签扫描**：菜单 `Sigil ▸ GAS ▸ Scan Project for Gameplay Tags`，扫工程里 `RequestTag("...")` 字面量一键补进注册表。
-- **增强 Inspector**：GameplayEffect / GameplayAbility / AttackDefinition / AbilityLoadout 带摘要与配置校验提示。`AbilityLoadout` 的属性集列表和 `InputControlSetup` 的检查器/处理器列表都按子类型下拉添加 `[SerializeReference]` 项。
+- **增强 Inspector**：GameplayEffect / GameplayAbility / AbilityLoadout 带摘要与配置校验提示（combat 配套包另附一个 `AttackDefinition` inspector）。`AbilityLoadout` 的属性集列表和 `InputControlSetup` 的检查器/处理器列表都按子类型下拉添加 `[SerializeReference]` 项。
 - **属性集代码生成**：`AttributeSetDefinition` 资产 + 其「生成 C#」按钮，不用手写 C# 就能定义属性集——见 [§5.1](#51-在编辑器里定义属性集不用手写-c)。
 - **GameplayTag 常量生成**：菜单 `Sigil ▸ GAS ▸ Generate Gameplay Tag Constants` 把标签注册表变成一个嵌套静态类（`Game.GameplayTags.Movement.State.Sprint`，既是标签又是父级的节点带 `Self`），代码就能强类型引用标签、替代 `RequestTag("…")`——从注册表自动同步，不用手维护常量文件。
 
@@ -773,7 +773,7 @@ public override void Execute(GameplayEffectSpec spec, AbilitySystemComponent src
     foreach (var t in spec.GetAllAssetTags())                       // 静态 AssetTags + 动态注入
         if (t.MatchesTag(GameplayTag.RequestTag("Damage.Type.Fire")) && resist != null)
             damage -= resist.FireResistance.CurrentValue;
-    // …clamp、写入 IncomingDamage（参考内置 DamageExecutionCalculation）…
+    // …clamp、写入 IncomingDamage（参考 combat 配套包的 DamageExecutionCalculation）…
 }
 ```
 
@@ -812,7 +812,7 @@ public override void Execute(GameplayEffectSpec spec, AbilitySystemComponent src
 | **Meta Attribute**（§5） | 中间属性（IncomingDamage），结算后由属性集消费清零 | **多个来源要汇进同一个结果**再统一结算（普攻 GE、DoT、反伤都写 IncomingDamage，clamp/破盾逻辑只写一处） |
 | **Execution**（§6） | 自定义计算类，多属性输入输出 | 公式要**读双方多个属性**（攻方 Damage、守方减伤、格挡状态）——最重也最强 |
 
-三者常组合：Execution 读 SetByCaller 传入的基础值 + 双方属性 → 算出结果写 Meta Attribute（内置 `DamageExecutionCalculation` 正是这条链）。
+三者常组合：Execution 读 SetByCaller 传入的基础值 + 双方属性 → 算出结果写 Meta Attribute（combat 配套包的 `DamageExecutionCalculation` 正是这条链）。
 
 ### 19.3 反模式清单（别这么干）
 

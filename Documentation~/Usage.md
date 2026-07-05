@@ -63,8 +63,8 @@ Package Manager → `+` → *Add package from git URL* → enter the repository 
                                                                     ▼
 [GameplayAbility] --(changes attributes via)--> [GameplayEffect] --> [AttributeSet]
        │                                                       ▲
-       ├-- hit detection [MeleeAttackTrace] --> [AttackDefinition] -┘
-       ├-- drives [MovementSystemComponent] (state written back to ASC tags = the state bus)
+       ├-- (combat companion) hit detection [MeleeAttackTrace] --> [AttackDefinition] -┘
+       ├-- (movement companion) drives [MovementSystemComponent] (state written back to ASC tags = the state bus)
        └-- triggers presentation [GameplayCue] / [ContextEffect] / camera mode stack
 
 Running through everything: [GameplayTag] — a character's "current state" is the set of tags the ASC holds
@@ -186,7 +186,7 @@ Loose tags are ref-counted: when multiple sources add the same tag, one source r
 
 ## 5. Attributes
 
-Attribute sets are **not** built into the framework — you author your own with the `AttributeSetDefinition` codegen (see [§5.1](#51-authoring-attribute-sets-in-the-editor-no-hand-written-c)). The examples below use a generated `AS_Health` (Health / MaxHealth / IncomingDamage / IncomingHealing) as the running example; `AS_Combat`, `AS_Stamina`, `AS_Mana` etc. are just other sets you'd generate the same way. Each attribute is a `GameplayAttributeData` (distinguishing `BaseValue`, the permanent value, from `CurrentValue`, which includes temporary buffs).
+Attribute sets are **not** built into the framework — you author your own with the `AttributeSetDefinition` codegen (see [§5.1](#51-authoring-attribute-sets-in-the-editor-no-hand-written-c)). The examples below use a generated `AS_Health` (Health / MaxHealth / IncomingDamage / IncomingHealing) as the running example; `AS_Stamina`, `AS_Mana` etc. are just other sets you'd generate the same way. Each attribute is a `GameplayAttributeData` (distinguishing `BaseValue`, the permanent value, from `CurrentValue`, which includes temporary buffs).
 
 ```csharp
 var health = asc.GetAttributeSet<AS_Health>();
@@ -423,7 +423,7 @@ At runtime: press the key → `InputSystemComponent` dispatches `InputTag.Crouch
 
 Pressing the key while sprinting → [0]'s state condition passes → slide, and `FirstOnly` returns; not sprinting → [0] fails → [1] crouch.
 
-**Same pattern, weapon-gated (one melee key → a different ability per weapon)** — the `StateQuery` just checks a weapon tag instead of a movement tag. A `WeaponComponent` injects `Weapon.Sword` / `Weapon.Axe` onto the ASC when equipped, so:
+**Same pattern, weapon-gated (one melee key → a different ability per weapon)** — the `StateQuery` just checks a weapon tag instead of a movement tag. A `WeaponComponent` (in the combat companion package) injects `Weapon.Sword` / `Weapon.Axe` onto the ASC when equipped, so:
 
 | Order | InputTags | StateQuery | AbilityTag |
 |---|---|---|---|
@@ -525,7 +525,7 @@ cam.PopCameraMode(aimMode);
 - **GameplayTagContainer multi-select**: lists the contained tags (removable) + a deduplicating dropdown to add.
 - **Tag registry `GameplayTagsSettings`** + the top-level menu window **`Sigil ▸ GAS ▸ Gameplay Tags`**: add/remove tags centrally (the source of the dropdown candidates); the window also has a "scan the project for tags" button. The plugin's editor entry points are all under the **Likeon** menu, not in Project Settings.
 - **Tag scanning**: menu `Sigil ▸ GAS ▸ Scan Project for Gameplay Tags` scans `RequestTag("...")` literals in the project and adds them to the registry in one click.
-- **Enhanced Inspectors**: GameplayEffect / GameplayAbility / AttackDefinition / AbilityLoadout carry summaries and configuration-validation hints. `AbilityLoadout`'s attribute-set list and `InputControlSetup`'s checker/processor lists both add `[SerializeReference]` entries via a subclass dropdown.
+- **Enhanced Inspectors**: GameplayEffect / GameplayAbility / AbilityLoadout carry summaries and configuration-validation hints (the combat companion adds an `AttackDefinition` inspector too). `AbilityLoadout`'s attribute-set list and `InputControlSetup`'s checker/processor lists both add `[SerializeReference]` entries via a subclass dropdown.
 - **Attribute-set codegen**: `AttributeSetDefinition` asset + its **Generate C#** button author attribute sets without hand-writing C# — see [§5.1](#51-authoring-attribute-sets-in-the-editor-no-hand-written-c).
 - **Gameplay tag constants**: menu `Sigil ▸ GAS ▸ Generate Gameplay Tag Constants` turns the tag registry into a nested static class (`Game.GameplayTags.Movement.State.Sprint`, with `Self` for tags that are also parents), so code references tags type-safely instead of via `RequestTag("…")` — auto-synced from the registry rather than a hand-maintained constants file.
 
@@ -774,7 +774,7 @@ public override void Execute(GameplayEffectSpec spec, AbilitySystemComponent src
     foreach (var t in spec.GetAllAssetTags())                       // static AssetTags + dynamic injections
         if (t.MatchesTag(GameplayTag.RequestTag("Damage.Type.Fire")) && resist != null)
             damage -= resist.FireResistance.CurrentValue;
-    // …clamp and write into IncomingDamage (see the built-in DamageExecutionCalculation)…
+    // …clamp and write into IncomingDamage (see the combat companion's DamageExecutionCalculation)…
 }
 ```
 
@@ -813,7 +813,7 @@ All three "feed runtime-computed numbers into settlement", with different jobs:
 | **Meta Attribute** (§5) | An intermediate attribute (IncomingDamage) consumed and zeroed by the attribute set after settlement | **Multiple sources funneling into one result** settled in one place (basic attacks, DoTs, thorns all write IncomingDamage; clamping/shield-break logic lives once) |
 | **Execution** (§6) | A custom calculation class with multi-attribute inputs/outputs | The formula must **read several attributes on both sides** (attacker Damage, defender mitigation, blocking state) — heaviest and most powerful |
 
-They compose: an Execution reads the SetByCaller base value + both sides' attributes → writes the result to a Meta Attribute (the built-in `DamageExecutionCalculation` is exactly this chain).
+They compose: an Execution reads the SetByCaller base value + both sides' attributes → writes the result to a Meta Attribute (the combat companion's `DamageExecutionCalculation` is exactly this chain).
 
 ### 19.3 Anti-patterns (don't do these)
 
