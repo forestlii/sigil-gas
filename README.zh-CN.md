@@ -90,6 +90,12 @@ Sigil 是**数据驱动**的：行为靠在 Inspector 里编辑 **ScriptableObje
 → 分步配置（含"一个键 → 不同武器不同技能"）见[使用文档](Documentation~/Usage.zh-CN.md) §9（输入）与 §7.5（技能规则）。
 → **Playable Demo 自带一套完整范例**（在 [combat 配套包](https://github.com/forestlii/sigil-combat)）：导入它、打开 `DemoConfig.asset`，即可看/抄接好线的输入控制集、交互规则、技能与效果。
 
+### 编辑器速查
+
+**在编辑器里配、零代码** —— *Create → Sigil → GAS → …*：**Gameplay Effect**、**Ability Loadout**、**Ability Interaction Rules**、**Input Config**、**Input Control Setup**、**Curve Table**、**Gameplay Tags Settings**、**Attribute Set Definition**（→ codegen）、**Gameplay Cue Notify (Static)**、**Surface Effect Library**、**Target Source**、**Game Phase Ability**。要写代码的类型（`GameplayAbility` / `GameplayCueNotify` / `GameplayEffectExecutionCalculation`）在 *Assets → Create → Sigil* 有一键空子类模板。工具在 *Sigil ▸ GAS*：**Gameplay Tags** 注册表、**GAS Debugger**、**Generate Gameplay Tag Constants**、**Scan Project for Gameplay Tags**。属性集由 **Attribute Set Definition** 资产生成（不用写 C++/C#）。战斗/移动的资产随各自配套包发布。
+
+→ 完整表格（带说明）见[使用文档](Documentation~/Usage.zh-CN.md) §21。
+
 ## 快速上手
 
 ```csharp

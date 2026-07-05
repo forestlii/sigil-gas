@@ -33,6 +33,7 @@
 18. [常用配方 Recipes](#18-常用配方-recipes)
 19. [设计取舍与反模式](#19-设计取舍与反模式)
 20. [给 UE GAS 用户的迁移速查](#20-给-ue-gas-用户的迁移速查)
+21. [编辑器速查（创建菜单 / 工具 / codegen）](#21-编辑器速查创建菜单--工具--codegen)
 
 ---
 
@@ -848,6 +849,54 @@ public override void Execute(GameplayEffectSpec spec, AbilitySystemComponent src
 | `GameplayCueNotify_Static` | 同（ScriptableObject） | **`_Actor` 有状态形态未提供**——持久特效实例自行管理（Add/Remove 事件语义在） |
 | Gameplay Debugger（Shift+'） | `Sigil ▸ GAS ▸ GAS Debugger`（§13.1） | 选中任意 GameObject 检视 |
 | Replication / Prediction / NetExecutionPolicy | **未实现**（单机权威） | 规划为后续阶段（§14） |
+
+---
+
+## 21. 编辑器速查（创建菜单 / 工具 / codegen）
+
+下面除标注*要写代码*的外，全部**在编辑器里**配、零代码。战斗/移动的资产在配套包里（见 §10 / §11）。
+
+### 数据资产 —— *Create → Sigil → GAS → …*（Project 窗口右键）
+
+| 菜单项 | 是什么 |
+|---|---|
+| **Gameplay Effect** | 改属性/挂标签的效果（瞬时/持续/无限、周期、叠层、SetByCaller）。 |
+| **Ability Loadout** | 批量授予"技能+效果+属性集"，整批撤销。 |
+| **Ability Interaction Rules** | 数据驱动的技能间 阻挡/取消/激活准入（按标签、状态感知）。 |
+| **Input Config** | 物理键 → `InputTag` 绑定。 |
+| **Input Control Setup** | 输入处理器链（FirstOnly / MatchAll → 一键多态）。 |
+| **Curve Table** | 按等级缩放数值的曲线**表**（属性初始化用）。 |
+| **Gameplay Tags Settings** | 层级标签**注册表**。 |
+| **Attribute Set Definition** | 声明属性集 → **codegen**（见下）。 |
+| **Gameplay Cue Notify (Static)** | 标签驱动的 VFX/SFX 表现。 |
+| **Surface Effect Library** | 表面类型 → 音效/粒子 映射。 |
+| **Target Source（Self / Event Data）** | 技能目标的来源。 |
+| **Game Phase Ability** | 嵌套阶段的游戏阶段技能。 |
+
+### 需写代码的类型 —— 一键空子类模板（*Assets → Create → Sigil → …*）
+
+这几类要写逻辑，框架给空子类脚手架（对好基类 + override 桩 + `[CreateAssetMenu]`）：
+**Ability (C# Script)** → `GameplayAbility`；**Cue Notify (C# Script)** → `GameplayCueNotify`；**Execution Calculation (C# Script)** → `GameplayEffectExecutionCalculation`。生成后就像上面的数据资产一样建实例。
+
+### 编辑器工具 / 窗口 —— 顶部 *Sigil ▸ GAS ▸ …*
+
+| 菜单 | 作用 |
+|---|---|
+| **Gameplay Tags** | 标签注册表窗口（层级下拉+搜索+新增标签，零代码）。 |
+| **GAS Debugger** | Play 模式实时查看任意 ASC —— 属性/标签/技能/激活效果 + 事件日志。 |
+| **Generate Gameplay Tag Constants** | 读注册表 → 生成强类型 tag 常量类。 |
+| **Scan Project for Gameplay Tags** | 扫源码里的 `RequestTag("…")` 字面量补进注册表。 |
+| **Documentation** | 打开本文档。 |
+
+### ⭐ 属性集 codegen（属性不用写 C++/C#）
+
+在 **Attribute Set Definition** 资产的 Inspector 里声明属性（名字/默认值/钳制/Max/Meta），点 **「Generate C#」** → 生成可编译的 `AttributeSet` 子类。数据资产=唯一真源、单向生成（资产→`.g.cs`，只读）、逻辑写手写 partial。见 [§5.1](#51-在编辑器里定义属性集不用手写-c)。
+
+### 增强编辑 UI
+
+- **GameplayTag / GameplayTagContainer** 字段绘制层级下拉 + 搜索 + 一键新增标签。
+- **增强 Inspector**（带摘要+校验提示）：Gameplay Effect、Gameplay Ability、Ability Loadout、Input Control Setup、Attribute Set Definition（combat 包里还有 Attack Definition）。
+- **SerializeReference 子类下拉**：给 `Ability Loadout` 的属性集列表、`Input Control Setup` 的处理器/检查器列表按类型添加条目。
 
 ---
 

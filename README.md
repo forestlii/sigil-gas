@@ -100,6 +100,12 @@ Sigil is **data-driven**: you configure behaviour by authoring **ScriptableObjec
 → Step-by-step configuration (incl. "one key → different ability per weapon") is in the [usage guide](Documentation~/Usage.md) §9 (input) and §7.5 (ability rules).
 → **A complete worked example ships with the Playable Demo** (in the [combat companion](https://github.com/forestlii/sigil-combat)): import it and open `DemoConfig.asset` to inspect/copy fully-wired input setups, interaction rules, abilities and effects.
 
+### Editor cheat sheet
+
+Authored **in the Editor, no code** — *Create → Sigil → GAS → …*: **Gameplay Effect**, **Ability Loadout**, **Ability Interaction Rules**, **Input Config**, **Input Control Setup**, **Curve Table**, **Gameplay Tags Settings**, **Attribute Set Definition** (→ codegen), **Gameplay Cue Notify (Static)**, **Surface Effect Library**, **Target Source**, **Game Phase Ability**. Code-backed types (`GameplayAbility` / `GameplayCueNotify` / `GameplayEffectExecutionCalculation`) get one-click empty-subclass templates under *Assets → Create → Sigil*. Tools under *Sigil ▸ GAS*: **Gameplay Tags** registry, **GAS Debugger**, **Generate Gameplay Tag Constants**, **Scan Project for Gameplay Tags**. Attribute sets are generated from an **Attribute Set Definition** asset (no C++/C# needed). Combat / movement assets ship with their companion packages.
+
+→ Full table (with descriptions) in the [usage guide](Documentation~/Usage.md) §21.
+
 ## Quick start
 
 ```csharp

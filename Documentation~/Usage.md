@@ -34,6 +34,7 @@ state-bus architecture. The **GameplayTag state bus** decouples and connects
 18. [Common recipes](#18-common-recipes)
 19. [Design trade-offs & anti-patterns](#19-design-trade-offs--anti-patterns)
 20. [Coming from Unreal GAS?](#20-coming-from-unreal-gas)
+21. [Editor cheat sheet (create menu, tools, codegen)](#21-editor-cheat-sheet-create-menu-tools-codegen)
 
 ---
 
@@ -849,6 +850,54 @@ Most concepts carry over **by name and meaning**; this table lists the mappings 
 | `GameplayCueNotify_Static` | Same (ScriptableObject) | **The stateful `_Actor` form is not provided** — manage persistent effect instances yourself (Add/Remove event semantics exist) |
 | Gameplay Debugger (Shift+') | `Sigil ▸ GAS ▸ GAS Debugger` (§13.1) | Inspect any selected GameObject |
 | Replication / Prediction / NetExecutionPolicy | **Not implemented** (single-player authoritative) | Planned as a later phase (§14) |
+
+---
+
+## 21. Editor cheat sheet (create menu, tools, codegen)
+
+Everything below is authored **in the Editor** — no code — unless marked *code-backed*. Combat and movement assets live in the companion packages (see §10 / §11).
+
+### Data assets — *Create → Sigil → GAS → …* (right-click in the Project window)
+
+| Menu item | What it is |
+|---|---|
+| **Gameplay Effect** | Change attributes / grant tags (Instant / Duration / Infinite, periodic, stacking, SetByCaller). |
+| **Ability Loadout** | Batch-grant abilities + effects + attribute sets; revoke as one handle. |
+| **Ability Interaction Rules** | Data-driven block / cancel / activation-gating between abilities (tag- & state-aware). |
+| **Input Config** | Bind physical keys → `InputTag`s. |
+| **Input Control Setup** | The input-processor chain (FirstOnly / MatchAll → one-key polymorphism). |
+| **Curve Table** | Level-scaled value **table** (for attribute initialization). |
+| **Gameplay Tags Settings** | The hierarchical tag **registry**. |
+| **Attribute Set Definition** | Declare an attribute set → **codegen** (see below). |
+| **Gameplay Cue Notify (Static)** | Tag-driven VFX/SFX response. |
+| **Surface Effect Library** | Surface type → audio / particle mapping. |
+| **Target Source (Self / Event Data)** | Where an ability's targets come from. |
+| **Game Phase Ability** | A nested-phase game-phase ability. |
+
+### Code-backed types — one-click empty subclass templates (*Assets → Create → Sigil → …*)
+
+These need logic, so the framework scaffolds an empty subclass (right base class + override stub + `[CreateAssetMenu]`):
+**Ability (C# Script)** → `GameplayAbility` · **Cue Notify (C# Script)** → `GameplayCueNotify` · **Execution Calculation (C# Script)** → `GameplayEffectExecutionCalculation`. After generating, you author assets from them like any data asset above.
+
+### Editor tools & windows — top-level *Sigil ▸ GAS ▸ …*
+
+| Menu | What it does |
+|---|---|
+| **Gameplay Tags** | Tag-registry window (hierarchical dropdown + search + add tags, no code). |
+| **GAS Debugger** | Play-mode inspector for any live ASC — attributes / tags / abilities / active effects + an event log. |
+| **Generate Gameplay Tag Constants** | Reads the registry → emits a strongly-typed tag-constants class. |
+| **Scan Project for Gameplay Tags** | Scans `RequestTag("…")` literals and adds them to the registry. |
+| **Documentation** | Opens this guide. |
+
+### ⭐ Attribute-set codegen (no C++/C# required for attributes)
+
+On an **Attribute Set Definition** asset, declare attributes in the inspector (name, default, clamp, max-attribute, meta flag) and click **Generate C#** → a compiling `AttributeSet` subclass. The asset is the single source of truth; generation is one-way (asset → `.g.cs`, read-only); custom logic goes in a hand-written partial. See [§5.1](#51-authoring-attribute-sets-in-the-editor-no-hand-written-c).
+
+### Enhanced editing UI
+
+- **GameplayTag / GameplayTagContainer** fields draw a hierarchical dropdown + search + inline "add tag".
+- **Enhanced inspectors** with summaries + validation hints: Gameplay Effect, Gameplay Ability, Ability Loadout, Input Control Setup, Attribute Set Definition (Attack Definition in the combat package).
+- **SerializeReference subclass dropdowns**: add typed entries to `Ability Loadout`'s attribute-set list and `Input Control Setup`'s processor / checker lists.
 
 ---
 
