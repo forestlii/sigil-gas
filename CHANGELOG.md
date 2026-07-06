@@ -6,6 +6,12 @@ All notable changes to Sigil are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.7.2] - 2026-07-05
+
+### Changed
+
+- **The auto-created `GameplayTagsSettings` asset now lands in `Assets/Sigil/`** (was `Assets/LikeonGAS/`, a leftover from before the Sigil rebrand). Only affects **new** projects: adding a tag when no tag-settings asset exists yet creates one there. Existing projects are unaffected — the tools locate the tag settings by type (`t:GameplayTagsSettings`), so an asset already anywhere (including the old `Assets/LikeonGAS/` path) keeps being used.
+
 ## [0.7.1] - 2026-07-05
 
 ### Changed

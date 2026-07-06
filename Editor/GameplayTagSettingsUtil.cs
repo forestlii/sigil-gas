@@ -9,12 +9,13 @@ namespace Likeon.GAS.Editor
 {
     internal static class GameplayTagSettingsUtil
     {
-        private const string DefaultDir = "Assets/LikeonGAS";
+        private const string DefaultDir = "Assets/Sigil";
         private const string DefaultPath = DefaultDir + "/GameplayTagsSettings.asset";
 
         private static GameplayTagsSettings _cached;
 
-        /// <summary>查找工程内已有的标签表；没有则在 Assets/LikeonGAS 下创建一个。</summary>
+        /// <summary>查找工程内已有的标签表；没有则在 Assets/Sigil 下创建一个。
+        /// 注：只按类型找第一个已有的，所以工程里已有的标签表（不管放哪、旧路径 Assets/LikeonGAS 也算）会继续沿用，本改动只影响将来全新创建。</summary>
         public static GameplayTagsSettings GetOrCreate()
         {
             if (_cached != null) return _cached;

@@ -5,6 +5,12 @@
 本文件记录 Sigil 的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.7.2] - 2026-07-05
+
+### 变更
+
+- **自动创建的 `GameplayTagsSettings` 资产现在落在 `Assets/Sigil/`**（原为 `Assets/LikeonGAS/`，Sigil 品牌重命名前的遗留）。只影响**新**工程：在还没有标签表资产时加标签会在那里新建一个。已有工程不受影响——工具按类型（`t:GameplayTagsSettings`）定位标签表，所以工程里已有的资产（包括旧 `Assets/LikeonGAS/` 路径的）会继续沿用。
+
 ## [0.7.1] - 2026-07-05
 
 ### 变更
