@@ -6,6 +6,12 @@ All notable changes to Sigil are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.7.3] - 2026-07-08
+
+### Fixed
+
+- **"Scan Project for Gameplay Tags" no longer picks up `RequestTag("…")` that is commented out.** The scanner ran its regex over the raw source, so tags inside `//` line comments and `/* */` block comments (e.g. old, commented-out code) got added to the registry. It now strips comments first while preserving string literals (so a `//` inside a string doesn't swallow a real tag after it). Added EditMode tests for the extraction.
+
 ## [0.7.2] - 2026-07-05
 
 ### Changed
