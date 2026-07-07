@@ -5,6 +5,16 @@
 本文件记录 Sigil 的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.8.0] - 2026-07-08
+
+### 新增
+
+- **Ability Triggers —— 技能可由游戏事件或拥有的标签自动激活。** `GameplayAbility` 现在可声明 `AbilityTriggers`，每条是一对 `(TriggerTag, TriggerSource)`。三种触发源，对齐 UE `EGameplayAbilityTriggerSource`：`GameplayEvent`（收到匹配的 `SendGameplayEvent` 时激活——标签层级匹配，事件数据作为技能的 triggerData 传入）、`OwnedTagAdded`（拥有该标签时激活一次）、`OwnedTagPresent`（标签出现时激活、消失时自动取消技能）。ASC 对所有已授予技能集中匹配触发，因此没有 per-ability 的事件订阅会泄漏。
+
+- **`GameplayCueNotify_Actor` —— 有状态、持久的 gameplay cue。** 补齐无状态的 `GameplayCueNotify_Static`：对 Duration/Infinite 效果，`_Actor` cue 会 spawn 一个挂在 target 上的持久实例，走完整的 `OnActive → WhileActive（逐帧）→ OnRemove` 生命周期，而不是每帧重播一次性表现。填个 `SpawnPrefab` 即可零代码得到 loop 特效/光环（自动挂载、移除时自动销毁），或子类重写生命周期钩子。`GameplayCueManager` 按 `(notify, target)` 各管一个活跃实例。
+
+- **`ModifierMagnitudeCalculation`（MMC）—— 用代码资产自定义修改量。** 新增 `MagnitudeType.CustomCalculationClass`，让 `GameplayEffect` 的 modifier 通过一个 ScriptableObject 读取源/目标属性和效果 spec 来算修改量——例如"伤害 = 力量 × 1.5"。对齐 UE `UGameplayModMagnitudeCalculation`；与现有的 `GameplayEffectExecutionCalculation` 并列（MMC 算一条 modifier 的值，Execution 可改多个属性）。现有 ScalableFloat / SetByCaller / CurveTable 修改量不受影响。
+
 ## [0.7.3] - 2026-07-08
 
 ### 修复

@@ -60,6 +60,10 @@ namespace Likeon.GAS
         [Tooltip("按标签组织'命中要施加的效果'")]
         public SerializableEffectContainerMap EffectContainerMap = new SerializableEffectContainerMap();
 
+        [Header("事件触发激活 Ability Triggers")]
+        [Tooltip("授予后由 ASC 自动监听：收到匹配的 GameplayEvent、或拥有某状态标签时自动激活（对齐 UE AbilityTriggers）。仍走 CanActivate 检查。")]
+        public List<AbilityTrigger> AbilityTriggers = new List<AbilityTrigger>();
+
         // ---- 运行时（每个实例自己的状态）----
         public AbilitySystemComponent ASC { get; internal set; }
         public GameplayAbilitySpec Spec { get; internal set; }

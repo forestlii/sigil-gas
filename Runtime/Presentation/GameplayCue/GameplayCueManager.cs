@@ -30,7 +30,11 @@ namespace Likeon.GAS
         public void UnregisterCueNotify(GameplayCueNotify notify) => _notifies.Remove(notify);
 
         /// <summary>清空登记（测试用）。</summary>
-        public void Clear() => _notifies.Clear();
+        public void Clear()
+        {
+            _notifies.Clear();
+            _activeActorCues.Clear();
+        }
 
         /// <summary>
         /// 路由一次 cue 事件：层级匹配（notify.CueTag 是 cueTag 的等于或父级）的处理器都会被调用。
@@ -51,5 +55,50 @@ namespace Likeon.GAS
 
             OnGameplayCue?.Invoke(target, cueTag, cueEvent, parameters);
         }
+
+        // ===================== 有状态 Cue 实例托管 =====================
+        // 按 (notify, target) 维护活跃的 GameplayCueNotify_Actor 实例：
+        // OnActive 建实例、Removed 销毁、WhileActive 转发。GameplayCueNotify_Actor.HandleCue 委托到这里。
+        private readonly Dictionary<(GameplayCueNotify_Actor, GameObject), GameplayCueActorInstance> _activeActorCues
+            = new Dictionary<(GameplayCueNotify_Actor, GameObject), GameplayCueActorInstance>();
+
+        /// <summary>分发一次有状态 Cue 事件（由 <see cref="GameplayCueNotify_Actor.HandleCue"/> 调用）。</summary>
+        public void DispatchActorCue(GameplayCueNotify_Actor notify, GameObject target, EGameplayCueEvent cueEvent, GameplayCueParameters parameters)
+        {
+            if (notify == null) return;
+            var key = (notify, target);
+            switch (cueEvent)
+            {
+                case EGameplayCueEvent.OnActive:
+                    if (_activeActorCues.ContainsKey(key)) return; // 同 target 同 Cue 已激活，不重复 spawn
+                    _activeActorCues[key] = GameplayCueActorInstance.Create(notify, target, parameters);
+                    break;
+
+                case EGameplayCueEvent.WhileActive:
+                    // 生产中逐帧由实例 Update 自驱；此分支供外部主动驱动（如未来 ASC 发 WhileActive / 测试）
+                    if (_activeActorCues.TryGetValue(key, out var ticking) && ticking != null)
+                        ticking.Tick(parameters, Time.deltaTime);
+                    break;
+
+                case EGameplayCueEvent.Removed:
+                    if (_activeActorCues.TryGetValue(key, out var inst))
+                    {
+                        _activeActorCues.Remove(key);
+                        if (inst != null) inst.Remove(parameters);
+                    }
+                    break;
+
+                case EGameplayCueEvent.Executed:
+                    // 有状态 Cue 不响应瞬时 Executed（那是 _Static 的语义）
+                    break;
+            }
+        }
+
+        /// <summary>查询某 target 上某有状态 Cue 是否有活跃实例（调试/测试）。</summary>
+        public bool TryGetActorCueInstance(GameplayCueNotify_Actor notify, GameObject target, out GameplayCueActorInstance instance)
+            => _activeActorCues.TryGetValue((notify, target), out instance);
+
+        /// <summary>活跃有状态 Cue 实例数（调试/测试）。</summary>
+        public int ActiveActorCueCount => _activeActorCues.Count;
     }
 }

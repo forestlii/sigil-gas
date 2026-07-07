@@ -6,6 +6,16 @@ All notable changes to Sigil are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.8.0] - 2026-07-08
+
+### Added
+
+- **Ability Triggers — abilities can auto-activate from gameplay events or owned tags.** A `GameplayAbility` can now declare `AbilityTriggers`, each a `(TriggerTag, TriggerSource)` pair. Three sources, matching Unreal's `EGameplayAbilityTriggerSource`: `GameplayEvent` (activate when a matching `SendGameplayEvent` fires — hierarchical tag match, with the event data passed in as the ability's trigger data), `OwnedTagAdded` (activate once when the owner gains the tag), and `OwnedTagPresent` (activate when the tag appears and auto-cancel the ability when it disappears). The ASC matches triggers centrally across all granted abilities, so there is no per-ability event subscription to leak.
+
+- **`GameplayCueNotify_Actor` — stateful, persistent gameplay cues.** Complements the existing stateless `GameplayCueNotify_Static`: for Duration/Infinite effects, an `_Actor` cue spawns a single persistent instance attached to the target and drives the full `OnActive → WhileActive (per-frame) → OnRemove` lifecycle, instead of replaying a one-shot every frame. Assign a `SpawnPrefab` for a zero-code looping VFX/aura (auto-attached, auto-destroyed on remove), or subclass to override the lifecycle hooks. `GameplayCueManager` tracks one live instance per `(notify, target)`.
+
+- **`ModifierMagnitudeCalculation` (MMC) — custom modifier magnitude via a code asset.** A new `MagnitudeType.CustomCalculationClass` lets a `GameplayEffect` modifier compute its magnitude from a ScriptableObject that reads source/target attributes and the effect spec — e.g. "damage = Strength × 1.5". Mirrors Unreal's `UGameplayModMagnitudeCalculation`; sits alongside the existing `GameplayEffectExecutionCalculation` (MMC computes one modifier's value; Execution can change multiple attributes). Existing ScalableFloat / SetByCaller / CurveTable magnitudes are unchanged.
+
 ## [0.7.3] - 2026-07-08
 
 ### Fixed

@@ -69,12 +69,13 @@ namespace Likeon.GAS
 
     /// <summary>
     /// 修改量来源。
-    /// 固定值（可按等级缩放）或 SetByCaller（运行时由施法者用标签传入）。
+    /// 固定值（可按等级缩放）、SetByCaller（运行时由施法者用标签传入）、曲线表按等级查值，
+    /// 或 CustomCalculationClass（自定义 MMC 资产，支持"伤害 = 力量 × 1.5"这类属性联动公式）。
     /// </summary>
     [Serializable]
     public struct GameplayModifierMagnitude
     {
-        public enum MagnitudeType { ScalableFloat, SetByCaller, CurveTableBased }
+        public enum MagnitudeType { ScalableFloat, SetByCaller, CurveTableBased, CustomCalculationClass }
 
         [SerializeField] private MagnitudeType type;
         [Tooltip("ScalableFloat 模式：基础值")]
@@ -89,12 +90,21 @@ namespace Likeon.GAS
         [SerializeField] private string curveRowName;
         [Tooltip("CurveTableBased 模式：系数。最终 = 系数 × 曲线在该 level 的值（系数通常填 1）")]
         [SerializeField] private float coefficient;
+        [Tooltip("CustomCalculationClass 模式：自定义 MMC 资产（读源/目标属性算 magnitude）")]
+        [SerializeField] private ModifierMagnitudeCalculation customCalculation;
 
         public MagnitudeType Type => type;
         public GameplayTag SetByCallerTag => setByCallerTag;
+        public ModifierMagnitudeCalculation CustomCalculation => customCalculation;
 
-        /// <summary>计算最终修改量。SetByCaller 从 spec 取；CurveTableBased 按 spec.Level 查曲线表。</summary>
-        public float Evaluate(GameplayEffectSpec spec)
+        /// <summary>
+        /// 计算最终修改量。SetByCaller 从 spec 取；CurveTableBased 按 spec.Level 查曲线表；
+        /// CustomCalculationClass 调 MMC 资产（用 source/target ASC 读属性算公式）。
+        /// </summary>
+        /// <param name="spec">效果规格（提供 Level / SetByCaller / Context）。</param>
+        /// <param name="sourceASC">效果来源 ASC（供 MMC 读源属性；非 MMC 分支忽略）。</param>
+        /// <param name="targetASC">效果目标 ASC（供 MMC 读目标属性；非 MMC 分支忽略）。</param>
+        public float Evaluate(GameplayEffectSpec spec, AbilitySystemComponent sourceASC = null, AbilitySystemComponent targetASC = null)
         {
             int level = spec?.Level ?? 1;
             switch (type)
@@ -103,6 +113,8 @@ namespace Likeon.GAS
                     return spec != null ? spec.GetSetByCallerMagnitude(setByCallerTag, 0f) : 0f;
                 case MagnitudeType.CurveTableBased:
                     return curveTable != null ? coefficient * curveTable.Evaluate(curveRowName, level) : 0f;
+                case MagnitudeType.CustomCalculationClass:
+                    return customCalculation != null ? customCalculation.CalculateBaseMagnitude(spec, sourceASC, targetASC) : 0f;
                 case MagnitudeType.ScalableFloat:
                 default:
                     return baseValue + perLevel * (level - 1);
@@ -117,6 +129,9 @@ namespace Likeon.GAS
 
         public static GameplayModifierMagnitude CurveTableBased(CurveTable table, string rowName, float coefficient = 1f)
             => new GameplayModifierMagnitude { type = MagnitudeType.CurveTableBased, curveTable = table, curveRowName = rowName, coefficient = coefficient };
+
+        public static GameplayModifierMagnitude Custom(ModifierMagnitudeCalculation calculation)
+            => new GameplayModifierMagnitude { type = MagnitudeType.CustomCalculationClass, customCalculation = calculation };
     }
 
     /// <summary>单条属性修改。</summary>

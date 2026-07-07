@@ -172,6 +172,8 @@ namespace Likeon.GAS
         {
             if (abilityTemplate == null) return GameplayAbilitySpecHandle.Invalid;
 
+            EnsureAbilityTriggerHook(); // 惰性订阅 owned-tag 变化，驱动 tag 触发源（不依赖 Awake，EditMode 也生效）
+
             var instance = UnityEngine.Object.Instantiate(abilityTemplate); // InstancedPerActor：每角色独立实例
             instance.hideFlags = HideFlags.HideAndDontSave;
             // 授予时附加的动态标签（对齐 UE 技能集授予项的动态标签）：加到克隆实例的身份标签，参与 TagRelationship 匹配
@@ -600,7 +602,7 @@ namespace Likeon.GAS
             var outputs = new List<GameplayExecutionOutput>();
             foreach (var mod in def.Modifiers)
             {
-                float mag = mod.Magnitude.Evaluate(spec);
+                float mag = mod.Magnitude.Evaluate(spec, spec.Context?.SourceASC, this);
                 if (mod.Operation == EAttributeModifierOp.Add) mag *= stackCount; // 按层放大加法结算
                 outputs.Add(new GameplayExecutionOutput(mod.Attribute, mag, mod.Operation));
             }
@@ -692,7 +694,7 @@ namespace Likeon.GAS
                 foreach (var mod in active.Def.Modifiers)
                 {
                     if (!mod.Attribute.Equals(attribute)) continue;
-                    float mag = mod.Magnitude.Evaluate(active.Spec);
+                    float mag = mod.Magnitude.Evaluate(active.Spec, active.Spec.Context?.SourceASC, this);
                     switch (mod.Operation)
                     {
                         case EAttributeModifierOp.Add: sumAdd += mag * stacks; break;
@@ -727,7 +729,7 @@ namespace Likeon.GAS
             {
                 var data = mod.Attribute.ResolveData(this);
                 if (data == null) continue;
-                float result = ApplyOp(data.BaseValue, mod.Operation, mod.Magnitude.Evaluate(spec));
+                float result = ApplyOp(data.BaseValue, mod.Operation, mod.Magnitude.Evaluate(spec, spec.Context?.SourceASC, this));
                 if (result < 0f) return false;
             }
             return true;
@@ -805,6 +807,68 @@ namespace Likeon.GAS
             data ??= new GameplayEventData(eventTag);
             data.EventTag = eventTag;
             OnGameplayEvent?.Invoke(eventTag, data);
+            TriggerAbilitiesFromEvent(eventTag, data); // AbilityTriggers：GameplayEvent 源自动激活
+        }
+
+        // ===================== 技能事件触发 Ability Triggers =====================
+        // 对齐 UE：授予的技能声明 AbilityTriggers（GameplayEvent / OwnedTagAdded / OwnedTagPresent），
+        // ASC 集中匹配并自动激活。中心遍历 _abilities（ASC 本就持有全部技能），
+        // 故无需 per-ability 事件订阅，从根上避免委托注销泄漏。
+
+        private bool _abilityTriggerHooked;
+
+        // 惰性订阅一次 owned-tag 存在性翻转事件，驱动 OwnedTagAdded/OwnedTagPresent 触发源。
+        private void EnsureAbilityTriggerHook()
+        {
+            if (_abilityTriggerHooked) return;
+            _ownedTags.OnTagCountChanged += HandleOwnedTagTriggerChanged;
+            _abilityTriggerHooked = true;
+        }
+
+        // GameplayEvent 源：激活所有 TriggerTag 层级命中该事件的已授予技能，并把事件数据作为 triggerData 传入。
+        private void TriggerAbilitiesFromEvent(GameplayTag eventTag, GameplayEventData data)
+        {
+            if (!eventTag.IsValid || _abilities.Count == 0) return;
+            var specs = new List<GameplayAbilitySpec>(_abilities.Values); // 快照：激活可能改动集合
+            foreach (var spec in specs)
+            {
+                var triggers = spec.Ability != null ? spec.Ability.AbilityTriggers : null;
+                if (triggers == null) continue;
+                for (int i = 0; i < triggers.Count; i++)
+                {
+                    var trig = triggers[i];
+                    if (trig == null || !trig.IsValid || trig.TriggerSource != EGameplayAbilityTriggerSource.GameplayEvent) continue;
+                    if (eventTag.MatchesTag(trig.TriggerTag)) // 层级匹配：事件 tag 命中（等于/子于）监听 tag
+                    {
+                        TryActivateSpec(spec, data);
+                        break; // 本技能已触发，避免多条匹配 trigger 重复激活
+                    }
+                }
+            }
+        }
+
+        // OwnedTag 源：标签存在性翻转时激活 / 取消。
+        // 标签容器按父链逐级 fire，故用精确 Equals 匹配即可命中且不重复。
+        private void HandleOwnedTagTriggerChanged(GameplayTag tag, bool isPresent)
+        {
+            if (_abilities.Count == 0) return;
+            var specs = new List<GameplayAbilitySpec>(_abilities.Values); // 快照：激活/取消可能改动集合与标签
+            foreach (var spec in specs)
+            {
+                var triggers = spec.Ability != null ? spec.Ability.AbilityTriggers : null;
+                if (triggers == null) continue;
+                for (int i = 0; i < triggers.Count; i++)
+                {
+                    var trig = triggers[i];
+                    if (trig == null || !trig.IsValid || trig.TriggerSource == EGameplayAbilityTriggerSource.GameplayEvent) continue;
+                    if (!tag.Equals(trig.TriggerTag)) continue;
+
+                    if (isPresent)
+                        TryActivateSpec(spec, null); // 标签出现 → 激活（AlreadyActive 会被 TryActivateSpec 挡掉，不重复）
+                    else if (trig.TriggerSource == EGameplayAbilityTriggerSource.OwnedTagPresent && spec.Ability.IsActive)
+                        spec.Ability.CancelAbility(); // OwnedTagPresent：标签消失 → 取消
+                }
+            }
         }
 
         // ===================== GameplayCue（表现钩子） =====================

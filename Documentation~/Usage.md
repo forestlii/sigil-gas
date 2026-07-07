@@ -237,7 +237,7 @@ The definition asset is the single source of truth; generation is one-way (asset
 - **DurationType**: `Instant` (changes the base value, e.g. one hit of damage) / `HasDuration` (changes the current value for a time) / `Infinite` (lasts until manually removed)
 - **Period**: if >0, it ticks periodically (e.g. poison per second)
 - **Modifiers**: each one = a target attribute + an operator (Add/Multiply/Divide/Override) + a magnitude
-  - Magnitude source: `ScalableFloat` (base + per-level increment) or `SetByCaller` (passed in at runtime by tag)
+  - Magnitude source: `ScalableFloat` (base + per-level increment), `SetByCaller` (passed in at runtime by tag), `CurveTableBased` (look up by level), or `CustomCalculationClass` (an MMC asset — see below)
 - **Executions**: complex calculations (see `GameplayEffectExecutionCalculation`, e.g. damage with mitigation)
 - **GrantedTags**: tags placed on the target while it lasts (Duration/Infinite only)
 - **ApplicationRequiredTags / BlockedTags**: application conditions
@@ -262,6 +262,19 @@ asc.RemoveActiveGameplayEffect(handle);                // remove a duration effe
 ```
 
 **Custom damage formula** (execution calculation) — derive from `GameplayEffectExecutionCalculation`. The **combat companion package** ships a sample `DamageExecutionCalculation` (`Damage − mitigation → IncomingDamage`, attribute-name based). Put it as an asset into the GE's *Executions*.
+
+**Attribute-linked magnitude** (MMC) — when *one modifier's* value depends on an attribute (e.g. "damage = Strength × 1.5"), derive from `ModifierMagnitudeCalculation`, set that modifier's magnitude to `CustomCalculationClass`, and assign your asset. It reads source/target attributes + the effect spec and returns a single number — unlike an Execution, which can change multiple attributes. Use MMC for a single attribute-linked modifier; use an Execution for multi-attribute formulas (mitigation, crits).
+
+```csharp
+[CreateAssetMenu(menuName = "MyGame/MMC Damage From Strength")]
+public class MMC_DamageFromStrength : ModifierMagnitudeCalculation
+{
+    public GameplayAttribute Strength;
+    public override float CalculateBaseMagnitude(
+        GameplayEffectSpec spec, AbilitySystemComponent source, AbilitySystemComponent target)
+        => (source != null ? source.GetAttributeValue(Strength) : 0f) * 1.5f;
+}
+```
 
 ---
 
@@ -331,6 +344,26 @@ asc.SetInteractionRules(myRules);   // or set the asc.InteractionRules field dir
 > Implementation status (single-player build): `AbilityTagsToBlock`, `AbilityTagsToCancel` and the (rule/ability) `ActivationRequiredTags`/`ActivationBlockedTags` are all enforced during activation. While an ability is active, the ability tags it contributes via `AbilityTagsToBlock` prevent any other ability whose `AbilityTags` match those tags from activating; the block is reference-counted across all active sources and lifts when they end (`AbilitySystemComponent.AreAbilityTagsBlocked(...)` exposes the live set). This differs from `AbilityTagsToCancel`, which interrupts already-active abilities rather than gating future activations.
 
 > 📦 **Worked example**: the **Playable Demo**'s `DemoConfig.asset` contains a configured `AbilityInteractionRules` — a channeled *Focus* ability blocks melee (`AbilityTagsToBlock`), and firing ranged cancels Focus (`AbilityTagsToCancel`). Import the sample and open it to inspect/copy.
+
+---
+
+### 7.6 Event- and tag-triggered activation (AbilityTriggers)
+
+An ability can auto-activate itself without an explicit `TryActivate` call — add entries to its **AbilityTriggers** list, each a `TriggerTag` + `TriggerSource`:
+
+- **GameplayEvent** — activates when `asc.SendGameplayEvent(tag)` fires a matching tag (hierarchical: an `Event.Combat.Hit` event triggers an ability listening on `Event.Combat`). The event's `GameplayEventData` is passed to the ability as its `triggerData`.
+- **OwnedTagAdded** — activates once when the owner gains the tag (count 0 → present; a 1 → 2 bump does *not* re-trigger).
+- **OwnedTagPresent** — activates when the tag appears, and **auto-cancels** the ability when the tag goes away (binds the ability's lifetime to the tag).
+
+```csharp
+myAbility.AbilityTriggers.Add(new AbilityTrigger {
+    TriggerTag = GameplayTag.RequestTag("Event.Combat.HitConfirmed"),
+    TriggerSource = EGameplayAbilityTriggerSource.GameplayEvent,
+});
+// ... grant it; now asc.SendGameplayEvent("Event.Combat.HitConfirmed") auto-activates it.
+```
+
+Triggered activation still runs the normal `CanActivate` checks (cost / cooldown / blocking tags). This is the built-in way to do reactive abilities — cleaner than granting a passive that loops on `WaitGameplayEvent` (§18.3).
 
 ---
 
@@ -492,6 +525,8 @@ asc.ExecuteGameplayCue(GameplayTag.RequestTag("GameplayCue.Hit"),
     GameplayCueParameters.At(hitPoint, hitNormal));
 // You can also subscribe to GameplayCueManager.Instance.OnGameplayCue and handle it yourself
 ```
+
+**Stateful cues** (`GameplayCueNotify_Actor`, *Create → Sigil → GAS → Gameplay Cue Notify (Actor)*) — for a persistent presentation (buff aura, channel beam, DoT particle) that should live for the whole Duration/Infinite effect rather than replay each frame. On `OnActive` it spawns **one** instance attached to the target and runs `OnActive → WhileActive (per-frame) → OnRemove`; the effect's removal destroys it. Assign a `SpawnPrefab` for a zero-code looping VFX/aura, or subclass and override the hooks for dynamic behavior (follow, fade by remaining time). `GameplayCueManager` keeps one live instance per `(notify, target)`.
 
 ### 12.2 Context effects (footsteps/hits by surface)
 
@@ -846,10 +881,10 @@ Most concepts carry over **by name and meaning**; this table lists the mappings 
 | SetByCaller / Stacking / GrantedTags / application tag requirements | Same names, same semantics | Stacking includes AggregateByTarget/BySource |
 | `FGameplayEffectContext` subclass + `AllocGameplayEffectContext` | Subclass `GameplayEffectContext` in C#, pass it when constructing a `GameplayEffectSpec` | No global alloc hook needed; the convenience path `MakeOutgoingSpec` uses the base class |
 | Instancing Policy (3 modes) | Always **InstancedPerActor** (granting clones) | UE itself deprecated NonInstanced as of 5.5 |
-| AbilityTriggers (event-tag-triggered abilities) | `ActivateOnGranted` + `AbilityTask_WaitGameplayEvent` | The resident-listener pattern, see §18.3 |
+| AbilityTriggers (event-tag-triggered abilities) | `GameplayAbility.AbilityTriggers` (GameplayEvent / OwnedTagAdded / OwnedTagPresent) | Built in, see §7.6 |
 | Input ID enum binding | `InputTag` + `InputConfig` + `InputProcessor` polymorphism | Closer to Lyra's Enhanced Input direction (§9) |
 | `CommitAbility` / Cost GE / Cooldown GE | Same names, same semantics | Cooldown remaining: `GetCooldownRemainingForTags` |
-| `GameplayCueNotify_Static` | Same (ScriptableObject) | **The stateful `_Actor` form is not provided** — manage persistent effect instances yourself (Add/Remove event semantics exist) |
+| `GameplayCueNotify_Static` / `GameplayCueNotify_Actor` | Same (ScriptableObject) | Both stateless and stateful (persistent-instance) forms are provided, see §12.1 |
 | Gameplay Debugger (Shift+') | `Sigil ▸ GAS ▸ GAS Debugger` (§13.1) | Inspect any selected GameObject |
 | Replication / Prediction / NetExecutionPolicy | **Not implemented** (single-player authoritative) | Planned as a later phase (§14) |
 
