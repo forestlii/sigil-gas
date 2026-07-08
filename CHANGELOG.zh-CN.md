@@ -5,6 +5,12 @@
 本文件记录 Sigil 的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.9.1] - 2026-07-09
+
+### 变更
+
+- **性能 —— 两条热路径池化（行为不变）。** ASC 每次事件/激活遍历时构建的"已授予技能快照 List"（`TryActivateAbilitiesByTag`、`TryActivateAbilityByClass`、技能取消、以及两条 trigger 路径）改为从每实例池借还，而非每次 `new List` —— 重入安全、稳态零分配。有状态 `GameplayCueNotify_Actor` 实例移除时回收进空闲池（按 notify 分桶）、下次激活复用，不再每次 `new GameObject` + `Destroy`（延迟淡出 / 不自动销毁的 Cue 仍走原销毁/保留路径）。新增 `GameplayCueManager.PooledActorCount` 供调试。
+
 ## [0.9.0] - 2026-07-08
 
 ### 新增

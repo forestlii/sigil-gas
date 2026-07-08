@@ -230,17 +230,34 @@ namespace Likeon.GAS
             return TryActivateSpec(spec, triggerData);
         }
 
+        // 借还式已授予技能快照池：避免每次事件/激活遍历都 new 一个 List。
+        // 重入安全——每层借一个不同 list（激活链可能重入这些方法）；稳态预热后零分配。
+        private readonly Stack<List<GameplayAbilitySpec>> _specSnapshotPool = new Stack<List<GameplayAbilitySpec>>();
+        private List<GameplayAbilitySpec> RentSpecSnapshot()
+        {
+            var list = _specSnapshotPool.Count > 0 ? _specSnapshotPool.Pop() : new List<GameplayAbilitySpec>();
+            list.Clear();
+            list.AddRange(_abilities.Values);
+            return list;
+        }
+        private void ReturnSpecSnapshot(List<GameplayAbilitySpec> list)
+        {
+            list.Clear();
+            _specSnapshotPool.Push(list);
+        }
+
         /// <summary>尝试激活所有 AbilityTags 命中该 tag 的已授予技能。</summary>
         public bool TryActivateAbilitiesByTag(GameplayTag tag, GameplayEventData triggerData = null)
         {
             bool any = false;
-            // 复制一份，避免激活过程中集合被改
-            var specs = new List<GameplayAbilitySpec>(_abilities.Values);
-            foreach (var spec in specs)
+            var specs = RentSpecSnapshot(); // 借用快照，避免激活过程中集合被改（重入安全）
+            try
             {
-                if (spec.Ability.GetAbilityTags().HasTag(tag))
-                    any |= TryActivateSpec(spec, triggerData);
+                foreach (var spec in specs)
+                    if (spec.Ability.GetAbilityTags().HasTag(tag))
+                        any |= TryActivateSpec(spec, triggerData);
             }
+            finally { ReturnSpecSnapshot(specs); }
             return any;
         }
 
@@ -248,10 +265,14 @@ namespace Likeon.GAS
         public bool TryActivateAbilityByClass(Type abilityType, GameplayEventData triggerData = null)
         {
             if (abilityType == null) return false;
-            var specs = new List<GameplayAbilitySpec>(_abilities.Values); // 快照：激活可能改动集合
-            foreach (var spec in specs)
-                if (spec.Ability != null && abilityType.IsInstanceOfType(spec.Ability))
-                    return TryActivateSpec(spec, triggerData);
+            var specs = RentSpecSnapshot(); // 快照：激活可能改动集合（重入安全）
+            try
+            {
+                foreach (var spec in specs)
+                    if (spec.Ability != null && abilityType.IsInstanceOfType(spec.Ability))
+                        return TryActivateSpec(spec, triggerData);
+            }
+            finally { ReturnSpecSnapshot(specs); }
             return false;
         }
 
@@ -413,13 +434,17 @@ namespace Likeon.GAS
             // 取消：打断已激活、命中 cancel 标签的技能
             if (!_cancelTagsCache.IsEmpty)
             {
-                var snapshot = new List<GameplayAbilitySpec>(_abilities.Values);
-                foreach (var spec in snapshot)
+                var snapshot = RentSpecSnapshot();
+                try
                 {
-                    if (spec.Ability == ability || !spec.Ability.IsActive) continue;
-                    if (_cancelTagsCache.HasAny(spec.Ability.GetAbilityTags()))
-                        spec.Ability.CancelAbility();
+                    foreach (var spec in snapshot)
+                    {
+                        if (spec.Ability == ability || !spec.Ability.IsActive) continue;
+                        if (_cancelTagsCache.HasAny(spec.Ability.GetAbilityTags()))
+                            spec.Ability.CancelAbility();
+                    }
                 }
+                finally { ReturnSpecSnapshot(snapshot); }
             }
 
             // 阻挡：登记本技能激活期间要阻挡的技能标签（CanActivate 据此拒绝后续激活，技能结束时撤销）
@@ -881,22 +906,26 @@ namespace Likeon.GAS
         private void TriggerAbilitiesFromEvent(GameplayTag eventTag, GameplayEventData data)
         {
             if (!eventTag.IsValid || _abilities.Count == 0) return;
-            var specs = new List<GameplayAbilitySpec>(_abilities.Values); // 快照：激活可能改动集合
-            foreach (var spec in specs)
+            var specs = RentSpecSnapshot(); // 快照：激活可能改动集合（重入安全）
+            try
             {
-                var triggers = spec.Ability != null ? spec.Ability.AbilityTriggers : null;
-                if (triggers == null) continue;
-                for (int i = 0; i < triggers.Count; i++)
+                foreach (var spec in specs)
                 {
-                    var trig = triggers[i];
-                    if (trig == null || !trig.IsValid || trig.TriggerSource != EGameplayAbilityTriggerSource.GameplayEvent) continue;
-                    if (eventTag.MatchesTag(trig.TriggerTag)) // 层级匹配：事件 tag 命中（等于/子于）监听 tag
+                    var triggers = spec.Ability != null ? spec.Ability.AbilityTriggers : null;
+                    if (triggers == null) continue;
+                    for (int i = 0; i < triggers.Count; i++)
                     {
-                        TryActivateSpec(spec, data);
-                        break; // 本技能已触发，避免多条匹配 trigger 重复激活
+                        var trig = triggers[i];
+                        if (trig == null || !trig.IsValid || trig.TriggerSource != EGameplayAbilityTriggerSource.GameplayEvent) continue;
+                        if (eventTag.MatchesTag(trig.TriggerTag)) // 层级匹配：事件 tag 命中（等于/子于）监听 tag
+                        {
+                            TryActivateSpec(spec, data);
+                            break; // 本技能已触发，避免多条匹配 trigger 重复激活
+                        }
                     }
                 }
             }
+            finally { ReturnSpecSnapshot(specs); }
         }
 
         // OwnedTag 源：标签存在性翻转时激活 / 取消。
@@ -904,23 +933,27 @@ namespace Likeon.GAS
         private void HandleOwnedTagTriggerChanged(GameplayTag tag, bool isPresent)
         {
             if (_abilities.Count == 0) return;
-            var specs = new List<GameplayAbilitySpec>(_abilities.Values); // 快照：激活/取消可能改动集合与标签
-            foreach (var spec in specs)
+            var specs = RentSpecSnapshot(); // 快照：激活/取消可能改动集合与标签（重入安全）
+            try
             {
-                var triggers = spec.Ability != null ? spec.Ability.AbilityTriggers : null;
-                if (triggers == null) continue;
-                for (int i = 0; i < triggers.Count; i++)
+                foreach (var spec in specs)
                 {
-                    var trig = triggers[i];
-                    if (trig == null || !trig.IsValid || trig.TriggerSource == EGameplayAbilityTriggerSource.GameplayEvent) continue;
-                    if (!tag.Equals(trig.TriggerTag)) continue;
+                    var triggers = spec.Ability != null ? spec.Ability.AbilityTriggers : null;
+                    if (triggers == null) continue;
+                    for (int i = 0; i < triggers.Count; i++)
+                    {
+                        var trig = triggers[i];
+                        if (trig == null || !trig.IsValid || trig.TriggerSource == EGameplayAbilityTriggerSource.GameplayEvent) continue;
+                        if (!tag.Equals(trig.TriggerTag)) continue;
 
-                    if (isPresent)
-                        TryActivateSpec(spec, null); // 标签出现 → 激活（AlreadyActive 会被 TryActivateSpec 挡掉，不重复）
-                    else if (trig.TriggerSource == EGameplayAbilityTriggerSource.OwnedTagPresent && spec.Ability.IsActive)
-                        spec.Ability.CancelAbility(); // OwnedTagPresent：标签消失 → 取消
+                        if (isPresent)
+                            TryActivateSpec(spec, null); // 标签出现 → 激活（AlreadyActive 会被 TryActivateSpec 挡掉，不重复）
+                        else if (trig.TriggerSource == EGameplayAbilityTriggerSource.OwnedTagPresent && spec.Ability.IsActive)
+                            spec.Ability.CancelAbility(); // OwnedTagPresent：标签消失 → 取消
+                    }
                 }
             }
+            finally { ReturnSpecSnapshot(specs); }
         }
 
         // ===================== GameplayCue（表现钩子） =====================

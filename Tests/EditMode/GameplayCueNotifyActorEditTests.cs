@@ -155,5 +155,32 @@ namespace Likeon.GAS.Tests
             Object.DestroyImmediate(target);
             Object.DestroyImmediate(notify);
         }
+
+        [Test]
+        public void RemovedActor_IsPooled_AndReusedOnNextActivation()
+        {
+            var notify = MakeNotify();
+            var target = new GameObject("Target");
+            var tag = GameplayTag.RequestTag(CueTagName);
+
+            GameplayCueManager.Instance.HandleGameplayCue(target, tag, EGameplayCueEvent.OnActive, null);
+            GameplayCueManager.Instance.TryGetActorCueInstance(notify, target, out var first);
+            GameplayCueManager.Instance.HandleGameplayCue(target, tag, EGameplayCueEvent.Removed, null);
+
+            Assert.AreEqual(0, GameplayCueManager.Instance.ActiveActorCueCount, "移除后不再活跃");
+            Assert.AreEqual(1, GameplayCueManager.Instance.PooledActorCount, "移除的实例应回池、而非销毁");
+
+            // 再次激活 → 复用池中实例（不新建）
+            GameplayCueManager.Instance.HandleGameplayCue(target, tag, EGameplayCueEvent.OnActive, null);
+            GameplayCueManager.Instance.TryGetActorCueInstance(notify, target, out var second);
+
+            Assert.AreSame(first, second, "再次激活应复用回池的同一实例");
+            Assert.AreEqual(0, GameplayCueManager.Instance.PooledActorCount, "复用后池应清空");
+            Assert.AreEqual(2, notify.OnActiveCount, "复用也回调 OnActive（共两次）");
+            Assert.AreEqual(1, notify.OnRemoveCount, "OnRemove 一次");
+
+            Object.DestroyImmediate(target);
+            Object.DestroyImmediate(notify); // 池中/活跃实例由 TearDown 的 Clear 收尾
+        }
     }
 }

@@ -6,6 +6,12 @@ All notable changes to Sigil are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.9.1] - 2026-07-09
+
+### Changed
+
+- **Performance — pooling on two hot paths (no behavior change).** The ASC now rents/returns the granted-ability snapshot list it builds on every event/activation sweep (`TryActivateAbilitiesByTag`, `TryActivateAbilityByClass`, ability-cancel, and both trigger paths) from a per-instance pool instead of allocating a fresh `List` every time — reentrancy-safe, zero steady-state allocation. Stateful `GameplayCueNotify_Actor` instances are now recycled through an idle pool (bucketed per notify) on remove and reused on the next activation, instead of `new GameObject` + `Destroy` each time (delayed-fade-out / non-auto-destroy cues still take the original destroy/keep path). Adds `GameplayCueManager.PooledActorCount` for debugging.
+
 ## [0.9.0] - 2026-07-08
 
 ### Added

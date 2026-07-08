@@ -34,6 +34,13 @@ namespace Likeon.GAS
         {
             _notifies.Clear();
             _activeActorCues.Clear();
+            foreach (var kv in _actorPool)
+                while (kv.Value.Count > 0)
+                {
+                    var inst = kv.Value.Pop();
+                    if (inst != null) inst.DestroyNow();
+                }
+            _actorPool.Clear();
         }
 
         /// <summary>
@@ -58,9 +65,12 @@ namespace Likeon.GAS
 
         // ===================== 有状态 Cue 实例托管 =====================
         // 按 (notify, target) 维护活跃的 GameplayCueNotify_Actor 实例：
-        // OnActive 建实例、Removed 销毁、WhileActive 转发。GameplayCueNotify_Actor.HandleCue 委托到这里。
+        // OnActive 建/复用实例、Removed 回池或销毁、WhileActive 转发。GameplayCueNotify_Actor.HandleCue 委托到这里。
         private readonly Dictionary<(GameplayCueNotify_Actor, GameObject), GameplayCueActorInstance> _activeActorCues
             = new Dictionary<(GameplayCueNotify_Actor, GameObject), GameplayCueActorInstance>();
+        // 空闲实例池（按 notify 分桶）：移除时回收、再激活时复用，避免频繁 new GameObject / Instantiate / Destroy。
+        private readonly Dictionary<GameplayCueNotify_Actor, Stack<GameplayCueActorInstance>> _actorPool
+            = new Dictionary<GameplayCueNotify_Actor, Stack<GameplayCueActorInstance>>();
 
         /// <summary>分发一次有状态 Cue 事件（由 <see cref="GameplayCueNotify_Actor.HandleCue"/> 调用）。</summary>
         public void DispatchActorCue(GameplayCueNotify_Actor notify, GameObject target, EGameplayCueEvent cueEvent, GameplayCueParameters parameters)
@@ -71,7 +81,7 @@ namespace Likeon.GAS
             {
                 case EGameplayCueEvent.OnActive:
                     if (_activeActorCues.ContainsKey(key)) return; // 同 target 同 Cue 已激活，不重复 spawn
-                    _activeActorCues[key] = GameplayCueActorInstance.Create(notify, target, parameters);
+                    _activeActorCues[key] = RentOrCreateActor(notify, target, parameters);
                     break;
 
                 case EGameplayCueEvent.WhileActive:
@@ -84,7 +94,15 @@ namespace Likeon.GAS
                     if (_activeActorCues.TryGetValue(key, out var inst))
                     {
                         _activeActorCues.Remove(key);
-                        if (inst != null) inst.Remove(parameters);
+                        if (inst != null)
+                        {
+                            inst.NotifyRemove(parameters); // 先回调 OnRemove
+                            // 主路径（自动销毁 + 无延迟）→ 回池复用；延迟淡出 / 不自动销毁 → 走原销毁/保留
+                            if (notify.AutoDestroyOnRemove && notify.AutoDestroyDelay <= 0f)
+                                ReturnActorToPool(notify, inst);
+                            else
+                                inst.DestroyOrKeep();
+                        }
                     }
                     break;
 
@@ -94,11 +112,43 @@ namespace Likeon.GAS
             }
         }
 
+        // 从池取一个复用（跳过被外部销毁的），没有则新建。
+        private GameplayCueActorInstance RentOrCreateActor(GameplayCueNotify_Actor notify, GameObject target, GameplayCueParameters parameters)
+        {
+            if (_actorPool.TryGetValue(notify, out var stack))
+                while (stack.Count > 0)
+                {
+                    var pooled = stack.Pop();
+                    if (pooled == null) continue; // 被外部销毁的跳过
+                    pooled.Reactivate(target, parameters);
+                    return pooled;
+                }
+            return GameplayCueActorInstance.Create(notify, target, parameters);
+        }
+
+        // 停用并回收进池。
+        private void ReturnActorToPool(GameplayCueNotify_Actor notify, GameplayCueActorInstance inst)
+        {
+            inst.ParkForPool();
+            if (!_actorPool.TryGetValue(notify, out var stack))
+            {
+                stack = new Stack<GameplayCueActorInstance>();
+                _actorPool[notify] = stack;
+            }
+            stack.Push(inst);
+        }
+
         /// <summary>查询某 target 上某有状态 Cue 是否有活跃实例（调试/测试）。</summary>
         public bool TryGetActorCueInstance(GameplayCueNotify_Actor notify, GameObject target, out GameplayCueActorInstance instance)
             => _activeActorCues.TryGetValue((notify, target), out instance);
 
         /// <summary>活跃有状态 Cue 实例数（调试/测试）。</summary>
         public int ActiveActorCueCount => _activeActorCues.Count;
+
+        /// <summary>空闲池中的实例数（调试/测试）。</summary>
+        public int PooledActorCount
+        {
+            get { int n = 0; foreach (var kv in _actorPool) n += kv.Value.Count; return n; }
+        }
     }
 }

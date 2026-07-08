@@ -42,6 +42,24 @@ namespace Likeon.GAS
             return inst;
         }
 
+        /// <summary>从池取出复用时：重新挂 target、启用、回调 OnActive（不重建 spawn 实例）。</summary>
+        internal void Reactivate(GameObject target, GameplayCueParameters parameters)
+        {
+            _target = target;
+            _parameters = parameters;
+            _removed = false;
+            var t = transform;
+            if (_notify != null && _notify.AttachToTarget && target != null)
+                t.SetParent(target.transform, false);
+            else
+            {
+                t.SetParent(null, false);
+                if (parameters != null) t.position = parameters.Location;
+            }
+            gameObject.SetActive(true);
+            _notify?.OnActive(target, _spawned, parameters);
+        }
+
         // 逐帧自驱 WhileActive（play mode）。ASC 不主动发 WhileActive，故持续 tick 在此。
         private void Update()
         {
@@ -56,13 +74,24 @@ namespace Likeon.GAS
             _notify.WhileActive(_target, _spawned, parameters ?? _parameters, deltaTime);
         }
 
-        /// <summary>移除：回调 OnRemove，按配置销毁宿主。</summary>
-        internal void Remove(GameplayCueParameters parameters)
+        /// <summary>移除第一步：回调 OnRemove（不销毁、不停用；后续由 Manager 决定回池还是销毁）。</summary>
+        internal void NotifyRemove(GameplayCueParameters parameters)
         {
             if (_removed) return;
             _removed = true;
             _notify?.OnRemove(_target, _spawned, parameters ?? _parameters);
+        }
 
+        /// <summary>停用 + detach，准备回收进池（不销毁 spawn 实例，供下次 Reactivate 复用）。</summary>
+        internal void ParkForPool()
+        {
+            transform.SetParent(null, false);
+            if (gameObject != null) gameObject.SetActive(false);
+        }
+
+        /// <summary>不回池的收尾：按配置延迟/立即销毁；AutoDestroyOnRemove=false 则保留实例（用户手动管）。OnRemove 已由 <see cref="NotifyRemove"/> 调过。</summary>
+        internal void DestroyOrKeep()
+        {
             bool auto = _notify == null || _notify.AutoDestroyOnRemove;
             if (!auto) return;
             float delay = _notify != null ? _notify.AutoDestroyDelay : 0f;
@@ -72,6 +101,14 @@ namespace Likeon.GAS
                 Destroy(gameObject, delay);          // 运行时：延迟销毁（可用于淡出）
             else
                 Destroy(gameObject);
+        }
+
+        /// <summary>直接销毁（清池时用）。</summary>
+        internal void DestroyNow()
+        {
+            if (gameObject == null) return;
+            if (!Application.isPlaying) DestroyImmediate(gameObject);
+            else Destroy(gameObject);
         }
     }
 }
