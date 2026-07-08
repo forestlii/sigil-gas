@@ -5,6 +5,16 @@
 本文件记录 Sigil 的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.9.0] - 2026-07-08
+
+### 新增
+
+- **`AbilityTask_WaitAttributeChange`** —— 在技能里等某个被监听属性发生变化再继续（包装 ASC 的 `OnAttributeChanged`；支持外部目标 ASC 与"一次/持续"两种模式）。
+- **`TryActivateAbilityByClass`**（`Type` 重载 + 泛型 `TryActivateAbilityByClass<T>()`）—— 按类型激活第一个已授予的该类技能，与现有的 by-handle / by-tag 激活入口并列。
+- **`AbilitySystemComponent.GetAbilitySystem(GameObject)` + `IAbilitySystemInterface`** —— 从任意对象解析 ASC：优先走对象实现的 `IAbilitySystemInterface`（应对 ASC 挂在子物体/伙伴对象的情况），否则退回 `GetComponent`（对齐 UE `GetAbilitySystemComponentFromActor`）。
+- **`AttributeSet.PostAttributeBaseChange`** 钩子 —— 在 Instant/Periodic 效果改完 BaseValue 后调用（对齐 UE `PostAttributeBaseChange`），用于响应"永久值"变化。
+- **Meta 属性误用防护**（UE `HideFromModifiers` 的意图）—— `AttributeSet.MarkMeta` / `IsMeta`，以及当 Duration/Infinite 效果的 modifier 指向 meta 属性（本应只被 Instant/Execution 写）时的编辑器警告。属性集 codegen 现在会为定义里标了 `IsMeta` 的属性生成 `MarkMeta(...)` 调用。
+
 ## [0.8.0] - 2026-07-08
 
 ### 新增

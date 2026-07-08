@@ -63,6 +63,25 @@ namespace Likeon.GAS
             _attributes[name] = data;
         }
 
+        private HashSet<string> _metaAttributes;
+
+        /// <summary>
+        /// 标记一个属性为 meta（瞬时/中转属性，如 IncomingDamage）。子类/codegen 在
+        /// <see cref="RegisterAttributes"/> 里调。meta 属性只该被 Instant/Execution 写并清零，
+        /// 不该被 Duration/Infinite 效果的 modifier 直接挂——对齐 UE HideFromModifiers 的防误用意图。
+        /// </summary>
+        protected void MarkMeta(string name)
+        {
+            (_metaAttributes ??= new HashSet<string>()).Add(name);
+        }
+
+        /// <summary>该属性是否被标记为 meta。</summary>
+        public bool IsMeta(string name)
+        {
+            EnsureRegistered();
+            return _metaAttributes != null && _metaAttributes.Contains(name);
+        }
+
         /// <summary>按名取属性数据。</summary>
         public GameplayAttributeData GetAttributeData(string name)
         {
@@ -85,6 +104,12 @@ namespace Likeon.GAS
 
         /// <summary>BaseValue 即将被 Instant/Periodic 效果改变前调用。</summary>
         public virtual void PreAttributeBaseChange(GameplayAttribute attribute, ref float newValue) { }
+
+        /// <summary>
+        /// BaseValue 被 Instant/Periodic 效果改变后调用（对齐 UE PostAttributeBaseChange）。
+        /// 用于响应"永久值"变化（如上限提升后按比例补当前值、记账、触发成就）。
+        /// </summary>
+        public virtual void PostAttributeBaseChange(GameplayAttribute attribute, float oldValue, float newValue) { }
 
         /// <summary>
         /// GameplayEffect 结算前调用，返回 false 可阻止本次结算。

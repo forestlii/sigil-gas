@@ -6,6 +6,16 @@ All notable changes to Sigil are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.9.0] - 2026-07-08
+
+### Added
+
+- **`AbilityTask_WaitAttributeChange`** — wait inside an ability until a watched attribute changes (wraps the ASC's `OnAttributeChanged`; supports an external target ASC and once-or-continuous modes).
+- **`TryActivateAbilityByClass`** (a `Type` overload and generic `TryActivateAbilityByClass<T>()`) — activate the first granted ability of a given type, alongside the existing by-handle / by-tag activators.
+- **`AbilitySystemComponent.GetAbilitySystem(GameObject)` + `IAbilitySystemInterface`** — resolve an ASC from any object: it prefers an `IAbilitySystemInterface` the object implements (for when the ASC lives on a child / companion object), then falls back to `GetComponent` (mirrors Unreal's `GetAbilitySystemComponentFromActor`).
+- **`AttributeSet.PostAttributeBaseChange`** hook — called after an Instant/Periodic effect changes a BaseValue (mirrors Unreal's `PostAttributeBaseChange`), for reacting to permanent-value changes.
+- **Meta-attribute misuse guard** (the intent of Unreal's `HideFromModifiers`) — `AttributeSet.MarkMeta` / `IsMeta`, plus an editor-only warning when a Duration/Infinite effect's modifier targets a meta attribute (which should only be written by Instant/Execution). The attribute-set codegen now emits `MarkMeta(...)` for attributes flagged `IsMeta` in the definition.
+
 ## [0.8.0] - 2026-07-08
 
 ### Added

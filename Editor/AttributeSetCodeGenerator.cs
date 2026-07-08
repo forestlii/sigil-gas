@@ -97,7 +97,10 @@ namespace Likeon.GAS.Editor
             sb.AppendLine("        protected override void RegisterAttributes()");
             sb.AppendLine("        {");
             foreach (var a in def.Attributes)
+            {
                 sb.AppendLine($"            Register(nameof({a.Name}), {a.Name});");
+                if (a.IsMeta) sb.AppendLine($"            MarkMeta(nameof({a.Name}));"); // meta：防被持续 modifier 误用
+            }
             sb.AppendLine("        }");
             sb.AppendLine();
 

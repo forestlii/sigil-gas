@@ -215,6 +215,10 @@ public sealed class AS_Shield : AttributeSet
 }
 ```
 
+**其它钩子**：`PostAttributeBaseChange(attribute, oldValue, newValue)` 在 Instant/Periodic 效果改完 **BaseValue**（永久值）后触发——用于响应永久变化；`PreAttributeChange` / `PostAttributeChange` 管 **CurrentValue**（含临时 buff），`PreAttributeBaseChange` 在基础值改动前跑。
+
+**Meta 属性**：把中转属性（如 `IncomingDamage`）标记为 meta——用 codegen 定义里的 `IsMeta` 勾选，或手写属性集里 `MarkMeta(nameof(X))`。meta 属性应只被 Instant 效果 / Execution 写入并由属性集清零；若一个 Duration/Infinite 效果的 modifier 指向 meta 属性，框架会（仅编辑器）警告——这是 UE `HideFromModifiers` 的意图，因为 Sigil 的属性没有可隐藏的选择下拉。
+
 ### 5.1 在编辑器里定义属性集（不用手写 C#）
 
 UE 的 GAS 逼你用 C++ 写属性；Sigil 让你在编辑器里定义、工具替你生成 C#——策划不用找程序员就能加属性，而代码端拿到的仍是真类型、编译期安全。
@@ -382,8 +386,10 @@ var owned = new GameplayTagContainer(); asc.GetOwnedGameplayTags(owned);
 // 技能
 var handle = asc.GiveAbility(template); asc.TryActivateAbility(handle);
 asc.TryActivateAbilitiesByTag(tag);
+asc.TryActivateAbilityByClass<MyAbility>();            // 按技能类型激活
 asc.ClearAbility(handle);
 IReadOnlyCollection<GameplayAbilitySpec> granted = asc.GetGrantedAbilities(); // 列技能栏
+AbilitySystemComponent a = AbilitySystemComponent.GetAbilitySystem(go); // 从任意对象解析 ASC（先 IAbilitySystemInterface，否则 GetComponent）
 
 // 效果
 var ge = asc.ApplyGameplayEffectToSelf(effect, level); // 返回激活句柄（瞬时效果句柄无效）
@@ -627,7 +633,7 @@ protected override void OnActivateAbility(GameplayEventData triggerData)
 }
 ```
 
-其它任务：`AbilityTask_WaitDelay`（延时）、`WaitDelayOneFrame`（一帧）、`AbilityTask_WaitGameplayEvent`（等事件）、`AbilityTask_WaitInputPress`（等输入，可标签门控）、`AbilityTask_WaitTargetData`（驱动 TargetActor 采集目标）。
+其它任务：`AbilityTask_WaitDelay`（延时）、`WaitDelayOneFrame`（一帧）、`AbilityTask_WaitGameplayEvent`（等事件）、`AbilityTask_WaitInputPress`（等输入，可标签门控）、`AbilityTask_WaitAttributeChange`（等被监听属性变化）、`AbilityTask_WaitTargetData`（驱动 TargetActor 采集目标）。
 
 > `PlayMontageAndWaitForEvent` 的 `animator` 可留空——此时只按 `duration` 计时驱动 5 个回调（OnCompleted / OnBlendOut / OnInterrupted / OnCancelled / OnEventReceived），便于纯逻辑/测试。
 

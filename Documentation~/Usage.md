@@ -216,6 +216,10 @@ public sealed class AS_Shield : AttributeSet
 }
 ```
 
+**Other hooks**: `PostAttributeBaseChange(attribute, oldValue, newValue)` fires after an Instant/Periodic effect changes a **BaseValue** (the permanent value) — use it to react to permanent changes; `PreAttributeChange` / `PostAttributeChange` cover the **CurrentValue** (temporary buffs included), and `PreAttributeBaseChange` runs just before a base change.
+
+**Meta attributes**: mark an intermediate attribute (like `IncomingDamage`) as meta — the codegen definition's `IsMeta` flag, or `MarkMeta(nameof(X))` in a hand-written set. Meta attributes should only be written by Instant effects / Executions and zeroed by the set; the framework warns (editor only) if a Duration/Infinite effect's modifier targets one — the intent of Unreal's `HideFromModifiers`, since Sigil attributes have no picker dropdown to hide from.
+
 ### 5.1 Authoring attribute sets in the editor (no hand-written C#)
 
 Unreal's GAS forces attributes into C++. Sigil lets you define them in the editor and generate the C# for you — so a designer can add attributes without a programmer, while code still gets a real, compile-time-safe type.
@@ -383,7 +387,9 @@ var owned = new GameplayTagContainer(); asc.GetOwnedGameplayTags(owned);
 // Abilities
 var handle = asc.GiveAbility(template); asc.TryActivateAbility(handle);
 asc.TryActivateAbilitiesByTag(tag);
+asc.TryActivateAbilityByClass<MyAbility>();            // activate by ability type
 asc.ClearAbility(handle);
+AbilitySystemComponent a = AbilitySystemComponent.GetAbilitySystem(go); // resolve an ASC from any object (IAbilitySystemInterface, else GetComponent)
 IReadOnlyCollection<GameplayAbilitySpec> granted = asc.GetGrantedAbilities(); // list an ability bar
 
 // Effects
@@ -628,7 +634,7 @@ protected override void OnActivateAbility(GameplayEventData triggerData)
 }
 ```
 
-Other tasks: `AbilityTask_WaitDelay` (delay), `WaitDelayOneFrame` (one frame), `AbilityTask_WaitGameplayEvent` (wait for an event), `AbilityTask_WaitInputPress` (wait for input, tag-gateable), `AbilityTask_WaitTargetData` (drives a TargetActor to collect targets).
+Other tasks: `AbilityTask_WaitDelay` (delay), `WaitDelayOneFrame` (one frame), `AbilityTask_WaitGameplayEvent` (wait for an event), `AbilityTask_WaitInputPress` (wait for input, tag-gateable), `AbilityTask_WaitAttributeChange` (wait for a watched attribute to change), `AbilityTask_WaitTargetData` (drives a TargetActor to collect targets).
 
 > The `animator` of `PlayMontageAndWaitForEvent` can be left empty — it then drives its 5 callbacks (OnCompleted / OnBlendOut / OnInterrupted / OnCancelled / OnEventReceived) purely by `duration`, which is handy for pure logic/tests.
 

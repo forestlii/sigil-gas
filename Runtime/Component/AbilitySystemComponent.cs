@@ -244,6 +244,37 @@ namespace Likeon.GAS
             return any;
         }
 
+        /// <summary>尝试激活第一个属于指定类型（或其子类）的已授予技能（对齐 UE TryActivateAbilityByClass）。</summary>
+        public bool TryActivateAbilityByClass(Type abilityType, GameplayEventData triggerData = null)
+        {
+            if (abilityType == null) return false;
+            var specs = new List<GameplayAbilitySpec>(_abilities.Values); // 快照：激活可能改动集合
+            foreach (var spec in specs)
+                if (spec.Ability != null && abilityType.IsInstanceOfType(spec.Ability))
+                    return TryActivateSpec(spec, triggerData);
+            return false;
+        }
+
+        /// <summary>泛型便捷重载。</summary>
+        public bool TryActivateAbilityByClass<T>(GameplayEventData triggerData = null) where T : GameplayAbility
+            => TryActivateAbilityByClass(typeof(T), triggerData);
+
+        /// <summary>
+        /// 从一个 GameObject 解析出 ASC：优先它实现的 <see cref="IAbilitySystemInterface"/>，
+        /// 否则退回 GetComponent（对齐 UE GetAbilitySystemComponentFromActor）。
+        /// ASC 不在本对象上（挂在子物体/伙伴对象）时用接口指路。
+        /// </summary>
+        public static AbilitySystemComponent GetAbilitySystem(GameObject actor)
+        {
+            if (actor == null) return null;
+            if (actor.TryGetComponent<IAbilitySystemInterface>(out var provider))
+            {
+                var asc = provider.GetAbilitySystemComponent();
+                if (asc != null) return asc;
+            }
+            return actor.GetComponent<AbilitySystemComponent>();
+        }
+
         private bool TryActivateSpec(GameplayAbilitySpec spec, GameplayEventData triggerData)
         {
             var ability = spec.Ability;
@@ -486,6 +517,10 @@ namespace Likeon.GAS
                 return ActiveGameplayEffectHandle.Invalid; // 瞬时效果不产生句柄
             }
 
+#if UNITY_EDITOR
+            WarnIfDurationModifiersTargetMeta(def); // meta 属性防误用（对齐 UE HideFromModifiers 的意图）
+#endif
+
             // 可叠层效果：命中已有同组实例则加层并按策略刷新，不新建实例
             if (def.IsStackable)
             {
@@ -592,6 +627,20 @@ namespace Likeon.GAS
             }
         }
 
+#if UNITY_EDITOR
+        // meta 属性只该被 Instant/Execution 写入并清零；Duration/Infinite 的 modifier 挂上它会破坏 meta 管线。
+        // 对齐 UE HideFromModifiers 的防误用意图——本项目无属性选择下拉 UI，改为施加持续效果时警告。
+        private void WarnIfDurationModifiersTargetMeta(GameplayEffect def)
+        {
+            foreach (var mod in def.Modifiers)
+            {
+                var set = GetAttributeSet(mod.Attribute.AttributeSetTypeName);
+                if (set != null && set.IsMeta(mod.Attribute.AttributeName))
+                    Debug.LogWarning($"[Sigil] 持续型效果 '{def.name}' 的 modifier 指向 meta 属性 '{mod.Attribute.AttributeName}'——meta 属性应只被 Instant/Execution 写入，挂在持续 modifier 上会破坏 meta 管线（对齐 UE HideFromModifiers）。");
+            }
+        }
+#endif
+
         // 立即结算一个效果（Instant 或 周期一次）：改基础值 + 执行计算 + PostGameplayEffectExecute 钩子
         // stackCount：周期性叠层效果按层放大结算量（加法语义；其它运算符周期叠层罕见，按单次处理）
         private void ExecuteEffectSpec(GameplayEffectSpec spec, int stackCount = 1)
@@ -629,6 +678,7 @@ namespace Likeon.GAS
                 float newBase = ApplyOp(oldBase, output.Operation, output.Magnitude);
                 set.PreAttributeBaseChange(output.Attribute, ref newBase);
                 data.BaseValue = newBase;
+                set.PostAttributeBaseChange(output.Attribute, oldBase, newBase); // BaseValue 改后钩子（对齐 UE）
 
                 // 重算当前值（基础值变了）
                 RecalculateCurrentValue(set, output.Attribute, spec.Context);
@@ -649,9 +699,11 @@ namespace Likeon.GAS
             var set = GetAttributeSet(attribute.AttributeSetTypeName);
             var data = attribute.ResolveData(this);
             if (set == null || data == null) return;
-            float newBase = ApplyOp(data.BaseValue, op, magnitude);
+            float oldBase = data.BaseValue;
+            float newBase = ApplyOp(oldBase, op, magnitude);
             set.PreAttributeBaseChange(attribute, ref newBase);
             data.BaseValue = newBase;
+            set.PostAttributeBaseChange(attribute, oldBase, newBase); // BaseValue 改后钩子（对齐 UE）
             RecalculateCurrentValue(set, attribute, source);
         }
 
