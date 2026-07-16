@@ -876,12 +876,12 @@ public override void Execute(GameplayEffectSpec spec, AbilitySystemComponent src
 | UE GAS | Sigil 对应 | 差异说明 |
 |---|---|---|
 | `UAbilitySystemComponent` | `AbilitySystemComponent`（MonoBehaviour） | 挂角色 GameObject 上 |
-| `IAbilitySystemInterface` | `GetComponent` / `GetComponentInParent<AbilitySystemComponent>()` | Unity 惯用法，无需接口 |
+| `IAbilitySystemInterface` / `GetAbilitySystemComponentFromActor` | `IAbilitySystemInterface` + `AbilitySystemComponent.GetAbilitySystem(go)` | 先看接口，否则退回 `GetComponent`（§8） |
 | OwnerActor / AvatarActor 分离 | **合一**（ASC 所在 GameObject 即两者） | 单机语境简化；联网阶段再评估 |
 | `AttributeSet` + `ATTRIBUTE_ACCESSORS` | `AttributeSet` 子类 + `Register()` 登记 | `PreAttributeChange` / `PostGameplayEffectExecute` 等钩子同名同义 |
 | Meta Attribute（Damage） | 同（`AS_Health.IncomingDamage`） | 管线一致 |
 | GE Instant / HasDuration / Infinite / Period | 同名同义 | — |
-| `ModifierMagnitudeCalculation`（MMC） | **未提供** | 用 Execution 或 SetByCaller 覆盖 |
+| `ModifierMagnitudeCalculation`（MMC） | `ModifierMagnitudeCalculation`（ScriptableObject；修改量选 `CustomCalculationClass`） | 职责相同：单条属性联动的修改器，见 §6 |
 | `ExecutionCalculation` | `GameplayEffectExecutionCalculation` | ScriptableObject 资产 |
 | SetByCaller / Stacking / GrantedTags / 施加条件标签 | 同名同义 | Stacking 含 AggregateByTarget/BySource |
 | `FGameplayEffectContext` 子类 + `AllocGameplayEffectContext` | 直接 C# 继承 `GameplayEffectContext`，构造 `GameplayEffectSpec` 时传入 | 不需要全局 Alloc 钩子；便捷路径 `MakeOutgoingSpec` 用基类 |

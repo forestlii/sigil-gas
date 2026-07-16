@@ -5,6 +5,13 @@
 本文件记录 Sigil 的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [Unreleased]
+
+### 文档
+
+- **README 功能清单补齐到 0.8.0 / 0.9.0。** 现已覆盖 `AbilityTriggers`、`ModifierMagnitudeCalculation`（MMC）、有状态的 `GameplayCueNotify_Actor`、`AbilityTask_WaitAttributeChange`、`TryActivateAbilityByClass` + `IAbilitySystemInterface` / `GetAbilitySystem`、`PostAttributeBaseChange` 钩子与 meta 属性标记——这些在使用文档里早已写了，只是 README 没跟上。编辑器速查表补上 **Gameplay Cue Notify (Actor)**。
+- **修正使用文档 UE GAS 迁移表（§20）里两行过时描述**：`ModifierMagnitudeCalculation` 还写着*"未提供——用 Execution 或 SetByCaller 覆盖"*（0.8.0 已实现）、`IAbilitySystemInterface` 还写着*"Unity 惯用法，无需接口"*（0.9.0 已实现）。两行都与文档自身的 §6 / §8 自相矛盾。
+
 ## [0.9.1] - 2026-07-09
 
 ### 变更

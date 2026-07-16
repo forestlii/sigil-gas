@@ -31,13 +31,13 @@
 
 ### 核心能力系统
 - **GameplayTag** — 层级标签、容器、引用计数松散标签、标签查询。
-- **AttributeSet** — 属性 + Pre/Post 结算钩子。**不内置任何 `AS_*`**：在 Inspector 里定义属性集，用属性集 codegen 工具（*Sigil ▸ GAS ▸ …*）**生成** C#，或手写 `AttributeSet` 子类。
-- **GameplayEffect** — 瞬时/持续/无限、周期、修改器、自定义执行计算、授予标签、施加条件、SetByCaller、**叠层**（按来源/目标合并、层数上限、刷新/重置/到期策略、修改量按层放大）。
-- **GameplayAbility** — 激活策略（并行/可替换独占/阻断独占）、消耗与冷却、激活期标签、效果容器。
-- **AbilitySystemComponent** — 中枢：拥有标签、属性集、激活效果、技能授予与激活、独占、交互规则。
+- **AttributeSet** — 属性 + `PreAttributeChange` / `PostAttributeBaseChange` / `PostGameplayEffectExecute` 钩子，以及 **meta 属性标记**（codegen 定义里勾 `IsMeta`，或手写 `MarkMeta(...)`）——持续/无限效果的修改器误指中间属性时编辑器会警告。**不内置任何 `AS_*`**：在 Inspector 里定义属性集，用属性集 codegen 工具（*Sigil ▸ GAS ▸ …*）**生成** C#，或手写 `AttributeSet` 子类。
+- **GameplayEffect** — 瞬时/持续/无限、周期、修改器、授予标签、施加条件、SetByCaller、**叠层**（按来源/目标合并、层数上限、刷新/重置/到期策略、修改量按层放大），以及两个算数值的扩展点：**`ModifierMagnitudeCalculation`**（MMC——单条属性联动的修改器，如*伤害 = 力量 × 1.5*）与 **`GameplayEffectExecutionCalculation`**（多属性公式：减伤、暴击）。
+- **GameplayAbility** — 激活策略（并行/可替换独占/阻断独占）、消耗与冷却、激活期标签、效果容器，以及 **`AbilityTriggers`**——收到 GameplayEvent、或拥有标签被加上/已存在时自动激活，无需显式 `TryActivate`。
+- **AbilitySystemComponent** — 中枢：拥有标签、属性集、激活效果、技能授予与激活（按句柄 / 标签 / **类型**——`TryActivateAbilityByClass<T>()`）、独占、交互规则。`GetAbilitySystem(gameObject)` 可从任意对象解析 ASC（先看 **`IAbilitySystemInterface`**，否则退回 `GetComponent`）——适配 ASC 挂在子物体/伙伴对象上的角色。
 - **AbilityLoadout** — 批量授予技能+效果+属性集，整批撤销。
 - **AbilityInteractionRules** — 状态感知的 阻挡/取消/激活准入 规则，按角色当前标签驱动。
-- **AbilityTask 框架** — 协程异步任务：`WaitDelay`、`WaitDelayOneFrame`、`WaitGameplayEvent`、`WaitInputPress`、`WaitTargetData`、`PlayMontageAndWaitForEvent`（播 Animator 状态同时监听 gameplay 事件）；技能结束自动取消。
+- **AbilityTask 框架** — 协程异步任务：`WaitDelay`、`WaitDelayOneFrame`、`WaitGameplayEvent`、`WaitInputPress`、`WaitAttributeChange`、`WaitTargetData`、`PlayMontageAndWaitForEvent`（播 Animator 状态同时监听 gameplay 事件）；技能结束自动取消。也可继承 `AbilityTask` 写自己的。
 - **目标采集** — `TargetActor`（线/球 trace）产出 `TargetData`，外加 `TargetSource`（自身 / 事件数据）。
 - **GlobalAbilitySystem** — 一次性给所有注册 ASC 施加技能/效果（全场 buff/debuff、阶段技能）；后注册的 ASC 自动补全。可选 `GlobalAbilitySystemRegistrant` 自动注册。
 - **GamePhaseSubsystem** — 嵌套层级 tag 游戏阶段（`GamePhaseAbility`）：父子阶段共存、兄弟互斥；开始/结束观察者（精确/部分匹配）。
@@ -60,7 +60,7 @@
 刻意不放核心：移动是状态总线的*消费方*、非能力系统——所以核心可配你自己的移动，也可搭这个包。
 
 ### 表现
-- **GameplayCue** — 标签驱动 VFX/SFX，经 `GameplayCueManager` 按标签层级路由。
+- **GameplayCue** — 标签驱动 VFX/SFX，经 `GameplayCueManager` 按标签层级路由，两种形态：**`GameplayCueNotify`（Static）** 打完就走的一次性表现；**`GameplayCueNotify_Actor`** 有状态表现，活满整个持续/无限效果（buff 光环、引导光束）——每个 (notify, 目标) 一个池化实例，走 `OnActive → WhileActive → OnRemove`；填个 `SpawnPrefab` 即可零代码做循环光环，也可继承重写钩子做动态行为。
 - **表面效果** — `SurfaceEffectComponent` 从命中解析表面，从 `SurfaceEffectLibrary` 播放音效与粒子。
 - **相机混合栈** — 第三人称行为按 AnimationCurve 权重混合，含 SphereCast 碰撞拉近。
 
@@ -92,7 +92,7 @@ Sigil 是**数据驱动**的：行为靠在 Inspector 里编辑 **ScriptableObje
 
 ### 编辑器速查
 
-**在编辑器里配、零代码** —— *Create → Sigil → GAS → …*：**Gameplay Effect**、**Ability Loadout**、**Ability Interaction Rules**、**Input Config**、**Input Control Setup**、**Curve Table**、**Gameplay Tags Settings**、**Attribute Set Definition**（→ codegen）、**Gameplay Cue Notify (Static)**、**Surface Effect Library**、**Target Source**、**Game Phase Ability**。要写代码的类型（`GameplayAbility` / `GameplayCueNotify` / `GameplayEffectExecutionCalculation`）在 *Assets → Create → Sigil* 有一键空子类模板。工具在 *Sigil ▸ GAS*：**Gameplay Tags** 注册表、**GAS Debugger**、**Generate Gameplay Tag Constants**、**Scan Project for Gameplay Tags**。属性集由 **Attribute Set Definition** 资产生成（不用写 C++/C#）。战斗/移动的资产随各自配套包发布。
+**在编辑器里配、零代码** —— *Create → Sigil → GAS → …*：**Gameplay Effect**、**Ability Loadout**、**Ability Interaction Rules**、**Input Config**、**Input Control Setup**、**Curve Table**、**Gameplay Tags Settings**、**Attribute Set Definition**（→ codegen）、**Gameplay Cue Notify (Static)**、**Gameplay Cue Notify (Actor)**、**Surface Effect Library**、**Target Source**、**Game Phase Ability**。要写代码的类型（`GameplayAbility` / `GameplayCueNotify` / `GameplayEffectExecutionCalculation`）在 *Assets → Create → Sigil* 有一键空子类模板。工具在 *Sigil ▸ GAS*：**Gameplay Tags** 注册表、**GAS Debugger**、**Generate Gameplay Tag Constants**、**Scan Project for Gameplay Tags**。属性集由 **Attribute Set Definition** 资产生成（不用写 C++/C#）。战斗/移动的资产随各自配套包发布。
 
 → 完整表格（带说明）见[使用文档](Documentation~/Usage.zh-CN.md) §21。
 

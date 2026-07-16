@@ -877,12 +877,12 @@ Most concepts carry over **by name and meaning**; this table lists the mappings 
 | UE GAS | Sigil equivalent | Notes |
 |---|---|---|
 | `UAbilitySystemComponent` | `AbilitySystemComponent` (MonoBehaviour) | Lives on the character GameObject |
-| `IAbilitySystemInterface` | `GetComponent` / `GetComponentInParent<AbilitySystemComponent>()` | Unity idiom; no interface needed |
+| `IAbilitySystemInterface` / `GetAbilitySystemComponentFromActor` | `IAbilitySystemInterface` + `AbilitySystemComponent.GetAbilitySystem(go)` | Prefers the interface, falls back to `GetComponent` (§8) |
 | OwnerActor / AvatarActor split | **Unified** (the ASC's GameObject is both) | Single-player simplification; revisit for networking |
 | `AttributeSet` + `ATTRIBUTE_ACCESSORS` | `AttributeSet` subclass + `Register()` | `PreAttributeChange` / `PostGameplayEffectExecute` hooks: same names, same semantics |
 | Meta Attributes (Damage) | Same (`AS_Health.IncomingDamage`) | Identical pipeline |
 | GE Instant / HasDuration / Infinite / Period | Same names, same semantics | — |
-| `ModifierMagnitudeCalculation` (MMC) | **Not provided** | Cover with an Execution or SetByCaller |
+| `ModifierMagnitudeCalculation` (MMC) | `ModifierMagnitudeCalculation` (a ScriptableObject; modifier magnitude = `CustomCalculationClass`) | Same role: one attribute-linked modifier, see §6 |
 | `ExecutionCalculation` | `GameplayEffectExecutionCalculation` | A ScriptableObject asset |
 | SetByCaller / Stacking / GrantedTags / application tag requirements | Same names, same semantics | Stacking includes AggregateByTarget/BySource |
 | `FGameplayEffectContext` subclass + `AllocGameplayEffectContext` | Subclass `GameplayEffectContext` in C#, pass it when constructing a `GameplayEffectSpec` | No global alloc hook needed; the convenience path `MakeOutgoingSpec` uses the base class |

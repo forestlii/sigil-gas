@@ -6,6 +6,13 @@ All notable changes to Sigil are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Documentation
+
+- **README feature list caught up with 0.8.0 / 0.9.0.** It now covers `AbilityTriggers`, `ModifierMagnitudeCalculation` (MMC), the stateful `GameplayCueNotify_Actor`, `AbilityTask_WaitAttributeChange`, `TryActivateAbilityByClass` + `IAbilitySystemInterface` / `GetAbilitySystem`, the `PostAttributeBaseChange` hook and meta-attribute marking — all of which were already documented in the usage guide but missing from the README. The editor cheat sheet now lists **Gameplay Cue Notify (Actor)**.
+- **Fixed two stale rows in the usage guide's Unreal-GAS migration table** (§20): `ModifierMagnitudeCalculation` still said *"Not provided — cover with an Execution or SetByCaller"* (added in 0.8.0) and `IAbilitySystemInterface` still said *"Unity idiom; no interface needed"* (added in 0.9.0). Both contradicted the guide's own §6 / §8.
+
 ## [0.9.1] - 2026-07-09
 
 ### Changed

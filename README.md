@@ -35,13 +35,13 @@ package to `"testables"` in your project's `Packages/manifest.json`, then open
 
 ### Core ability system
 - **GameplayTag** — hierarchical tags, containers, ref-counted loose tags, tag queries.
-- **AttributeSet** — attributes with Pre/Post change hooks. No built-in `AS_*`: define your attribute sets in the Inspector and **generate** the C# with the attribute-set codegen tool (*Sigil ▸ GAS ▸ …*), or hand-write `AttributeSet` subclasses.
-- **GameplayEffect** — Instant / Duration / Infinite, periodic, modifiers, custom execution calculations, granted tags, application conditions, SetByCaller, **stacking** (aggregate by source/target, stack limit, duration-refresh / period-reset / expiration policies, magnitude scales by stack count).
-- **GameplayAbility** — activation group (Independent / ExclusiveReplaceable / ExclusiveBlocking), cost & cooldown (incl. modular `AbilityCost`), optional per-frame `AbilityTick`, activation-owned tags, effect containers.
-- **AbilitySystemComponent** — the hub: owned tags, attribute sets, active effects, ability granting/activation, exclusivity, interaction rules.
+- **AttributeSet** — attributes with `PreAttributeChange` / `PostAttributeBaseChange` / `PostGameplayEffectExecute` hooks, and **meta-attribute marking** (`IsMeta` in the codegen definition or `MarkMeta(...)` by hand) so the editor warns when a Duration/Infinite modifier misuses an intermediate attribute. No built-in `AS_*`: define your attribute sets in the Inspector and **generate** the C# with the attribute-set codegen tool (*Sigil ▸ GAS ▸ …*), or hand-write `AttributeSet` subclasses.
+- **GameplayEffect** — Instant / Duration / Infinite, periodic, modifiers, granted tags, application conditions, SetByCaller, **stacking** (aggregate by source/target, stack limit, duration-refresh / period-reset / expiration policies, magnitude scales by stack count), and two extension points for computed magnitudes: **`ModifierMagnitudeCalculation`** (MMC — one attribute-linked modifier, e.g. *damage = Strength × 1.5*) and **`GameplayEffectExecutionCalculation`** (multi-attribute formulas: mitigation, crits).
+- **GameplayAbility** — activation group (Independent / ExclusiveReplaceable / ExclusiveBlocking), cost & cooldown (incl. modular `AbilityCost`), optional per-frame `AbilityTick`, activation-owned tags, effect containers, and **`AbilityTriggers`** — self-activation on a GameplayEvent or on an owned tag being added / present, with no explicit `TryActivate` call.
+- **AbilitySystemComponent** — the hub: owned tags, attribute sets, active effects, ability granting/activation (by handle / tag / **class** — `TryActivateAbilityByClass<T>()`), exclusivity, interaction rules. `GetAbilitySystem(gameObject)` resolves an ASC from any object via **`IAbilitySystemInterface`**, falling back to `GetComponent` — for characters whose ASC lives on a child or companion object.
 - **AbilityLoadout** — batch-grant abilities + effects + attribute sets; revoke as one handle.
 - **AbilityInteractionRules** — state-aware block / cancel / activation rules driven by the character's current tags.
-- **AbilityTask framework** — coroutine-based async tasks: `WaitDelay`, `WaitDelayOneFrame`, `WaitGameplayEvent`, `WaitInputPress`, `WaitTargetData`, `PlayMontageAndWaitForEvent` (play an Animator state while listening for gameplay events); auto-cancelled on ability end.
+- **AbilityTask framework** — coroutine-based async tasks: `WaitDelay`, `WaitDelayOneFrame`, `WaitGameplayEvent`, `WaitInputPress`, `WaitAttributeChange`, `WaitTargetData`, `PlayMontageAndWaitForEvent` (play an Animator state while listening for gameplay events); auto-cancelled on ability end. Derive your own from `AbilityTask`.
 - **Targeting** — `TargetActor` (line / sphere trace) producing `TargetData`, plus `TargetSource` (self / event-data).
 - **GlobalAbilitySystem** — apply an ability/effect to every registered ASC at once (arena-wide buffs/debuffs, phase abilities); late-registered ASCs auto-receive global items. Optional `GlobalAbilitySystemRegistrant` for auto register.
 - **GamePhaseSubsystem** — nested hierarchical-tag game phases (`GamePhaseAbility`): parent & child phases coexist, siblings are exclusive; start/end observers (exact / partial match).
@@ -68,7 +68,7 @@ movement is a *consumer* of the state bus, not the ability system — so you can
 core with your own movement, or with this package.
 
 ### Presentation
-- **GameplayCue** — tag-driven VFX/SFX, routed by tag hierarchy via `GameplayCueManager`.
+- **GameplayCue** — tag-driven VFX/SFX, routed by tag hierarchy via `GameplayCueManager`, in two forms: **`GameplayCueNotify` (Static)** for fire-and-forget bursts, and **`GameplayCueNotify_Actor`** for stateful presentation that lives for a whole Duration/Infinite effect (buff aura, channel beam) — one pooled instance per (notify, target), running `OnActive → WhileActive → OnRemove`; assign a `SpawnPrefab` for a zero-code looping aura, or subclass for dynamic behaviour.
 - **Surface effects** — `SurfaceEffectComponent` resolves a surface from a hit and plays audio & particles from a `SurfaceEffectLibrary`.
 - **Camera blend stack** — third-person behaviors blended by an AnimationCurve-driven weight, with SphereCast collision pull-in.
 
@@ -102,7 +102,7 @@ Sigil is **data-driven**: you configure behaviour by authoring **ScriptableObjec
 
 ### Editor cheat sheet
 
-Authored **in the Editor, no code** — *Create → Sigil → GAS → …*: **Gameplay Effect**, **Ability Loadout**, **Ability Interaction Rules**, **Input Config**, **Input Control Setup**, **Curve Table**, **Gameplay Tags Settings**, **Attribute Set Definition** (→ codegen), **Gameplay Cue Notify (Static)**, **Surface Effect Library**, **Target Source**, **Game Phase Ability**. Code-backed types (`GameplayAbility` / `GameplayCueNotify` / `GameplayEffectExecutionCalculation`) get one-click empty-subclass templates under *Assets → Create → Sigil*. Tools under *Sigil ▸ GAS*: **Gameplay Tags** registry, **GAS Debugger**, **Generate Gameplay Tag Constants**, **Scan Project for Gameplay Tags**. Attribute sets are generated from an **Attribute Set Definition** asset (no C++/C# needed). Combat / movement assets ship with their companion packages.
+Authored **in the Editor, no code** — *Create → Sigil → GAS → …*: **Gameplay Effect**, **Ability Loadout**, **Ability Interaction Rules**, **Input Config**, **Input Control Setup**, **Curve Table**, **Gameplay Tags Settings**, **Attribute Set Definition** (→ codegen), **Gameplay Cue Notify (Static)**, **Gameplay Cue Notify (Actor)**, **Surface Effect Library**, **Target Source**, **Game Phase Ability**. Code-backed types (`GameplayAbility` / `GameplayCueNotify` / `GameplayEffectExecutionCalculation`) get one-click empty-subclass templates under *Assets → Create → Sigil*. Tools under *Sigil ▸ GAS*: **Gameplay Tags** registry, **GAS Debugger**, **Generate Gameplay Tag Constants**, **Scan Project for Gameplay Tags**. Attribute sets are generated from an **Attribute Set Definition** asset (no C++/C# needed). Combat / movement assets ship with their companion packages.
 
 → Full table (with descriptions) in the [usage guide](Documentation~/Usage.md) §21.
 
