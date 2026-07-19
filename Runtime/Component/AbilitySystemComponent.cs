@@ -336,18 +336,28 @@ namespace Likeon.GAS
         private bool TryActivateSpec(GameplayAbilitySpec spec, GameplayEventData triggerData)
         {
             var ability = spec.Ability;
-            if (ability.IsActive) { OnAbilityActivationFailed?.Invoke(ability, EAbilityActivationFailReason.AlreadyActive); return false; }
+            // 重入安全（C1）：ability.IsActive 要到下方 ability.Activate() 内才置位，而其前的取消/阻挡回调
+            // （CancelAbilitiesWithActivationGroup / ApplyAbilityBlockAndCancelTags → 被取消技能的 OnEndAbility 用户代码）
+            // 若对同一句柄重入 TryActivateAbility，此刻 IsActive 仍为 false → 绕过守卫 → 双激活
+            // （松散标签挂两遍、OnActivateAbility 跑两遍、OnAbilityActivated 发两遍）。
+            // spec.IsActivating 作为「激活临界区锁」把这段窗口一并挡住——对齐 UE 激活期间的重入保护。
+            if (ability.IsActive || spec.IsActivating) { OnAbilityActivationFailed?.Invoke(ability, EAbilityActivationFailReason.AlreadyActive); return false; }
             if (!ability.CanActivate(out var failReason)) { OnAbilityActivationFailed?.Invoke(ability, failReason); return false; }
 
-            // 独占技能激活：先打断可替换的独占技能
-            if (ability.ActivationGroup != EAbilityActivationGroup.Independent)
-                CancelAbilitiesWithActivationGroup(EAbilityActivationGroup.ExclusiveReplaceable, ability);
+            spec.IsActivating = true;
+            try
+            {
+                // 独占技能激活：先打断可替换的独占技能
+                if (ability.ActivationGroup != EAbilityActivationGroup.Independent)
+                    CancelAbilitiesWithActivationGroup(EAbilityActivationGroup.ExclusiveReplaceable, ability);
 
-            // 按 TagRelationship 取消互斥技能 + 登记本技能激活期间阻挡的技能标签
-            ApplyAbilityBlockAndCancelTags(ability);
+                // 按 TagRelationship 取消互斥技能 + 登记本技能激活期间阻挡的技能标签
+                ApplyAbilityBlockAndCancelTags(ability);
 
-            ability.Activate(triggerData);
-            OnAbilityActivated?.Invoke(ability);
+                ability.Activate(triggerData); // 此处置 IsActive=true，之后重入由 IsActive 守卫接管
+                OnAbilityActivated?.Invoke(ability);
+            }
+            finally { spec.IsActivating = false; }
             return true;
         }
 

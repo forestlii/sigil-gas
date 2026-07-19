@@ -28,6 +28,11 @@ namespace Likeon.GAS
         /// <summary>当前是否处于激活中。</summary>
         public bool IsActive { get; internal set; }
 
+        /// <summary>激活临界区标志：TryActivateSpec 跑「取消回调 + Activate」这段期间置位。
+        /// GameplayAbility.IsActive 要到 Activate() 内才置位，而取消/阻挡回调跑在其之前——期间对
+        /// 同一 spec 重入激活会绕过 IsActive 守卫导致双激活（C1）。本标志把这段窗口一并挡住。</summary>
+        public bool IsActivating { get; internal set; }
+
         public GameplayAbilitySpec(GameplayAbilitySpecHandle handle, GameplayAbility ability, int level)
         {
             Handle = handle;
