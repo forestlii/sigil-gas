@@ -558,10 +558,75 @@ namespace Likeon.GAS
             return ApplyGameplayEffectSpecToSelf(MakeOutgoingSpec(effect, level));
         }
 
-        /// <summary>给自己施加一个效果 spec。</summary>
+        // ===================== 重入安全：作用域锁 + 延迟队列 =====================
+        // 效果结算 / 属性变化钩子里，用户 Apply/Remove 效果是合理写法（反伤、斩杀链、受伤驱散护盾）。
+        // 若当场执行会破坏正在进行的遍历/结算：跳 tick、对已删对象继续跑、无限递归爆栈。
+        // 方案：正处于结算作用域（_scopeDepth>0）时，Apply/Remove 入队，退到最外层再统一 flush。
+        // 对齐 UE 的 FScopedAbilityListLock + 延迟移除（见 MD/design/重入安全-延迟队列方案.md）。
+        private int _scopeDepth;
+        private bool _flushingDeferred;
+        private const int MaxDeferredOpsPerFlush = 256; // 兜底：回调自喂自导致队列失控时中止并报错
+        private readonly Queue<DeferredEffectOp> _deferredEffectOps = new Queue<DeferredEffectOp>();
+
+        private readonly struct DeferredEffectOp
+        {
+            public readonly bool IsApply; // true=Apply(Spec)，false=Remove(Handle)
+            public readonly GameplayEffectSpec Spec;
+            public readonly ActiveGameplayEffectHandle Handle;
+            private DeferredEffectOp(bool isApply, GameplayEffectSpec spec, ActiveGameplayEffectHandle handle)
+            { IsApply = isApply; Spec = spec; Handle = handle; }
+            public static DeferredEffectOp Apply(GameplayEffectSpec s) => new DeferredEffectOp(true, s, default);
+            public static DeferredEffectOp Remove(ActiveGameplayEffectHandle h) => new DeferredEffectOp(false, null, h);
+        }
+
+        // 退出一层作用域；退到最外层时把攒下的延迟操作一次性执行掉。
+        private void LeaveScope()
+        {
+            _scopeDepth--;
+            if (_scopeDepth == 0 && _deferredEffectOps.Count > 0) FlushDeferredEffects();
+        }
+
+        private void FlushDeferredEffects()
+        {
+            if (_flushingDeferred) return;
+            _flushingDeferred = true;
+            _scopeDepth++; // flush 期间执行 op 触发的回调仍入队，由下面的 while 收敛处理
+            try
+            {
+                int guard = 0;
+                while (_deferredEffectOps.Count > 0)
+                {
+                    if (++guard > MaxDeferredOpsPerFlush)
+                    {
+                        Debug.LogError("[Sigil] 效果延迟队列超限，疑似结算/属性钩子里无限自施加，已丢弃剩余操作。");
+                        _deferredEffectOps.Clear();
+                        break;
+                    }
+                    var op = _deferredEffectOps.Dequeue();
+                    if (op.IsApply) ApplyGameplayEffectSpecToSelf_Core(op.Spec);
+                    else RemoveActiveGameplayEffect_Core(op.Handle);
+                }
+            }
+            finally { _scopeDepth--; _flushingDeferred = false; }
+        }
+
+        /// <summary>
+        /// 给自己施加一个效果 spec。
+        /// ⚠️ 在效果结算 / 属性变化钩子内调用时（重入），本次会被延迟到当前作用域结束再执行，此时返回 Invalid 句柄
+        /// （句柄需在钩子外或经 OnActiveEffectAdded 事件获取）。稳态（非重入）路径行为不变。
+        /// </summary>
         public ActiveGameplayEffectHandle ApplyGameplayEffectSpecToSelf(GameplayEffectSpec spec)
         {
             if (spec == null || spec.Def == null) return ActiveGameplayEffectHandle.Invalid;
+            if (_scopeDepth > 0) { _deferredEffectOps.Enqueue(DeferredEffectOp.Apply(spec)); return ActiveGameplayEffectHandle.Invalid; }
+            _scopeDepth++;
+            try { return ApplyGameplayEffectSpecToSelf_Core(spec); }
+            finally { LeaveScope(); }
+        }
+
+        // 实际施加逻辑（不含作用域/延迟管理）；直接调用与 flush 都走它。spec 已由入口保证非空。
+        private ActiveGameplayEffectHandle ApplyGameplayEffectSpecToSelf_Core(GameplayEffectSpec spec)
+        {
             var def = spec.Def;
 
             // 施加条件检查
@@ -611,8 +676,19 @@ namespace Likeon.GAS
             return handle;
         }
 
-        /// <summary>移除一个激活效果。</summary>
+        /// <summary>
+        /// 移除一个激活效果。
+        /// ⚠️ 在结算 / 属性变化钩子内调用时（重入），本次移除会被延迟到当前作用域结束再执行，返回 true 表示"已受理"。
+        /// </summary>
         public bool RemoveActiveGameplayEffect(ActiveGameplayEffectHandle handle)
+        {
+            if (_scopeDepth > 0) { _deferredEffectOps.Enqueue(DeferredEffectOp.Remove(handle)); return true; }
+            _scopeDepth++;
+            try { return RemoveActiveGameplayEffect_Core(handle); }
+            finally { LeaveScope(); }
+        }
+
+        private bool RemoveActiveGameplayEffect_Core(ActiveGameplayEffectHandle handle)
         {
             for (int i = 0; i < _activeEffects.Count; i++)
             {
@@ -646,7 +722,9 @@ namespace Likeon.GAS
                         if (assetTag.MatchesTag(t)) { match = true; break; }
                     if (match) break;
                 }
-                if (match) RemoveActiveGameplayEffect(_activeEffects[i].Handle);
+                // 框架内部、自包含的反向遍历移除 → 直接走 _Core 立即执行，保持"先移旧再加新"的顺序
+                // （不入延迟队列，否则会与随后新增的效果乱序）。
+                if (match) RemoveActiveGameplayEffect_Core(_activeEffects[i].Handle);
             }
         }
 
@@ -1067,36 +1145,43 @@ namespace Likeon.GAS
             if (_activeEffects.Count == 0) return;
             _expiredScratch.Clear();
 
-            // 用索引遍历快照，避免在迭代时被周期结算改动
-            for (int i = 0; i < _activeEffects.Count; i++)
+            // 整个 tick 进一个结算作用域：周期结算/抑制翻转触发的用户钩子里若 Apply/Remove 效果，
+            // 会入延迟队列而非当场改 _activeEffects → 本循环始终在稳定列表上跑（不跳 tick、不递归爆栈）。
+            _scopeDepth++;
+            try
             {
-                var active = _activeEffects[i];
-
-                // Ongoing 标签条件 -> 抑制
-                UpdateInhibition(active);
-
-                // 周期结算（叠层效果按层放大结算量）
-                if (active.Def.IsPeriodic && !active.Inhibited)
+                for (int i = 0; i < _activeEffects.Count; i++)
                 {
-                    active.PeriodRemaining -= dt;
-                    while (active.PeriodRemaining <= 0f)
+                    var active = _activeEffects[i];
+
+                    // Ongoing 标签条件 -> 抑制
+                    UpdateInhibition(active);
+
+                    // 周期结算（叠层效果按层放大结算量）
+                    if (active.Def.IsPeriodic && !active.Inhibited)
                     {
-                        ExecuteEffectSpec(active.Spec, active.StackCount); // 按 Instant 语义改基础值
-                        if (active.Def.Period <= 0f) break; // 兜底：运行时资产被改成 0 时防死循环
-                        active.PeriodRemaining += active.Def.Period;
+                        active.PeriodRemaining -= dt;
+                        while (active.PeriodRemaining <= 0f)
+                        {
+                            ExecuteEffectSpec(active.Spec, active.StackCount); // 按 Instant 语义改基础值
+                            if (active.Def.Period <= 0f) break; // 兜底：运行时资产被改成 0 时防死循环
+                            active.PeriodRemaining += active.Def.Period;
+                        }
+                    }
+
+                    // 时长推进
+                    if (active.Def.DurationType == EGameplayEffectDurationType.HasDuration)
+                    {
+                        active.TimeRemaining -= dt;
+                        if (active.TimeRemaining <= 0f) HandleDurationExpired(active);
                     }
                 }
 
-                // 时长推进
-                if (active.Def.DurationType == EGameplayEffectDurationType.HasDuration)
-                {
-                    active.TimeRemaining -= dt;
-                    if (active.TimeRemaining <= 0f) HandleDurationExpired(active);
-                }
+                // 到期移除（此时仍在作用域内 → 入延迟队列，随下面 LeaveScope 的 flush 一并执行）
+                foreach (var expired in _expiredScratch)
+                    RemoveActiveGameplayEffect(expired.Handle);
             }
-
-            foreach (var expired in _expiredScratch)
-                RemoveActiveGameplayEffect(expired.Handle);
+            finally { LeaveScope(); }
         }
 
         // 限时效果到期：不可叠层 / 整组清空 → 整体移除；否则按叠层到期策略掉层或仅刷新

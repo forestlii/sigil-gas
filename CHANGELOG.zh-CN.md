@@ -20,6 +20,7 @@
 - **`GamePhaseSubsystem` 不再在"兄弟阶段的结束回调里启动了另一阶段"时丢失本阶段的 `onEnded`。** `StartPhase` 用共享字段 `_pendingOnEnded` 传回调；兄弟阶段拆除时嵌套的 `StartPhase` 会覆盖它，导致外层阶段的回调丢失。`OnBeginPhase` 现在一进来就把待定回调取进局部量（消费语义）。`StartPhase` 在激活失败时还会 `ClearAbility` 回收授予的阶段技能，不再泄漏。
 - **`GameplayCueManager` 生命周期修复。** `Clear()` 现在会销毁活跃的 cue 实例，而不只是清字典（原来它们成孤儿 GameObject 泄漏）；若某 `OnActive` 记录的实例被外部销毁，现在会重建它，而不是被陈旧的 fake-null 条目静默吞掉；`UnregisterCueNotify` 现在级联——销毁该 notify 的活跃实例并清它的对象池桶。
 - **标签注册表现在会拒绝格式非法的标签名。** `GameplayTagsSettings.AddTag` 原来只查空白，含空段（`A..B`、`.A`、`A.`）、引号或其它杂字符的名字能进注册表并击穿常量生成器。现在用新增的 `IsValidTagName` 校验点分段格式（每段只含字母/数字/`_`/`-`）。
+- **效果结算现在是重入安全的（延迟队列）。** 在结算 / 属性变化钩子里施加或移除效果（合理写法——反伤、斩杀链、"受伤→驱散护盾"）原来会当场执行：可能在 tick 中途改动 `_activeEffects` 导致某效果本帧被跳过、对已移除的效果继续处理、或无限递归 `ExecuteEffectSpec` 直到 StackOverflow 崩进程。现在 ASC 把效果结算放进一个作用域；作用域内调用的 `ApplyGameplayEffectSpecToSelf` / `RemoveActiveGameplayEffect` 会入队，等最外层作用域退出时统一 flush（对齐 UE 的 `FScopedAbilityListLock` + 延迟移除，带每次 flush 256 操作上限，钩子无限自喂时报错中止）。稳态（非重入）调用行为完全不变；重入的 Apply 返回 Invalid 句柄、重入的 Remove 返回 true（"已受理"）。*(重入安全 3 阶段中的第 1 阶段——技能激活(C1)、输入(C6/C7)待后续；见 `MD/design/重入安全-延迟队列方案.md`。)*
 - **代码生成器不再对关键字名、未转义标签串、成员重名生成不可编译代码。** 标签常量生成器把标签路径嵌进字符串字面量前先转义，并给是 C# 关键字的段加 `@` 前缀，还预留外层类型名与注入的 `Self` 成员，使 `A.A` 这类嵌套或名为 `Self` 的子段不撞名。属性集生成器的 `Validate` 现在会拒绝 C# 关键字标识符、与类名同名的属性（CS0542）、以及生成的 `{Name}Attribute` 句柄与另一属性撞名的情况。
 
 ### 文档
