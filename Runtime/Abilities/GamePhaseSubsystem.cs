@@ -45,7 +45,9 @@ namespace Likeon.GAS
             if (asc == null || template == null) return;
             _pendingOnEnded = onEnded;
             var handle = asc.GiveAbility(template);
-            asc.TryActivateAbility(handle); // 触发克隆实例 OnActivateAbility → OnBeginPhase
+            // 激活失败（CanActivate 未过、被标签挡）时授予的技能永远留在 _abilities → 泄漏；回收之。
+            if (!asc.TryActivateAbility(handle)) // 触发克隆实例 OnActivateAbility → OnBeginPhase
+                asc.ClearAbility(handle);
             _pendingOnEnded = null;
         }
 
@@ -71,6 +73,11 @@ namespace Likeon.GAS
         /// <summary>由 <see cref="GamePhaseAbility"/> 激活时回调：结束兄弟阶段、记录、通知开始观察者。</summary>
         public void OnBeginPhase(GamePhaseAbility phase)
         {
+            // 先消费 _pendingOnEnded（取出并清空）：下面结束兄弟阶段的 OnEnded 回调里可能嵌套 StartPhase，
+            // 那会覆盖共享字段 _pendingOnEnded，导致本阶段的结束回调丢失。用局部量隔离。
+            var onEnded = _pendingOnEnded;
+            _pendingOnEnded = null;
+
             var t = phase.GamePhaseTag;
             var p = DirectParent(t);
 
@@ -86,7 +93,7 @@ namespace Likeon.GAS
             }
             foreach (var a in toEnd) a.EndAbility(true); // → OnEndPhase 移除该项
 
-            _active.Add(new PhaseEntry { Ability = phase, OnEnded = _pendingOnEnded });
+            _active.Add(new PhaseEntry { Ability = phase, OnEnded = onEnded });
 
             for (int i = 0; i < _startObservers.Count; i++)
                 if (_startObservers[i].IsMatch(t)) _startObservers[i].Callback?.Invoke(t);

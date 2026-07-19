@@ -21,14 +21,32 @@ namespace Likeon.GAS
 
         public bool Contains(string tag) => !string.IsNullOrEmpty(tag) && tags.Contains(tag);
 
-        /// <summary>新增标签（去重 + 排序）。成功返回 true。</summary>
+        /// <summary>新增标签（去重 + 排序）。成功返回 true；格式非法或已存在返回 false。</summary>
         public bool AddTag(string tag)
         {
             if (string.IsNullOrWhiteSpace(tag)) return false;
             tag = tag.Trim();
+            if (!IsValidTagName(tag)) return false; // 非法格式（空段/引号/非法字符）挡在注册表外，避免击穿常量生成器
             if (tags.Contains(tag)) return false;
             tags.Add(tag);
             tags.Sort(StringComparer.Ordinal);
+            return true;
+        }
+
+        /// <summary>
+        /// 校验标签名格式：点分段，每段非空、只含字母/数字/下划线/连字符（对齐 UE tag 命名字符集）。
+        /// 拦截 <c>A..B</c> / <c>.A</c> / <c>A.</c> / 含引号或反斜杠等会生成不可编译常量的名字。
+        /// </summary>
+        public static bool IsValidTagName(string tag)
+        {
+            if (string.IsNullOrEmpty(tag)) return false;
+            var parts = tag.Split('.');
+            foreach (var p in parts)
+            {
+                if (p.Length == 0) return false; // 空段
+                foreach (var c in p)
+                    if (!(char.IsLetterOrDigit(c) || c == '_' || c == '-')) return false;
+            }
             return true;
         }
 

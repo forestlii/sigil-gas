@@ -106,5 +106,28 @@ namespace Likeon.GAS.PlayTests
             Assert.AreEqual(1, ended, "被兄弟取代时 onEnded 应回调");
             yield return null;
         }
+
+        // ============ F) 嵌套 StartPhase 不丢外层 onEnded（C2 回归）============
+        // Game.Menu 的 onEnded 里嵌套启动一个阶段 → 会覆盖共享字段 _pendingOnEnded；
+        // 修复前 Game.Playing 自己的 onEnded 会因此丢失。
+        [UnityTest]
+        public IEnumerator F_NestedStartPhase_InOnEnded_DoesNotLoseOuterCallback()
+        {
+            var asc = NewGameAsc();
+
+            // Game.Menu 结束时，在其 onEnded 回调里再启动一个无关阶段（触发共享字段被覆盖的时序）
+            GamePhaseSubsystem.Instance.StartPhase(asc, NewPhase("Game.Menu"),
+                _ => GamePhaseSubsystem.Instance.StartPhase(asc, NewPhase("Overlay.Toast")));
+
+            int playingEnded = 0;
+            // 启动 Game.Playing 取代 Game.Menu：其 onEnded 不应被上面嵌套的 StartPhase 冲掉
+            GamePhaseSubsystem.Instance.StartPhase(asc, NewPhase("Game.Playing"), _ => playingEnded++);
+            Assert.AreEqual(0, playingEnded, "Game.Playing 刚启动还没结束");
+
+            // 用另一个兄弟取代 Game.Playing → 其 onEnded 应触发（修复前已丢失 → 恒为 0）
+            GamePhaseSubsystem.Instance.StartPhase(asc, NewPhase("Game.Over"));
+            Assert.AreEqual(1, playingEnded, "Game.Playing 的 onEnded 不应因嵌套 StartPhase 而丢失");
+            yield return null;
+        }
     }
 }

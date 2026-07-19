@@ -17,6 +17,10 @@
 - **指向未注册属性集的 modifier 现在会告警（仅编辑器），不再静默丢弃。** GE 的 modifier 引用了未添加的属性集（如 Loadout A 的初始化 GE 引用了 Loadout B 才加的属性集）时，原先直接 `continue` 吞掉、无任何提示。`ExecuteEffectSpec` / `RecalculateAffectedAttributes` 现在输出仅编辑器的 `LogWarning`，指明效果与属性名。
 - **四个运行时单例现在进入 Play Mode 时重置。** `GlobalAbilitySystem`、`GameplayCueManager`、`GameplayTagManager`、`GamePhaseSubsystem` 用 `static _instance ??= new()` 且无重置钩子；禁用 Domain Reload（官方推荐的快速进入 Play 模式选项）时会跨会话残留已销毁对象与陈旧状态。现在各自用 `[RuntimeInitializeOnLoadMethod(SubsystemRegistration)]` 清空 `_instance`。
 - **`GlobalAbilitySystem` 现在按原 level 给晚注册的 ASC 补发全局效果。** `ApplyEffectToAll(effect, level)` 只记效果不记 level，晚注册的 ASC 一律按 level 1 补发——曲线表 magnitude 会算错。现在按效果记录 level 并在补发时使用。
+- **`GamePhaseSubsystem` 不再在"兄弟阶段的结束回调里启动了另一阶段"时丢失本阶段的 `onEnded`。** `StartPhase` 用共享字段 `_pendingOnEnded` 传回调；兄弟阶段拆除时嵌套的 `StartPhase` 会覆盖它，导致外层阶段的回调丢失。`OnBeginPhase` 现在一进来就把待定回调取进局部量（消费语义）。`StartPhase` 在激活失败时还会 `ClearAbility` 回收授予的阶段技能，不再泄漏。
+- **`GameplayCueManager` 生命周期修复。** `Clear()` 现在会销毁活跃的 cue 实例，而不只是清字典（原来它们成孤儿 GameObject 泄漏）；若某 `OnActive` 记录的实例被外部销毁，现在会重建它，而不是被陈旧的 fake-null 条目静默吞掉；`UnregisterCueNotify` 现在级联——销毁该 notify 的活跃实例并清它的对象池桶。
+- **标签注册表现在会拒绝格式非法的标签名。** `GameplayTagsSettings.AddTag` 原来只查空白，含空段（`A..B`、`.A`、`A.`）、引号或其它杂字符的名字能进注册表并击穿常量生成器。现在用新增的 `IsValidTagName` 校验点分段格式（每段只含字母/数字/`_`/`-`）。
+- **代码生成器不再对关键字名、未转义标签串、成员重名生成不可编译代码。** 标签常量生成器把标签路径嵌进字符串字面量前先转义，并给是 C# 关键字的段加 `@` 前缀，还预留外层类型名与注入的 `Self` 成员，使 `A.A` 这类嵌套或名为 `Self` 的子段不撞名。属性集生成器的 `Validate` 现在会拒绝 C# 关键字标识符、与类名同名的属性（CS0542）、以及生成的 `{Name}Attribute` 句柄与另一属性撞名的情况。
 
 ### 文档
 

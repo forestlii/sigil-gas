@@ -32,12 +32,42 @@ namespace Likeon.GAS
             if (notify != null && !_notifies.Contains(notify)) _notifies.Add(notify);
         }
 
-        public void UnregisterCueNotify(GameplayCueNotify notify) => _notifies.Remove(notify);
+        public void UnregisterCueNotify(GameplayCueNotify notify)
+        {
+            _notifies.Remove(notify);
+            // 级联回收：注销一个有状态 notify 时，销毁以它为键的活跃实例 + 清它的池桶，
+            // 否则场景里残留没有处理器的孤儿 CueActor / 尸体条目。
+            if (notify is GameplayCueNotify_Actor actorNotify)
+            {
+                _cascadeScratch.Clear();
+                foreach (var kv in _activeActorCues)
+                    if (kv.Key.Item1 == actorNotify)
+                    {
+                        if (kv.Value != null) kv.Value.DestroyNow();
+                        _cascadeScratch.Add(kv.Key);
+                    }
+                foreach (var k in _cascadeScratch) _activeActorCues.Remove(k);
+                _cascadeScratch.Clear();
+
+                if (_actorPool.TryGetValue(actorNotify, out var stack))
+                {
+                    while (stack.Count > 0) { var inst = stack.Pop(); if (inst != null) inst.DestroyNow(); }
+                    _actorPool.Remove(actorNotify);
+                }
+            }
+        }
+
+        // UnregisterCueNotify 级联回收时收集待删 key，避免遍历中改字典。
+        private readonly List<(GameplayCueNotify_Actor, GameObject)> _cascadeScratch
+            = new List<(GameplayCueNotify_Actor, GameObject)>();
 
         /// <summary>清空登记（测试用）。</summary>
         public void Clear()
         {
             _notifies.Clear();
+            // 销毁活跃实例本体，避免场景里残留孤儿 CueActor GameObject（原来只清字典）。
+            foreach (var kv in _activeActorCues)
+                if (kv.Value != null) kv.Value.DestroyNow();
             _activeActorCues.Clear();
             foreach (var kv in _actorPool)
                 while (kv.Value.Count > 0)
@@ -85,7 +115,9 @@ namespace Likeon.GAS
             switch (cueEvent)
             {
                 case EGameplayCueEvent.OnActive:
-                    if (_activeActorCues.ContainsKey(key)) return; // 同 target 同 Cue 已激活，不重复 spawn
+                    // 已有活跃实例且未被外部销毁 → 不重复 spawn；若命中的是 Unity fake-null（实例被外部 Destroy），
+                    // 视为不存在并重建——否则 ContainsKey 命中尸体条目，后续激活被永久静默吞掉。
+                    if (_activeActorCues.TryGetValue(key, out var existing) && existing != null) return;
                     _activeActorCues[key] = RentOrCreateActor(notify, target, parameters);
                     break;
 

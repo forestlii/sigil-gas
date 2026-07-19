@@ -34,8 +34,14 @@ namespace Likeon.GAS.Editor
                 foreach (var a in def.Attributes)
                 {
                     if (a == null) continue;
-                    if (!IsValidIdentifier(a.Name)) { errors.Add($"属性名不是合法标识符: '{a.Name}'"); continue; }
+                    if (!IsValidIdentifier(a.Name)) { errors.Add($"属性名不是合法标识符或为 C# 关键字: '{a.Name}'"); continue; }
                     if (!seen.Add(a.Name)) errors.Add($"属性名重复: '{a.Name}'");
+                    // 成员不能与外层类型同名（CS0542）
+                    if (a.Name == def.ClassName)
+                        errors.Add($"属性名不能与类名相同: '{a.Name}'（会与外层类型同名，CS0542）");
+                    // 生成的句柄属性名 = {Name}Attribute；若它恰为另一属性的字段名，会生成重复成员
+                    if (names.Contains(a.Name + "Attribute"))
+                        errors.Add($"属性 '{a.Name}' 的句柄名 '{a.Name}Attribute' 与另一属性同名（会生成重复成员）");
                     if (!string.IsNullOrEmpty(a.MaxAttribute) && !names.Contains(a.MaxAttribute))
                         errors.Add($"属性 '{a.Name}' 的 MaxAttribute='{a.MaxAttribute}' 在本集中不存在");
                 }
@@ -165,6 +171,7 @@ namespace Likeon.GAS.Editor
             if (!(char.IsLetter(s[0]) || s[0] == '_')) return false;
             for (int i = 1; i < s.Length; i++)
                 if (!(char.IsLetterOrDigit(s[i]) || s[i] == '_')) return false;
+            if (CSharpKeywords.IsKeyword(s)) return false; // C# 关键字（class/int/event…）不能作类名/属性名
             return true;
         }
 

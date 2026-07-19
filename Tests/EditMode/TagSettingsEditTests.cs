@@ -32,5 +32,27 @@ namespace Likeon.GAS.Tests
 
             Object.DestroyImmediate(s);
         }
+
+        // E1 回归：格式非法的标签应被拦在注册表外（否则击穿常量生成器 → 生成不可编译代码）。
+        [Test]
+        public void AddTag_RejectsMalformedNames()
+        {
+            var s = ScriptableObject.CreateInstance<GameplayTagsSettings>();
+
+            Assert.IsFalse(s.AddTag("A..B"), "双点空段应拒绝");
+            Assert.IsFalse(s.AddTag(".A"), "前导点应拒绝");
+            Assert.IsFalse(s.AddTag("A."), "尾随点应拒绝");
+            Assert.IsFalse(s.AddTag("A.\"B"), "含引号应拒绝");
+            Assert.IsFalse(s.AddTag("A B"), "含空格应拒绝");
+            Assert.AreEqual(0, s.Count, "非法标签都不应进注册表");
+
+            Assert.IsTrue(s.AddTag("State.Combat.Block-Heavy_2"), "合法名（字母/数字/下划线/连字符）应通过");
+
+            Assert.IsTrue(GameplayTagsSettings.IsValidTagName("A.B_c-1"));
+            Assert.IsFalse(GameplayTagsSettings.IsValidTagName("A..B"));
+            Assert.IsFalse(GameplayTagsSettings.IsValidTagName("A.\"B"));
+
+            Object.DestroyImmediate(s);
+        }
     }
 }

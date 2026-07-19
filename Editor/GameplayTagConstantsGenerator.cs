@@ -103,9 +103,16 @@ namespace Likeon.GAS.Editor
         }
 
         // ---- 生成 ----
-        private static void EmitChildren(StringBuilder sb, Node parent, int indent)
+        private static void EmitChildren(StringBuilder sb, Node parent, int indent,
+            string enclosingTypeName = null, bool hasSelf = false)
         {
             var used = new HashSet<string>();
+            // 预留同一类体内已存在的成员名，避免生成冲突：
+            //  - 外层类型名本身（成员不能与外围类型同名 → CS0542，如 tag "A.A"）；
+            //  - IsTag 节点注入的 Self 成员（子段名恰为 Self 会撞名 → CS0102）。
+            if (!string.IsNullOrEmpty(enclosingTypeName)) used.Add(enclosingTypeName);
+            if (hasSelf) used.Add("Self");
+
             foreach (var kv in parent.Children)
             {
                 string id = UniqueId(Sanitize(kv.Key), used);
@@ -114,15 +121,15 @@ namespace Likeon.GAS.Editor
 
                 if (node.Children.Count == 0)
                 {
-                    sb.AppendLine($"{pad}public static readonly GameplayTag {id} = GameplayTag.RequestTag(\"{node.FullPath}\");");
+                    sb.AppendLine($"{pad}public static readonly GameplayTag {id} = GameplayTag.RequestTag(\"{Escape(node.FullPath)}\");");
                 }
                 else
                 {
                     sb.AppendLine($"{pad}public static class {id}");
                     sb.AppendLine($"{pad}{{");
                     if (node.IsTag)
-                        sb.AppendLine($"{pad}    public static readonly GameplayTag Self = GameplayTag.RequestTag(\"{node.FullPath}\");");
-                    EmitChildren(sb, node, indent + 1);
+                        sb.AppendLine($"{pad}    public static readonly GameplayTag Self = GameplayTag.RequestTag(\"{Escape(node.FullPath)}\");");
+                    EmitChildren(sb, node, indent + 1, id, node.IsTag);
                     sb.AppendLine($"{pad}}}");
                 }
             }
@@ -135,8 +142,14 @@ namespace Likeon.GAS.Editor
                 sb.Append(char.IsLetterOrDigit(c) ? c : '_');
             if (sb.Length == 0) sb.Append('_');
             if (char.IsDigit(sb[0])) sb.Insert(0, '_');
-            return sb.ToString();
+            string id = sb.ToString();
+            // C# 关键字（class/int/event…）不能直接作标识符 → 加 @ 前缀转成 verbatim 标识符。
+            if (CSharpKeywords.IsKeyword(id)) id = "@" + id;
+            return id;
         }
+
+        // 转义要嵌进 C# 字符串字面量的标签路径：含 " 或 \ 的 tag 否则会生成不可编译代码。
+        private static string Escape(string s) => s.Replace("\\", "\\\\").Replace("\"", "\\\"");
 
         private static string UniqueId(string id, HashSet<string> used)
         {

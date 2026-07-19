@@ -156,6 +156,68 @@ namespace Likeon.GAS.Tests
             Object.DestroyImmediate(notify);
         }
 
+        // D1-1 回归：Clear 应销毁活跃实例本体（原来只清字典 → 场景里残留孤儿 CueActor）。
+        [Test]
+        public void Clear_DestroysActiveInstances()
+        {
+            var notify = MakeNotify();
+            var target = new GameObject("Target");
+            GameplayCueManager.Instance.HandleGameplayCue(target, GameplayTag.RequestTag(CueTagName), EGameplayCueEvent.OnActive, null);
+            GameplayCueManager.Instance.TryGetActorCueInstance(notify, target, out var inst);
+            Assert.IsTrue(inst != null, "应有活跃实例");
+            var instGo = inst.gameObject;
+
+            GameplayCueManager.Instance.Clear();
+
+            Assert.IsTrue(instGo == null, "Clear 应销毁活跃实例的 GameObject（原来留孤儿）");
+            Assert.AreEqual(0, GameplayCueManager.Instance.ActiveActorCueCount);
+
+            Object.DestroyImmediate(target);
+            Object.DestroyImmediate(notify);
+        }
+
+        // D1-2 回归：活跃实例被外部销毁后，同 (notify,target) 再次 OnActive 应重建，而非被 fake-null 尸体条目静默吞掉。
+        [Test]
+        public void OnActive_AfterExternalDestroy_Respawns()
+        {
+            var notify = MakeNotify();
+            var target = new GameObject("Target");
+            var tag = GameplayTag.RequestTag(CueTagName);
+
+            GameplayCueManager.Instance.HandleGameplayCue(target, tag, EGameplayCueEvent.OnActive, null);
+            GameplayCueManager.Instance.TryGetActorCueInstance(notify, target, out var first);
+            Object.DestroyImmediate(first.gameObject); // 外部销毁
+
+            GameplayCueManager.Instance.HandleGameplayCue(target, tag, EGameplayCueEvent.OnActive, null);
+            GameplayCueManager.Instance.TryGetActorCueInstance(notify, target, out var second);
+
+            Assert.IsTrue(second != null, "外部销毁后再次 OnActive 应重建实例（修复前被静默吞掉）");
+            Assert.AreEqual(2, notify.OnActiveCount, "应再次回调 OnActive");
+
+            Object.DestroyImmediate(second.gameObject);
+            Object.DestroyImmediate(target);
+            Object.DestroyImmediate(notify);
+        }
+
+        // D1-3 回归：注销 notify 应级联销毁其活跃实例、清活跃表条目。
+        [Test]
+        public void UnregisterCueNotify_CascadeDestroysActiveInstances()
+        {
+            var notify = MakeNotify();
+            var target = new GameObject("Target");
+            GameplayCueManager.Instance.HandleGameplayCue(target, GameplayTag.RequestTag(CueTagName), EGameplayCueEvent.OnActive, null);
+            GameplayCueManager.Instance.TryGetActorCueInstance(notify, target, out var inst);
+            var instGo = inst.gameObject;
+
+            GameplayCueManager.Instance.UnregisterCueNotify(notify);
+
+            Assert.IsTrue(instGo == null, "注销 notify 应级联销毁其活跃实例");
+            Assert.AreEqual(0, GameplayCueManager.Instance.ActiveActorCueCount, "活跃表应清掉该 notify 的条目");
+
+            Object.DestroyImmediate(target);
+            Object.DestroyImmediate(notify);
+        }
+
         [Test]
         public void RemovedActor_IsPooled_AndReusedOnNextActivation()
         {
