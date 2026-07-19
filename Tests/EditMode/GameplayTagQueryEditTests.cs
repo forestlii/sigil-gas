@@ -73,6 +73,34 @@ namespace Likeon.GAS.Tests
             Assert.IsTrue(q.Matches(Container()), "空查询匹配一切");
         }
 
+        // P0-4 回归：Inspector 里给 [SerializeReference] expressions 加了元素但尚未选具体类型时，
+        // 元素为 null；修复前 Matches 对 null 元素调 e.Matches 直接抛 NRE，IsEmpty 也不放行全 null。
+        [Test]
+        public void NullSubExpression_DoesNotThrow_AndIsSkipped()
+        {
+            var withNullAndReal = new List<GameplayTagQuery>
+            {
+                null,
+                GameplayTagQuery.MakeQuery_MatchAllTags(GameplayTag.RequestTag("State.Stunned")),
+            };
+            var q = Authored(GameplayTagQueryExprType.AnyExprMatch, null, withNullAndReal);
+
+            Assert.DoesNotThrow(() => q.Matches(Container("State.Stunned")),
+                "含 null 子表达式求值不应抛 NRE");
+            Assert.IsTrue(q.Matches(Container("State.Stunned")), "非 null 子表达式命中应为真");
+            Assert.IsFalse(q.Matches(Container("State.Other")), "非 null 子表达式不命中应为假（null 被跳过）");
+        }
+
+        [Test]
+        public void AllNullExpressions_TreatedAsEmpty_MatchesAll()
+        {
+            var allNull = new List<GameplayTagQuery> { null, null };
+            var q = Authored(GameplayTagQueryExprType.AllExprMatch, null, allNull);
+            Assert.IsTrue(q.IsEmpty, "全 null 子表达式应判为空");
+            Assert.DoesNotThrow(() => q.Matches(Container()), "全 null 求值不应抛异常");
+            Assert.IsTrue(q.Matches(Container()), "空查询匹配一切");
+        }
+
         [Test]
         public void FactoryConstructed_StillWorks_NoRegression()
         {
