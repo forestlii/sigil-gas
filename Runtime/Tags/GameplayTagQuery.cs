@@ -56,11 +56,20 @@ namespace Likeon.GAS
                     case GameplayTagQueryExprType.AllExprMatch:
                     case GameplayTagQueryExprType.AnyExprMatch:
                     case GameplayTagQueryExprType.NoExprMatch:
-                        return expressions == null || expressions.Count == 0;
+                        return !HasAnyNonNullExpression();
                     default:
                         return true;
                 }
             }
+        }
+
+        // 表达式列表里是否存在至少一个非 null 子表达式。
+        // Inspector 默认 UI 下点 "+" 但尚未选具体类型时元素为 null，需据此判空避免误放行/求值 NRE。
+        private bool HasAnyNonNullExpression()
+        {
+            if (expressions == null) return false;
+            foreach (var e in expressions) if (e != null) return true;
+            return false;
         }
 
         public GameplayTagQuery() { }
@@ -90,13 +99,13 @@ namespace Likeon.GAS
                     foreach (var t in tags) if (container.HasTag(t)) return false;
                     return true;
                 case GameplayTagQueryExprType.AllExprMatch:
-                    foreach (var e in expressions) if (!e.Matches(container)) return false;
+                    foreach (var e in expressions) if (e != null && !e.Matches(container)) return false;
                     return true;
                 case GameplayTagQueryExprType.AnyExprMatch:
-                    foreach (var e in expressions) if (e.Matches(container)) return true;
+                    foreach (var e in expressions) if (e != null && e.Matches(container)) return true;
                     return false;
                 case GameplayTagQueryExprType.NoExprMatch:
-                    foreach (var e in expressions) if (e.Matches(container)) return false;
+                    foreach (var e in expressions) if (e != null && e.Matches(container)) return false;
                     return true;
                 default:
                     return false;

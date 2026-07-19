@@ -7,6 +7,11 @@
 
 ## [Unreleased]
 
+### 修复
+
+- **周期效果不再双重计数其 modifier（DoT / 回血数值原本是错的）。** `RecalculateCurrentValue` 聚合 CurrentValue 时现在跳过周期效果：周期效果每个周期按 Instant 语义把 modifier 落到 BaseValue，若同时又把它当持续修饰聚合进 CurrentValue，同一 magnitude 会被算两次——-10 HP/s 的 DoT 第一个 tick 掉 20、整个存续期读数低一个 tick。并给周期循环加了 `Period <= 0` 兜底，防止运行时把资产 `Period` 改成 0 时死循环。
+- **`GameplayTagQuery` 不再因 null 子表达式抛异常。** 表达式类查询的 `expressions` 列表含 null 元素（Inspector 里给 `[SerializeReference]` 加了元素但还没选具体类型时的默认状态）会在求值时抛 `NullReferenceException`。三处表达式循环现在跳过 null 元素，`IsEmpty` 也把"全 null"视为空。
+
 ### 文档
 
 - **README 功能清单补齐到 0.8.0 / 0.9.0。** 现已覆盖 `AbilityTriggers`、`ModifierMagnitudeCalculation`（MMC）、有状态的 `GameplayCueNotify_Actor`、`AbilityTask_WaitAttributeChange`、`TryActivateAbilityByClass` + `IAbilitySystemInterface` / `GetAbilitySystem`、`PostAttributeBaseChange` 钩子与 meta 属性标记——这些在使用文档里早已写了，只是 README 没跟上。编辑器速查表补上 **Gameplay Cue Notify (Actor)**。

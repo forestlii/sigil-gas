@@ -767,6 +767,9 @@ namespace Likeon.GAS
             foreach (var active in _activeEffects)
             {
                 if (active.Inhibited) continue;
+                // 周期效果按 Instant 语义每周期落 BaseValue（见 TickActiveEffects），其 modifier 不参与
+                // CurrentValue 聚合——否则同一 magnitude 会被算两次（持续修饰 + 周期落基础值）。
+                if (active.Def.IsPeriodic) continue;
                 int stacks = active.StackCount; // 按层数放大：等价于该修改施加 stacks 次
                 foreach (var mod in active.Def.Modifiers)
                 {
@@ -1025,6 +1028,7 @@ namespace Likeon.GAS
                     while (active.PeriodRemaining <= 0f)
                     {
                         ExecuteEffectSpec(active.Spec, active.StackCount); // 按 Instant 语义改基础值
+                        if (active.Def.Period <= 0f) break; // 兜底：运行时资产被改成 0 时防死循环
                         active.PeriodRemaining += active.Def.Period;
                     }
                 }

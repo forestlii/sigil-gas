@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Periodic effects no longer double-count their modifiers (DoT / regen values were wrong).** `RecalculateCurrentValue` now skips periodic effects when aggregating CurrentValue: a periodic effect applies its modifiers to BaseValue every period as an Instant-style execution, so also aggregating them as duration modifiers on CurrentValue counted the same magnitude twice — a −10 HP/s DoT dropped 20 on its first tick and read one tick low for its whole lifetime. Added a `Period <= 0` guard on the periodic loop to prevent an infinite loop if an asset's `Period` is edited to 0 at runtime.
+- **`GameplayTagQuery` no longer throws on null sub-expressions.** An expression-type query whose `expressions` list contained null elements (the default when a `[SerializeReference]` element is added in the Inspector but no concrete type is chosen yet) threw a `NullReferenceException` on evaluation. The three expression loops now skip null elements and `IsEmpty` treats an all-null list as empty.
+
 ### Documentation
 
 - **README feature list caught up with 0.8.0 / 0.9.0.** It now covers `AbilityTriggers`, `ModifierMagnitudeCalculation` (MMC), the stateful `GameplayCueNotify_Actor`, `AbilityTask_WaitAttributeChange`, `TryActivateAbilityByClass` + `IAbilitySystemInterface` / `GetAbilitySystem`, the `PostAttributeBaseChange` hook and meta-attribute marking — all of which were already documented in the usage guide but missing from the README. The editor cheat sheet now lists **Gameplay Cue Notify (Actor)**.
