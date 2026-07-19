@@ -221,10 +221,12 @@ namespace Likeon.GAS
 
             _currentBufferedInput = buffered;
             if (_currentBufferedInput.IsValid)
-                FireBufferedInput();
+                FireBufferedInput(); // 其收尾可能已关掉本窗口并派发过一次关闭事件
 
-            _activeBufferWindows.Remove(bufferWindowName);
-            OnInputBufferWindowStateChanged?.Invoke(bufferWindowName, false);
+            // 重入安全（C6）：仅当窗口仍存在时才移除 + 派发关闭事件——上面的 FireBufferedInput
+            // 收尾会关掉进入时的窗口（含本窗口），无条件再 Remove + 派发会重复发一次 (tag,false)。
+            if (_activeBufferWindows.Remove(bufferWindowName))
+                OnInputBufferWindowStateChanged?.Invoke(bufferWindowName, false);
         }
 
         /// <summary>关闭所有激活窗口（不触发）。</summary>
@@ -242,10 +244,22 @@ namespace Likeon.GAS
         // 触发当前缓冲的输入：重新走分发。
         private void FireBufferedInput()
         {
+            // 重入安全（C6）：ProcessInput 分发过程中，处理器可能 OpenInputBufferWindow 开下一段连招窗口。
+            // 收尾若无脑 CloseActiveInputBufferWindows() 关掉所有活跃窗口，会把刚开的下一段窗口一起关掉
+            // → 连招预输入链断。故进入时先快照当前窗口，只关"快照里、且仍存在"的旧窗口，分发中新开的保留。
+            // 用局部列表（非共享字段）以对重入安全（FireBufferedInput 自身可能被重入）。
+            var windowsAtEntry = new List<GameplayTag>(_activeBufferWindows.Keys);
+
             ProcessInput(_currentBufferedInput.ActionData, _currentBufferedInput.InputTag, _currentBufferedInput.TriggerEvent);
             OnFireBufferedInput?.Invoke(_currentBufferedInput.ActionData, _currentBufferedInput.InputTag, _currentBufferedInput.TriggerEvent);
             _currentBufferedInput = BufferedInput.None;
-            CloseActiveInputBufferWindows();
+
+            for (int i = 0; i < windowsAtEntry.Count; i++)
+            {
+                var k = windowsAtEntry[i];
+                if (_activeBufferWindows.Remove(k)) // 仅当仍存在（可能已被重入路径关掉）
+                    OnInputBufferWindowStateChanged?.Invoke(k, false);
+            }
         }
 
         /// <summary>尝试把被拦输入存入任一激活窗口。</summary>

@@ -39,13 +39,18 @@ namespace Likeon.GAS
             set => enableInputBuffer = value;
         }
 
-        /// <summary>追加一个门控检查器。</summary>
+        /// <summary>追加一个门控检查器。
+        /// ⚠️ 这会改动本资产的序列化列表——仅供初始化 / 代码构建 setup 时调用（C7②）。运行时对一个被多个角色共享的
+        /// setup 资产调用会污染该 .asset（编辑器内 Play 结束后改动会留在版本库）。要在运行时改，请对 <c>Instantiate</c>
+        /// 出的实例副本操作，别改源资产。</summary>
         public void AddChecker(InputChecker checker)
         {
             if (checker != null) inputCheckers.Add(checker);
         }
 
-        /// <summary>追加一个处理器（顺序即优先级；FirstOnly 下靠前的先命中）。</summary>
+        /// <summary>追加一个处理器（顺序即优先级；FirstOnly 下靠前的先命中）。
+        /// ⚠️ 同 <see cref="AddChecker"/>：改动序列化列表、仅初始化期可调；运行时改共享 setup 资产会污染 .asset，
+        /// 需改则对 <c>Instantiate</c> 的实例副本操作（C7②）。</summary>
         public void AddProcessor(InputProcessor processor)
         {
             if (processor != null) inputProcessors.Add(processor);
@@ -86,28 +91,46 @@ namespace Likeon.GAS
         public void HandleInput(InputSystemComponent ic, InputActionData data, GameplayTag inputTag, InputTriggerEvent triggerEvent)
         {
             var processors = FilterInputProcessors(inputTag, triggerEvent);
-            foreach (var processor in processors)
+            try
             {
-                if (processor.CanHandleInput(ic, data, inputTag, triggerEvent))
+                foreach (var processor in processors)
                 {
-                    processor.HandleInput(ic, data, inputTag, triggerEvent);
-                    if (inputProcessorExecutionType == EInputProcessorExecutionType.FirstOnly)
-                        return; // ★ 第一个通过的执行后即返回——状态驱动多态的精确落点
+                    if (processor.CanHandleInput(ic, data, inputTag, triggerEvent))
+                    {
+                        processor.HandleInput(ic, data, inputTag, triggerEvent);
+                        if (inputProcessorExecutionType == EInputProcessorExecutionType.FirstOnly)
+                            return; // ★ 第一个通过的执行后即返回——状态驱动多态的精确落点（finally 仍归还借表）
+                    }
                 }
             }
+            finally { ReturnFilterList(processors); }
         }
 
         // 筛出监听该 InputTag + TriggerEvent 的处理器。
-        private readonly List<InputProcessor> _filterScratch = new List<InputProcessor>();
+        // 重入安全（C7）：处理器 HandleInput 里可能同步重入 HandleInput（再分发一次输入）。
+        // 若返回共享 scratch，内层 FilterInputProcessors 的 Clear() 会清掉外层正在 foreach 的同一 List
+        // → 抛 InvalidOperationException / 跳处理。改用借还池：每层借一个独立 List、foreach 结束归还，稳态零分配。
+        private readonly Stack<List<InputProcessor>> _filterPool = new Stack<List<InputProcessor>>();
+        private List<InputProcessor> RentFilterList()
+        {
+            var list = _filterPool.Count > 0 ? _filterPool.Pop() : new List<InputProcessor>();
+            list.Clear();
+            return list;
+        }
+        private void ReturnFilterList(List<InputProcessor> list)
+        {
+            list.Clear();
+            _filterPool.Push(list);
+        }
         private List<InputProcessor> FilterInputProcessors(GameplayTag inputTag, InputTriggerEvent triggerEvent)
         {
-            _filterScratch.Clear();
+            var result = RentFilterList();
             foreach (var p in inputProcessors)
             {
                 if (p != null && !p.InputTags.IsEmpty && p.InputTags.HasTagExact(inputTag) && p.TriggerEvents.Contains(triggerEvent))
-                    _filterScratch.Add(p);
+                    result.Add(p);
             }
-            return _filterScratch;
+            return result;
         }
     }
 }
