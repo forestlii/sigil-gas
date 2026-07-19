@@ -3,6 +3,7 @@
 // Unity 版做轻量实现：维护已知标签集合，提供父链展开（用于 CountContainer 的父标签累加）。
 
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace Likeon.GAS
 {
@@ -14,6 +15,11 @@ namespace Likeon.GAS
     {
         private static GameplayTagManager _instance;
         public static GameplayTagManager Instance => _instance ??= new GameplayTagManager();
+
+        // 禁用 Domain Reload 时静态实例会跨 Play 会话残留（_registeredTags/_parentChainCache 陈旧）。
+        // 进入 Play Mode 前重置。
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics() => _instance = null;
 
         private readonly HashSet<string> _registeredTags = new HashSet<string>();
         // 缓存：标签 -> 自身及所有父标签（含自己），避免重复 split。

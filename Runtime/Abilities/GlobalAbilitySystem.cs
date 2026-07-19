@@ -6,6 +6,7 @@
 // 语义：同一技能/效果只全局应用一次（重复 ApplyXToAll 幂等）；新 ASC 注册时自动补上所有已全局应用的项。
 
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace Likeon.GAS
 {
@@ -18,12 +19,19 @@ namespace Likeon.GAS
         private static GlobalAbilitySystem _instance;
         public static GlobalAbilitySystem Instance => _instance ??= new GlobalAbilitySystem();
 
+        // 禁用 Domain Reload（Enter Play Mode Options）时静态实例会跨会话残留，导致新会话命中已销毁的
+        // ASC/句柄。进入 Play Mode 前重置。
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics() => _instance = null;
+
         private readonly List<AbilitySystemComponent> _registered = new List<AbilitySystemComponent>();
         // 技能/效果模板 → (ASC → 句柄)，撤销时按 ASC 找回各自句柄。
         private readonly Dictionary<GameplayAbility, Dictionary<AbilitySystemComponent, GameplayAbilitySpecHandle>> _abilities
             = new Dictionary<GameplayAbility, Dictionary<AbilitySystemComponent, GameplayAbilitySpecHandle>>();
         private readonly Dictionary<GameplayEffect, Dictionary<AbilitySystemComponent, ActiveGameplayEffectHandle>> _effects
             = new Dictionary<GameplayEffect, Dictionary<AbilitySystemComponent, ActiveGameplayEffectHandle>>();
+        // 每个全局效果施加时的 level：晚注册的 ASC 必须按原 level 补发（曲线表按 level 查值），否则一律按 1 级错算。
+        private readonly Dictionary<GameplayEffect, int> _effectLevels = new Dictionary<GameplayEffect, int>();
 
         /// <summary>当前已注册的 ASC 数量。</summary>
         public int RegisteredCount => _registered.Count;
@@ -36,7 +44,8 @@ namespace Likeon.GAS
             foreach (var kv in _abilities)
                 kv.Value[asc] = asc.GiveAbility(kv.Key);
             foreach (var kv in _effects)
-                kv.Value[asc] = asc.ApplyGameplayEffectToSelf(kv.Key);
+                kv.Value[asc] = asc.ApplyGameplayEffectToSelf(kv.Key,
+                    _effectLevels.TryGetValue(kv.Key, out var lvl) ? lvl : 1); // 按原 level 补发，别一律按 1 级
 
             _registered.Add(asc);
         }
@@ -74,6 +83,7 @@ namespace Likeon.GAS
             foreach (var asc in _registered)
                 if (asc != null) map[asc] = asc.ApplyGameplayEffectToSelf(effect, level);
             _effects[effect] = map;
+            _effectLevels[effect] = level; // 记 level，供晚注册的 ASC 按同一 level 补发
         }
 
         /// <summary>从所有 ASC 移除该全局技能。</summary>
@@ -92,6 +102,7 @@ namespace Likeon.GAS
             foreach (var kv in map)
                 if (kv.Key != null) kv.Key.RemoveActiveGameplayEffect(kv.Value);
             _effects.Remove(effect);
+            _effectLevels.Remove(effect);
         }
 
         /// <summary>清空所有注册与全局应用记录（场景卸载 / 测试用，不主动撤销已施加项）。</summary>
@@ -99,6 +110,7 @@ namespace Likeon.GAS
         {
             _abilities.Clear();
             _effects.Clear();
+            _effectLevels.Clear();
             _registered.Clear();
         }
     }

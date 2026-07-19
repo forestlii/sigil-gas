@@ -16,6 +16,11 @@ namespace Likeon.GAS
         private static GameplayCueManager _instance;
         public static GameplayCueManager Instance => _instance ??= new GameplayCueManager();
 
+        // 禁用 Domain Reload 时静态实例会跨 Play 会话残留（_notifies/_activeActorCues/_actorPool 里全是已销毁对象）。
+        // 进入 Play Mode 前重置。
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics() => _instance = null;
+
         private readonly List<GameplayCueNotify> _notifies = new List<GameplayCueNotify>();
 
         /// <summary>所有 cue 触发时都会广播（供代码/测试观察，不依赖真实 VFX）。</summary>

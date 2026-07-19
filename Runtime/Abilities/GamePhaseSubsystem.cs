@@ -8,6 +8,7 @@
 
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace Likeon.GAS
 {
@@ -19,6 +20,11 @@ namespace Likeon.GAS
     {
         private static GamePhaseSubsystem _instance;
         public static GamePhaseSubsystem Instance => _instance ??= new GamePhaseSubsystem();
+
+        // 禁用 Domain Reload 时静态实例会跨 Play 会话残留（_active 里是已销毁的阶段技能，IsPhaseActive 误判）。
+        // 进入 Play Mode 前重置。
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics() => _instance = null;
 
         private sealed class PhaseEntry { public GamePhaseAbility Ability; public Action<GamePhaseAbility> OnEnded; }
         private sealed class Observer

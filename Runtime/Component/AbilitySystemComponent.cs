@@ -40,6 +40,35 @@ namespace Likeon.GAS
                 if (initialLoadouts[i] != null) _grantedLoadoutHandles.Add(GrantLoadout(initialLoadouts[i]));
         }
 
+        /// <summary>
+        /// 销毁时回收随实例克隆的技能 SO（及其 AdditionalCosts 克隆）。这些克隆标了 HideAndDontSave，
+        /// 不随场景卸载/资源回收，ASC 被 Destroy（刷怪、换场景）时不清就会在真机包体里逐个泄漏。
+        /// 只在 Play 模式做运行时销毁——编辑器/EditMode 测试下 DestroyImmediate(go) 会同步进本回调，
+        /// 此时调 Object.Destroy 会报 "Destroy may not be called from edit mode"，故跳过（编辑器泄漏无害）。
+        /// </summary>
+        protected virtual void OnDestroy()
+        {
+            if (Application.isPlaying && _abilities.Count > 0)
+            {
+                var specs = new List<GameplayAbilitySpec>(_abilities.Values);
+                _abilities.Clear();
+                foreach (var spec in specs)
+                {
+                    var ability = spec.Ability;
+                    if (ability == null) continue;
+                    if (spec.IsActive) ability.CancelAbility();
+                    foreach (var c in ability.AdditionalCosts)
+                        if (c != null) UnityEngine.Object.Destroy(c);
+                    UnityEngine.Object.Destroy(ability);
+                }
+            }
+            if (_abilityTriggerHooked)
+            {
+                _ownedTags.OnTagCountChanged -= HandleOwnedTagTriggerChanged;
+                _abilityTriggerHooked = false;
+            }
+        }
+
         // ===================== 拥有标签 Owned Tags =====================
         private readonly GameplayTagCountContainer _ownedTags = new GameplayTagCountContainer();
 
@@ -91,6 +120,14 @@ namespace Likeon.GAS
         public void AddAttributeSet(AttributeSet set)
         {
             if (set == null || _attributeSets.Contains(set)) return;
+            // 拒绝同类型重复：GetAttributeSet 按类型全名解析、只命中第一个，重复实例会让后加的那套读写
+            // 静默无效（"属性有时生效有时不生效"级难查 bug）。两个 Loadout 勾同一属性集类型即会触发。
+            if (GetAttributeSet(set.GetType().FullName) != null)
+            {
+                Debug.LogWarning($"[Sigil] AddAttributeSet 忽略了重复的属性集类型 {set.GetType().Name}：同类型已存在，" +
+                                 "属性解析只会命中第一个实例。请勿在多个 Loadout 勾选同一属性集类型。");
+                return;
+            }
             set.Owner = this;
             set.EnsureRegistered();
             _attributeSets.Add(set);
@@ -583,8 +620,12 @@ namespace Likeon.GAS
                 {
                     var active = _activeEffects[i];
                     _activeEffects.RemoveAt(i);
-                    foreach (var t in active.Def.GrantedTags) RemoveLooseGameplayTag(t);
-                    foreach (var cue in active.Def.GameplayCues) RemoveGameplayCue(cue, MakeCueParams(active.Spec));
+                    // 若效果当前处于抑制态，其授予标签/持续 cue 已被 UpdateInhibition 撤下 → 不能再撤一次（否则计数双减）。
+                    if (!active.Inhibited)
+                    {
+                        foreach (var t in active.Def.GrantedTags) RemoveLooseGameplayTag(t);
+                        foreach (var cue in active.Def.GameplayCues) RemoveGameplayCue(cue, MakeCueParams(active.Spec));
+                    }
                     RecalculateAffectedAttributes(active.Def);
                     OnActiveEffectRemoved?.Invoke(active);
                     return true;
@@ -688,7 +729,15 @@ namespace Likeon.GAS
             {
                 var set = GetAttributeSet(output.Attribute.AttributeSetTypeName);
                 var data = output.Attribute.ResolveData(this);
-                if (set == null || data == null) continue;
+                if (set == null || data == null)
+                {
+#if UNITY_EDITOR
+                    // 静默丢弃修饰是难查配置错误的常见来源（如 Loadout A 的初始化 GE 引用了 Loadout B 才添加的属性集）。
+                    Debug.LogWarning($"[Sigil] 效果 {(def != null ? def.name : "?")} 的 modifier 指向未注册的属性 " +
+                        $"{output.Attribute.AttributeSetTypeName}.{output.Attribute.AttributeName}，已忽略——检查属性集是否已添加、Loadout 授予顺序。");
+#endif
+                    continue;
+                }
 
                 // PreGameplayEffectExecute 钩子（可否决）
                 var callback = new GameplayEffectModCallbackData
@@ -752,6 +801,11 @@ namespace Likeon.GAS
             {
                 var set = GetAttributeSet(mod.Attribute.AttributeSetTypeName);
                 if (set != null) RecalculateCurrentValue(set, mod.Attribute, source);
+#if UNITY_EDITOR
+                else
+                    Debug.LogWarning($"[Sigil] 效果 {def.name} 的 modifier 指向未注册的属性集 " +
+                        $"{mod.Attribute.AttributeSetTypeName}，本次重算已跳过——检查属性集是否已添加。");
+#endif
             }
         }
 
@@ -1086,6 +1140,19 @@ namespace Likeon.GAS
             if (active.Inhibited != shouldInhibit)
             {
                 active.Inhibited = shouldInhibit;
+                // 抑制语义是"效果暂时不生效"：不仅属性修饰要回退（聚合时已按 Inhibited 跳过），
+                // 授予标签与持续 cue 也要一并撤下/恢复——否则被抑制的定身效果属性放开了、State.Rooted 标签还挂着，
+                // 所有按标签判断的系统仍认为目标定身中（标签与属性表现矛盾）。
+                if (shouldInhibit)
+                {
+                    foreach (var t in active.Def.GrantedTags) RemoveLooseGameplayTag(t);
+                    foreach (var cue in active.Def.GameplayCues) RemoveGameplayCue(cue, MakeCueParams(active.Spec));
+                }
+                else
+                {
+                    foreach (var t in active.Def.GrantedTags) AddLooseGameplayTag(t);
+                    foreach (var cue in active.Def.GameplayCues) AddGameplayCue(cue, MakeCueParams(active.Spec));
+                }
                 RecalculateAffectedAttributes(active.Def);
             }
         }

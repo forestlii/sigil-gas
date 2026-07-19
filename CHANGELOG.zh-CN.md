@@ -11,6 +11,12 @@
 
 - **周期效果不再双重计数其 modifier（DoT / 回血数值原本是错的）。** `RecalculateCurrentValue` 聚合 CurrentValue 时现在跳过周期效果：周期效果每个周期按 Instant 语义把 modifier 落到 BaseValue，若同时又把它当持续修饰聚合进 CurrentValue，同一 magnitude 会被算两次——-10 HP/s 的 DoT 第一个 tick 掉 20、整个存续期读数低一个 tick。并给周期循环加了 `Period <= 0` 兜底，防止运行时把资产 `Period` 改成 0 时死循环。
 - **`GameplayTagQuery` 不再因 null 子表达式抛异常。** 表达式类查询的 `expressions` 列表含 null 元素（Inspector 里给 `[SerializeReference]` 加了元素但还没选具体类型时的默认状态）会在求值时抛 `NullReferenceException`。三处表达式循环现在跳过 null 元素，`IsEmpty` 也把"全 null"视为空。
+- **ASC 销毁时回收授予的技能克隆。** 授予的技能（及其克隆的 `AdditionalCosts`）是 `HideAndDontSave` 克隆、不随场景卸载回收；此前没有 `OnDestroy`，每生成/销毁一个带技能的角色就泄漏一批 ScriptableObject。现在 `OnDestroy` 逐个销毁（仅 Play 模式，避免编辑器下 `Destroy` 报错）并反注册 owned-tag 触发订阅。
+- **被抑制的效果现在会一并摘除授予标签与 cue，而不只是回退属性修饰。** 效果被抑制（`OngoingRequiredTags` 不再满足）时原先只回退属性修饰，`GrantedTags` 与持续 cue 仍挂着——被抑制的定身效果属性放开了、`State.Rooted` 标签还在，所有按标签判断的系统仍认为目标定身中。现在抑制翻转时同步摘/挂授予标签与 cue（并在效果移除路径加了对应守卫，避免计数双减）。
+- **添加第二个同类型属性集现在会被拒绝并告警。** `AddAttributeSet` 原本只挡同一实例、不挡同类型的另一实例；两个 Loadout 授予同一属性集类型会产生两个实例，属性解析只静默命中第一个，第二套读写静默无效。现在同类型添加会被 `LogWarning` 拒绝。
+- **指向未注册属性集的 modifier 现在会告警（仅编辑器），不再静默丢弃。** GE 的 modifier 引用了未添加的属性集（如 Loadout A 的初始化 GE 引用了 Loadout B 才加的属性集）时，原先直接 `continue` 吞掉、无任何提示。`ExecuteEffectSpec` / `RecalculateAffectedAttributes` 现在输出仅编辑器的 `LogWarning`，指明效果与属性名。
+- **四个运行时单例现在进入 Play Mode 时重置。** `GlobalAbilitySystem`、`GameplayCueManager`、`GameplayTagManager`、`GamePhaseSubsystem` 用 `static _instance ??= new()` 且无重置钩子；禁用 Domain Reload（官方推荐的快速进入 Play 模式选项）时会跨会话残留已销毁对象与陈旧状态。现在各自用 `[RuntimeInitializeOnLoadMethod(SubsystemRegistration)]` 清空 `_instance`。
+- **`GlobalAbilitySystem` 现在按原 level 给晚注册的 ASC 补发全局效果。** `ApplyEffectToAll(effect, level)` 只记效果不记 level，晚注册的 ASC 一律按 level 1 补发——曲线表 magnitude 会算错。现在按效果记录 level 并在补发时使用。
 
 ### 文档
 
